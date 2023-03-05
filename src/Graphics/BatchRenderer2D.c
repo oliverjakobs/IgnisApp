@@ -1,5 +1,3 @@
-#include "BatchRenderer2D.h"
-
 #include "Renderer.h"
 
 typedef struct
@@ -34,7 +32,7 @@ void BatchRenderer2DInit(const char* vert, const char* frag)
 	ignisAddArrayBufferLayout(&_render_data.vao, BATCHRENDERER2D_BUFFER_SIZE * sizeof(float), NULL, GL_DYNAMIC_DRAW, 0, layout, 3);
 
 	GLuint indices[BATCHRENDERER2D_INDEX_COUNT];
-	GenerateIndices(indices, BATCHRENDERER2D_INDEX_COUNT, BATCHRENDERER2D_INDICES_PER_QUAD);
+	GenerateQuadIndices(indices, BATCHRENDERER2D_INDEX_COUNT);
 
 	ignisLoadElementBuffer(&_render_data.vao, indices, BATCHRENDERER2D_INDEX_COUNT, GL_STATIC_DRAW);
 
@@ -89,7 +87,7 @@ void BatchRenderer2DFlush()
 		glBindTexture(GL_TEXTURE_2D, _render_data.texture_slots[i]);
 	}
 
-	glDrawElements(GL_TRIANGLES, BATCHRENDERER2D_INDICES_PER_QUAD * (GLsizei)_render_data.quad_count, GL_UNSIGNED_INT, NULL);
+	glDrawElements(GL_TRIANGLES, RENDERER_INDICES_PER_QUAD * (GLsizei)_render_data.quad_count, GL_UNSIGNED_INT, NULL);
 
 	_render_data.vertex_index = 0;
 	_render_data.quad_count = 0;

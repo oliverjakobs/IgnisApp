@@ -1,288 +1,235 @@
-#include "Primitives2D.h"
-
 #include "Renderer.h"
 
 #include <math.h>
 
-/* ---------------------| Lines |----------------------------------------------*/
+/* ---------------------| shader |---------------------------------------------*/
+static const char* vert_src = "#version 330 core \n     \
+layout(location = 0) in vec2 a_Pos;                     \
+layout(location = 1) in vec4 a_Color;                   \
+uniform mat4 u_ViewProj;                                \
+out vec4 v_Color;                                       \
+void main()                                             \
+{                                                       \
+    gl_Position = u_ViewProj * vec4(a_Pos, 0.0, 1.0);   \
+    v_Color = a_Color;                                  \
+}";
+
+static const char* frag_src = "#version 330 core \n\
+layout(location = 0) out vec4 f_Color;      \
+in vec4 v_Color;                            \
+void main()                                 \
+{                                           \
+    f_Color = v_Color;                      \
+}";
+/* ---------------------| !shader |--------------------------------------------*/
+
 typedef struct
 {
-	IgnisVertexArray vao;
-	IgnisShader shader;
+    IgnisVertexArray vao;
+    IgnisShader shader;
+    GLint uniform_location_view_proj;
 
-	float* vertices;
-	GLsizei vertex_count;
-} Primitives2DLines;
+    float* vertices;
+    GLsizei vertex_count;
+} PrimitivesData;
 
-static int Primitives2DLinesCreate(Primitives2DLines* lines, const char* vert, const char* frag, IgnisBufferElement* layout, size_t layout_size)
+static int PrimitivesDataCreate(PrimitivesData* data, size_t size, IgnisBufferElement* layout, size_t layout_size)
 {
-	ignisGenerateVertexArray(&lines->vao);
-	ignisAddArrayBufferLayout(&lines->vao, PRIMITIVES2D_LINES_BUFFER_SIZE * sizeof(float), NULL, GL_DYNAMIC_DRAW, 0, layout, layout_size);
+    ignisGenerateVertexArray(&data->vao);
+    ignisAddArrayBufferLayout(&data->vao, size * sizeof(float), NULL, GL_DYNAMIC_DRAW, 0, layout, layout_size);
 
-	lines->vertices = ignisMalloc(PRIMITIVES2D_LINES_BUFFER_SIZE * sizeof(float));
-	lines->vertex_count = 0;
+    data->vertices = ignisMalloc(size * sizeof(float));
+    data->vertex_count = 0;
 
-	ignisCreateShadervf(&lines->shader, vert, frag);
+    ignisCreateShaderSrcvf(&data->shader, vert_src, frag_src);
+    data->uniform_location_view_proj = ignisGetUniformLocation(&data->shader, "u_ViewProj");
 
-	return 1;
+    return 1;
 }
 
-static void Primitives2DLinesDestroy(Primitives2DLines* lines)
+static void PrimitivesDataDestroy(PrimitivesData* data)
 {
-	ignisDeleteShader(&lines->shader);
-	ignisDeleteVertexArray(&lines->vao);
+    ignisDeleteShader(&data->shader);
+    ignisDeleteVertexArray(&data->vao);
 
-	ignisFree(lines->vertices);
+    ignisFree(data->vertices);
 }
 
-static void Primitives2DLinesStart(Primitives2DLines* lines, const float* mat_view_proj)
+static void PrimitivesDataFlush(PrimitivesData* data, GLenum mode)
 {
-	ignisSetUniformMat4(&lines->shader, "u_ViewProjection", mat_view_proj);
+    if (data->vertex_count == 0) return;
+
+    ignisBindVertexArray(&data->vao);
+    ignisBufferSubData(&data->vao.array_buffers[0], 0, data->vertex_count * sizeof(float), data->vertices);
+
+    ignisUseShader(&data->shader);
+
+    glDrawArrays(mode, 0, data->vertex_count / PRIMITIVES2D_VERTEX_SIZE);
+
+    data->vertex_count = 0;
 }
 
-static void Primitives2DLinesFlush(Primitives2DLines* lines)
+static void PrimitivesPushVertex(PrimitivesData* data, float x, float y, IgnisColorRGBA color)
 {
-	if (lines->vertex_count == 0) return;
+    data->vertices[data->vertex_count++] = x;
+    data->vertices[data->vertex_count++] = y;
 
-	ignisBindVertexArray(&lines->vao);
-	ignisBufferSubData(&lines->vao.array_buffers[0], 0, lines->vertex_count * sizeof(float), lines->vertices);
-
-	ignisUseShader(&lines->shader);
-
-	glDrawArrays(GL_LINES, 0, lines->vertex_count / PRIMITIVES2D_VERTEX_SIZE);
-
-	lines->vertex_count = 0;
+    data->vertices[data->vertex_count++] = color.r;
+    data->vertices[data->vertex_count++] = color.g;
+    data->vertices[data->vertex_count++] = color.b;
+    data->vertices[data->vertex_count++] = color.a;
 }
 
-static void Primitives2DLinesVertex(Primitives2DLines* lines, float x, float y, const IgnisColorRGBA color)
+static PrimitivesData _lines;
+static PrimitivesData _triangles;
+
+void Primitives2DInit()
 {
-	if (lines->vertex_count >= PRIMITIVES2D_LINES_BUFFER_SIZE) Primitives2DLinesFlush(lines);
+    IgnisBufferElement layout[] = { {GL_FLOAT, 2, GL_FALSE}, {GL_FLOAT, 4, GL_FALSE} };
+    size_t layout_size = 2;
 
-	lines->vertices[lines->vertex_count++] = x;
-	lines->vertices[lines->vertex_count++] = y;
-
-	lines->vertices[lines->vertex_count++] = color.r;
-	lines->vertices[lines->vertex_count++] = color.g;
-	lines->vertices[lines->vertex_count++] = color.b;
-	lines->vertices[lines->vertex_count++] = color.a;
-}
-/* ---------------------| !Lines |---------------------------------------------*/
-
-/* ---------------------| Triangles |----------------------------------------------*/
-typedef struct
-{
-	IgnisVertexArray vao;
-	IgnisShader shader;
-
-	float* vertices;
-	GLsizei vertex_count;
-} Primitives2DTriangles;
-
-static int Primitives2DTrianglesCreate(Primitives2DTriangles* triangles, const char* vert, const char* frag, IgnisBufferElement* layout, size_t layout_size)
-{
-	ignisGenerateVertexArray(&triangles->vao);
-	ignisAddArrayBufferLayout(&triangles->vao, PRIMITIVES2D_TRIANGLES_BUFFER_SIZE * sizeof(float), NULL, GL_DYNAMIC_DRAW, 0, layout, layout_size);
-
-	triangles->vertices = ignisMalloc(PRIMITIVES2D_TRIANGLES_BUFFER_SIZE * sizeof(float));
-	triangles->vertex_count = 0;
-
-	ignisCreateShadervf(&triangles->shader, vert, frag);
-
-	return 1;
-}
-
-static void Primitives2DTrianglesDestroy(Primitives2DTriangles* triangles)
-{
-	ignisDeleteShader(&triangles->shader);
-
-	ignisDeleteVertexArray(&triangles->vao);
-
-	ignisFree(triangles->vertices);
-}
-
-static void Primitives2DTrianglesStart(Primitives2DTriangles* triangles, const float* mat_view_proj)
-{
-	ignisSetUniformMat4(&triangles->shader, "u_ViewProjection", mat_view_proj);
-}
-
-static void Primitives2DTrianglesFlush(Primitives2DTriangles* triangles)
-{
-	if (triangles->vertex_count == 0) return;
-
-	ignisBindVertexArray(&triangles->vao);
-	ignisBufferSubData(&triangles->vao.array_buffers[0], 0, triangles->vertex_count * sizeof(float), triangles->vertices);
-
-	ignisUseShader(&triangles->shader);
-
-	glDrawArrays(GL_TRIANGLES, 0, triangles->vertex_count / PRIMITIVES2D_VERTEX_SIZE);
-
-	triangles->vertex_count = 0;
-}
-
-static void Primitives2DTrianglesVertex(Primitives2DTriangles* triangles, float x, float y, const IgnisColorRGBA color)
-{
-	if (triangles->vertex_count >= PRIMITIVES2D_TRIANGLES_BUFFER_SIZE) Primitives2DTrianglesFlush(triangles);
-
-	triangles->vertices[triangles->vertex_count++] = x;
-	triangles->vertices[triangles->vertex_count++] = y;
-
-	triangles->vertices[triangles->vertex_count++] = color.r;
-	triangles->vertices[triangles->vertex_count++] = color.g;
-	triangles->vertices[triangles->vertex_count++] = color.b;
-	triangles->vertices[triangles->vertex_count++] = color.a;
-}
-/* ---------------------| !Triangles |---------------------------------------------*/
-
-static Primitives2DLines _lines;
-static Primitives2DTriangles _triangles;
-
-void Primitives2DInit(const char* vert, const char* frag)
-{
-	IgnisBufferElement layout[] = { {GL_FLOAT, 2, GL_FALSE}, {GL_FLOAT, 4, GL_FALSE} };
-	size_t layout_size = 2;
-
-	Primitives2DLinesCreate(&_lines, vert, frag, layout, layout_size);
-	Primitives2DTrianglesCreate(&_triangles, vert, frag, layout, layout_size);
+    PrimitivesDataCreate(&_lines, PRIMITIVES2D_LINES_BUFFER_SIZE, layout, layout_size);
+    PrimitivesDataCreate(&_triangles, PRIMITIVES2D_TRIANGLES_BUFFER_SIZE, layout, layout_size);
 }
 
 void Primitives2DDestroy()
 {
-	Primitives2DLinesDestroy(&_lines);
-	Primitives2DTrianglesDestroy(&_triangles);
+    PrimitivesDataDestroy(&_lines);
+    PrimitivesDataDestroy(&_triangles);
 }
 
 void Primitives2DStart(const float* mat_view_proj)
 {
-	Primitives2DLinesStart(&_lines, mat_view_proj);
-	Primitives2DTrianglesStart(&_triangles, mat_view_proj);
+    ignisSetUniformMat4l(&_lines.shader, _lines.uniform_location_view_proj, mat_view_proj);
+    ignisSetUniformMat4l(&_triangles.shader, _triangles.uniform_location_view_proj, mat_view_proj);
 }
 
 void Primitives2DFlush()
 {
-	Primitives2DLinesFlush(&_lines);
-	Primitives2DTrianglesFlush(&_triangles);
+    PrimitivesDataFlush(&_lines, GL_LINES);
+    PrimitivesDataFlush(&_triangles, GL_TRIANGLES);
 }
 
-void Primitives2DRenderLine(float x1, float y1, float x2, float y2, IgnisColorRGBA color)
+void Primitives2DRenderLine(float x0, float y0, float x1, float y1, IgnisColorRGBA color)
 {
-	Primitives2DLinesVertex(&_lines, x1, y1, color);
-	Primitives2DLinesVertex(&_lines, x2, y2, color);
+    if (_lines.vertex_count + (2 * PRIMITIVES2D_VERTEX_SIZE) > PRIMITIVES2D_LINES_BUFFER_SIZE)
+        PrimitivesDataFlush(&_lines, GL_LINES);
+
+    PrimitivesPushVertex(&_lines, x0, y0, color);
+    PrimitivesPushVertex(&_lines, x1, y1, color);
 }
 
 void Primitives2DRenderRect(float x, float y, float w, float h, IgnisColorRGBA color)
 {
-	float vertices[] =
-	{
-		x + 0, y + 0,
-		x + w, y + 0,
-		x + w, y + h,
-		x + 0, y + h
-	};
-
-	Primitives2DRenderPolygon(vertices, 8, color);
+    Primitives2DRenderLine(x + 0, y + 0, x + w, y + 0, color);
+    Primitives2DRenderLine(x + w, y + 0, x + w, y + h, color);
+    Primitives2DRenderLine(x + w, y + h, x + 0, y + h, color);
+    Primitives2DRenderLine(x + 0, y + h, x + 0, y + 0, color);
 }
 
-void Primitives2DRenderPolygon(float* vertices, size_t count, IgnisColorRGBA color)
+void Primitives2DRenderPolygon(const float* vertices, size_t count, IgnisColorRGBA color)
 {
-	if (!vertices || count < 2) return;
+    if (!vertices || count < 2) return;
 
-	float p1x = vertices[count - 2];
-	float p1y = vertices[count - 1];
+    float p1x = vertices[count - 2];
+    float p1y = vertices[count - 1];
 
-	size_t i = 0;
-	while (i < count - 1)
-	{
-		float p2x = vertices[i++];
-		float p2y = vertices[i++];
+    size_t i = 0;
+    while (i < count - 1)
+    {
+        float p2x = vertices[i++];
+        float p2y = vertices[i++];
 
-		Primitives2DLinesVertex(&_lines, p1x, p1y, color);
-		Primitives2DLinesVertex(&_lines, p2x, p2y, color);
+        Primitives2DRenderLine(p1x, p1y, p2x, p2y, color);
 
-		p1x = p2x;
-		p1y = p2y;
-	}
+        p1x = p2x;
+        p1y = p2y;
+    }
 }
 
 void Primitives2DRenderCircle(float x, float y, float radius, IgnisColorRGBA color)
 {
-	float sinInc = sinf(PRIMITIVES2D_K_INCREMENT);
-	float cosInc = cosf(PRIMITIVES2D_K_INCREMENT);
+    float sinInc = sinf(PRIMITIVES2D_K_INCREMENT);
+    float cosInc = cosf(PRIMITIVES2D_K_INCREMENT);
 
-	float r1x = 1.0f;
-	float r1y = 0.0f;
+    float r1x = 1.0f;
+    float r1y = 0.0f;
 
-	float v1x = x + radius * r1x;
-	float v1y = y + radius * r1y;
+    float v1x = x + radius * r1x;
+    float v1y = y + radius * r1y;
 
-	for (int i = 0; i < PRIMITIVES2D_K_SEGMENTS; ++i)
-	{
-		/* Perform rotation to avoid additional trigonometry. */
-		float r2x = cosInc * r1x - sinInc * r1y;
-		float r2y = sinInc * r1x + cosInc * r1y;
+    for (int i = 0; i < PRIMITIVES2D_K_SEGMENTS; ++i)
+    {
+        /* Perform rotation to avoid additional trigonometry. */
+        float r2x = cosInc * r1x - sinInc * r1y;
+        float r2y = sinInc * r1x + cosInc * r1y;
 
-		float v2x = x + radius * r2x;
-		float v2y = y + radius * r2y;
+        float v2x = x + radius * r2x;
+        float v2y = y + radius * r2y;
 
-		Primitives2DLinesVertex(&_lines, v1x, v1y, color);
-		Primitives2DLinesVertex(&_lines, v2x, v2y, color);
+        Primitives2DRenderLine(v1x, v1y, v2x, v2y, color);
 
-		r1x = r2x;
-		r1y = r2y;
-		v1x = v2x;
-		v1y = v2y;
-	}
+        r1x = r2x;
+        r1y = r2y;
+        v1x = v2x;
+        v1y = v2y;
+    }
+}
+
+void Primitives2DFillTriangle(float x0, float y0, float x1, float y1, float x2, float y2, IgnisColorRGBA color)
+{
+    if (_triangles.vertex_count + (3 * PRIMITIVES2D_VERTEX_SIZE) > PRIMITIVES2D_TRIANGLES_BUFFER_SIZE)
+        PrimitivesDataFlush(&_triangles, GL_TRIANGLES);
+
+    PrimitivesPushVertex(&_triangles, x0, y0, color);
+    PrimitivesPushVertex(&_triangles, x1, y1, color);
+    PrimitivesPushVertex(&_triangles, x2, y2, color);
 }
 
 void Primitives2DFillRect(float x, float y, float w, float h, IgnisColorRGBA color)
 {
-	Primitives2DTrianglesVertex(&_triangles, x + 0, y + 0, color);
-	Primitives2DTrianglesVertex(&_triangles, x + w, y + 0, color);
-	Primitives2DTrianglesVertex(&_triangles, x + w, y + h, color);
-
-	Primitives2DTrianglesVertex(&_triangles, x + w, y + h, color);
-	Primitives2DTrianglesVertex(&_triangles, x + 0, y + h, color);
-	Primitives2DTrianglesVertex(&_triangles, x + 0, y + 0, color);
+    Primitives2DFillTriangle(x + 0, y + 0, x + w, y + 0, x + w, y + h, color);
+    Primitives2DFillTriangle(x + w, y + h, x + 0, y + h, x + 0, y + 0, color);
 }
 
-void Primitives2DFillPolygon(float* vertices, size_t count, IgnisColorRGBA color)
+void Primitives2DFillPolygon(const float* vertices, size_t count, IgnisColorRGBA color)
 {
-	if (!vertices || count < 2) return;
+    if (!vertices || count < 2) return;
 
-	for (size_t i = 2; i < count - 3; ++i)
-	{
-		Primitives2DTrianglesVertex(&_triangles, vertices[0], vertices[1], color);
-		Primitives2DTrianglesVertex(&_triangles, vertices[i + 0], vertices[i + 1], color);
-		Primitives2DTrianglesVertex(&_triangles, vertices[i + 2], vertices[i + 3], color);
-	}
+    float x0 = vertices[0], y0 = vertices[1];
+    for (size_t i = 2; i < count - 3; ++i)
+    {
+        float x1 = vertices[i + 0], y1 = vertices[i + 1];
+        float x2 = vertices[i + 2], y2 = vertices[i + 3];
+        Primitives2DFillTriangle(x0, y0, x1, y1, x2, y2, color);
+    }
 }
 
 void Primitives2DFillCircle(float x, float y, float radius, IgnisColorRGBA color)
 {
-	float sinInc = sinf(PRIMITIVES2D_K_INCREMENT);
-	float cosInc = cosf(PRIMITIVES2D_K_INCREMENT);
+    float sinInc = sinf(PRIMITIVES2D_K_INCREMENT);
+    float cosInc = cosf(PRIMITIVES2D_K_INCREMENT);
 
-	float r1x = 1.0f;
-	float r1y = 0.0f;
+    float r1x = 1.0f;
+    float r1y = 0.0f;
 
-	float v1x = x + radius * r1x;
-	float v1y = y + radius * r1y;
+    float v1x = x + radius * r1x;
+    float v1y = y + radius * r1y;
 
-	for (int i = 0; i < PRIMITIVES2D_K_SEGMENTS; ++i)
-	{
-		/* Perform rotation to avoid additional trigonometry. */
-		float r2x = cosInc * r1x - sinInc * r1y;
-		float r2y = sinInc * r1x + cosInc * r1y;
+    for (int i = 0; i < PRIMITIVES2D_K_SEGMENTS; ++i)
+    {
+        /* Perform rotation to avoid additional trigonometry. */
+        float r2x = cosInc * r1x - sinInc * r1y;
+        float r2y = sinInc * r1x + cosInc * r1y;
 
-		float v2x = x + radius * r2x;
-		float v2y = y + radius * r2y;
+        float v2x = x + radius * r2x;
+        float v2y = y + radius * r2y;
 
-		Primitives2DTrianglesVertex(&_triangles, x, y, color);
-		Primitives2DTrianglesVertex(&_triangles, v1x, v1y, color);
-		Primitives2DTrianglesVertex(&_triangles, v2x, v2y, color);
+        Primitives2DFillTriangle(x, y, v1x, v1y, v2x, v2y, color);
 
-		r1x = r2x;
-		r1y = r2y;
-		v1x = v2x;
-		v1y = v2y;
-	}
+        r1x = r2x;
+        r1y = r2y;
+        v1x = v2x;
+        v1y = v2y;
+    }
 }

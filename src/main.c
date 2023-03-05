@@ -50,10 +50,9 @@ int OnLoad(MinimalApp* app, uint32_t w, uint32_t h)
     ignisSetClearColor(IGNIS_DARK_GREY);
 
     /* renderer */
-    Renderer2DInit("res/shaders/renderer2D.vert", "res/shaders/renderer2D.frag");
-    Primitives2DInit("res/shaders/primitives.vert", "res/shaders/primitives.frag");
-    BatchRenderer2DInit("res/shaders/batchrenderer.vert", "res/shaders/batchrenderer.frag");
-    FontRendererInit("res/shaders/font.vert", "res/shaders/font.frag");
+    Renderer2DInit();
+    Primitives2DInit();
+    FontRendererInit();
 
     SetViewport((float)w, (float)h);
 
@@ -76,7 +75,6 @@ void OnDestroy(MinimalApp* app)
 
     FontRendererDestroy();
     Primitives2DDestroy();
-    BatchRenderer2DDestroy();
     Renderer2DDestroy();
 }
 
