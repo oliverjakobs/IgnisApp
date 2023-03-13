@@ -1,7 +1,8 @@
-#include <Ignis/Ignis.h>
+#include <ignis/ignis.h>
+#include <ignis/renderer/renderer.h>
 
-#include "Minimal/Application.h"
-#include "Graphics/Renderer.h"
+#include <minimal/application.h>
+
 #include "math/math.h"
 
 static void IgnisErrorCallback(ignisErrorLevel level, const char* desc)
@@ -14,12 +15,8 @@ static void IgnisErrorCallback(ignisErrorLevel level, const char* desc)
     }
 }
 
-int show_info = 0;
-
 float width, height;
 mat4 screen_projection;
-
-IgnisFont font;
 
 static void SetViewport(float w, float h)
 {
@@ -28,6 +25,7 @@ static void SetViewport(float w, float h)
     screen_projection = mat4_ortho(0.0f, w, h, 0.0f, -1.0f, 1.0f);
 }
 
+IgnisFont font;
 
 int OnLoad(MinimalApp* app, uint32_t w, uint32_t h)
 {
@@ -35,9 +33,11 @@ int OnLoad(MinimalApp* app, uint32_t w, uint32_t h)
     // ignisSetAllocator(FrostMemoryGetAllocator(), tb_mem_malloc, tb_mem_realloc, tb_mem_free);
     ignisSetErrorCallback(IgnisErrorCallback);
 
-    int debug = 0;
 #ifdef _DEBUG
-    debug = 1;
+    int debug = 1;
+    minimalEnableDebug(app, debug);
+#else
+    int debug = 0;
 #endif
 
     if (!ignisInit(debug))
@@ -50,21 +50,22 @@ int OnLoad(MinimalApp* app, uint32_t w, uint32_t h)
     ignisSetClearColor(IGNIS_DARK_GREY);
 
     /* renderer */
-    Renderer2DInit();
-    Primitives2DInit();
-    FontRendererInit();
+    ignisRenderer2DInit();
+    ignisPrimitives2DInit();
+    ignisFontRendererInit();
+    ignisBatch2DInit("res/shaders/batch.vert", "res/shaders/batch.frag");
 
     SetViewport((float)w, (float)h);
 
     ignisCreateFont(&font, "res/fonts/ProggyTiny.ttf", 24.0);
-    FontRendererBindFontColor(&font, IGNIS_WHITE);
+    ignisFontRendererBindFontColor(&font, IGNIS_WHITE);
 
-    MINIMAL_INFO("[GLFW] Version: %s", glfwGetVersionString());
-    MINIMAL_INFO("[OpenGL] Version: %s", ignisGetGLVersion());
-    MINIMAL_INFO("[OpenGL] Vendor: %s", ignisGetGLVendor());
-    MINIMAL_INFO("[OpenGL] Renderer: %s", ignisGetGLRenderer());
+    MINIMAL_INFO("[GLFW] Version:        %s", glfwGetVersionString());
+    MINIMAL_INFO("[OpenGL] Version:      %s", ignisGetGLVersion());
+    MINIMAL_INFO("[OpenGL] Vendor:       %s", ignisGetGLVendor());
+    MINIMAL_INFO("[OpenGL] Renderer:     %s", ignisGetGLRenderer());
     MINIMAL_INFO("[OpenGL] GLSL Version: %s", ignisGetGLSLVersion());
-    MINIMAL_INFO("[Ignis] Version: %s", ignisGetVersionString());
+    MINIMAL_INFO("[Ignis] Version:       %s", ignisGetVersionString());
 
     return MINIMAL_OK;
 }
@@ -73,26 +74,26 @@ void OnDestroy(MinimalApp* app)
 {
     ignisDeleteFont(&font);
 
-    FontRendererDestroy();
-    Primitives2DDestroy();
-    Renderer2DDestroy();
+    ignisBatch2DDestroy();
+    ignisFontRendererDestroy();
+    ignisPrimitives2DDestroy();
+    ignisRenderer2DDestroy();
 }
 
 int OnEvent(MinimalApp* app, const MinimalEvent* e)
 {
     float w, h;
-    if (MinimalEventWindowSize(e, &w, &h))
+    if (minimalEventWindowSize(e, &w, &h))
     {
         SetViewport(w, h);
         glViewport(0, 0, (GLsizei)w, (GLsizei)h);
     }
 
-    switch (MinimalEventKeyPressed(e))
+    switch (minimalEventKeyPressed(e))
     {
-    case GLFW_KEY_ESCAPE:    MinimalClose(app); break;
-    case GLFW_KEY_F6:        MinimalToggleVsync(app); break;
-    case GLFW_KEY_F7:        MinimalToggleDebug(app); break;
-    case GLFW_KEY_F9:        show_info = !show_info; break;
+    case GLFW_KEY_ESCAPE:    minimalClose(app); break;
+    case GLFW_KEY_F6:        minimalToggleVsync(app); break;
+    case GLFW_KEY_F7:        minimalToggleDebug(app); break;
     }
 
     return MINIMAL_OK;
@@ -104,23 +105,21 @@ void OnUpdate(MinimalApp* app, float deltatime)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // render debug info
-    FontRendererStart(screen_projection.v);
+    ignisFontRendererSetProjection(screen_projection.v);
 
     /* fps */
-    FontRendererRenderTextFormat(8.0f, 8.0f, "FPS: %d", MinimalGetFps(app));
+    ignisFontRendererRenderTextFormat(8.0f, 8.0f, "FPS: %d", minimalGetFps(app));
 
-    if (show_info)
+    if (app->debug)
     {
         /* Settings */
-        FontRendererTextFieldBegin(width - 220.0f, 8.0f, 8.0f);
+        ignisFontRendererTextFieldBegin(width - 220.0f, 8.0f, 8.0f);
 
-        FontRendererTextFieldLine("F6: Toggle Vsync");
-        FontRendererTextFieldLine("F7: Toggle debug mode");
-
-        FontRendererTextFieldLine("F9: Toggle overlay");
+        ignisFontRendererTextFieldLine("F6: Toggle Vsync");
+        ignisFontRendererTextFieldLine("F7: Toggle debug mode");
     }
 
-    FontRendererFlush();
+    ignisFontRendererFlush();
 }
 
 int main()
@@ -132,10 +131,10 @@ int main()
         .on_update = OnUpdate
     };
 
-    if (MinimalLoad(&app, "IgnisApp", 1024, 800, "4.4"))
-        MinimalRun(&app);
+    if (minimalLoad(&app, "IgnisApp", 1024, 800, "4.4"))
+        minimalRun(&app);
 
-    MinimalDestroy(&app);
+    minimalDestroy(&app);
 
     return 0;
 }

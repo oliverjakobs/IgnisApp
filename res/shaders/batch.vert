@@ -11,7 +11,7 @@ out float v_TexIndex;
 
 void main()
 {
-	gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
-	v_TexCoords = a_TexCoords;
-	v_TexIndex = a_TexIndex;
+    gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
+    v_TexCoords = a_TexCoords;
+    v_TexIndex = a_TexIndex;
 }

@@ -4,3 +4,6 @@
 [submodule "packages/glfw"]
 	path = packages/glfw
 	url = https://github.com/glfw/glfw
+[submodule "packages/Minimal"]
+	path = packages/Minimal
+	url = https://github.com/oliverjakobs/Minimal
