@@ -4,13 +4,36 @@
 
 #include "math/math.h"
 
-static void ignisErrorCallback(ignisErrorLevel level, const char* desc);
+static void ignisErrorCallback(ignisErrorLevel level, const char *desc);
 static void printVersionInfo();
 
 IgnisFont font;
 
 float width, height;
 mat4 screen_projection;
+
+const float vertices[] = {
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f
+};
+
+const GLuint indices[] = {
+    0, 1, 2, 2, 3, 0,
+    4, 5, 6, 6, 7, 4,
+    7, 3, 0, 0, 4, 7,
+    6, 2, 1, 1, 5, 6,
+    0, 1, 5, 5, 4, 0,
+    3, 2, 6, 6, 7, 3
+};
+
+IgnisShader shader;
+IgnisVertexArray vao;
 
 static void setViewport(float w, float h)
 {
@@ -19,7 +42,7 @@ static void setViewport(float w, float h)
     screen_projection = mat4_ortho(0.0f, w, h, 0.0f, -1.0f, 1.0f);
 }
 
-int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
+int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 {
     /* ingis initialization */
     // ignisSetAllocator(FrostMemoryGetAllocator(), tb_mem_malloc, tb_mem_realloc, tb_mem_free);
@@ -41,33 +64,44 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
     ignisEnableBlend(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     ignisSetClearColor(IGNIS_DARK_GREY);
 
-    /* renderer */
-    ignisRenderer2DInit();
-    ignisPrimitives2DInit();
+    glEnable(GL_DEPTH_TEST);
+
+    /* font renderer */
+    ignisCreateFont(&font, "res/fonts/ProggyTiny.ttf", 24.0);
     ignisFontRendererInit();
-    ignisBatch2DInit("res/shaders/batch.vert", "res/shaders/batch.frag");
+    ignisFontRendererBindFontColor(&font, IGNIS_WHITE);
 
     setViewport((float)w, (float)h);
 
-    ignisCreateFont(&font, "res/fonts/ProggyTiny.ttf", 24.0);
-    ignisFontRendererBindFontColor(&font, IGNIS_WHITE);
+    /* cube */
+    ignisGenerateVertexArray(&vao);
+
+    IgnisBufferElement layout[] = {
+        { GL_FLOAT, 3, GL_FALSE }
+    };
+    ignisAddArrayBufferLayout(&vao, sizeof(vertices), vertices, GL_STATIC_DRAW, 0, layout, 1);
+    ignisLoadElementBuffer(&vao, indices, 36, GL_STATIC_DRAW);
+
+
+    /* shader */
+    ignisCreateShadervf(&shader, "res/shaders/shader.vert", "res/shaders/shader.frag");
 
     printVersionInfo();
 
     return MINIMAL_OK;
 }
 
-void onDestroy(MinimalApp* app)
+void onDestroy(MinimalApp *app)
 {
+    ignisDeleteVertexArray(&vao);
+    ignisDeleteShader(&shader);
+    
     ignisDeleteFont(&font);
 
-    ignisBatch2DDestroy();
     ignisFontRendererDestroy();
-    ignisPrimitives2DDestroy();
-    ignisRenderer2DDestroy();
 }
 
-int onEvent(MinimalApp* app, const MinimalEvent* e)
+int onEvent(MinimalApp *app, const MinimalEvent* e)
 {
     float w, h;
     if (minimalEventWindowSize(e, &w, &h))
@@ -86,13 +120,31 @@ int onEvent(MinimalApp* app, const MinimalEvent* e)
     return MINIMAL_OK;
 }
 
-void onUpdate(MinimalApp* app, float deltatime)
+void onUpdate(MinimalApp *app, float deltatime)
 {
     // clear screen
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    vec3 camera_pos = (vec3){ 0.0f, 0.0f, 3.0f };
+
+    // create transformations
+    mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
+    mat4 view = mat4_translation(vec3_negate(camera_pos));
+    mat4 proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+
+    ignisSetUniform3f(&shader, "lightPos", &camera_pos.x);
+
+    ignisSetUniformMat4(&shader, "proj", proj.v[0]);
+    ignisSetUniformMat4(&shader, "view", view.v[0]);
+    ignisSetUniformMat4(&shader, "model", model.v[0]);
+
+    ignisUseShader(&shader);
+
+    ignisBindVertexArray(&vao);
+    glDrawElements(GL_TRIANGLES, vao.element_count, GL_UNSIGNED_INT, NULL);
 
     // render debug info
-    ignisFontRendererSetProjection(screen_projection.v);
+    ignisFontRendererSetProjection(screen_projection.v[0]);
 
     /* fps */
     ignisFontRendererRenderTextFormat(8.0f, 8.0f, "FPS: %d", minimalGetFps(app));
@@ -126,7 +178,7 @@ int main()
     return 0;
 }
 
-void ignisErrorCallback(ignisErrorLevel level, const char* desc)
+void ignisErrorCallback(ignisErrorLevel level, const char *desc)
 {
     switch (level)
     {
