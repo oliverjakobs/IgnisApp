@@ -12,33 +12,63 @@ IgnisFont font;
 float width, height;
 mat4 screen_projection;
 
-const float vertices[] = {
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f
-};
 
-const GLuint indices[] = {
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4,
-    7, 3, 0, 0, 4, 7,
-    6, 2, 1, 1, 5, 6,
-    0, 1, 5, 5, 4, 0,
-    3, 2, 6, 6, 7, 3
+float vertices[] = {
+    // neg x, red
+    -0.5f,  0.5f,  0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
+    // pos x, red
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
+    // neg y, green
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
+    // pos y, green
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
+    // neg z, blue
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
+    // pos z, blue
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
 };
 
 IgnisShader shader;
 IgnisVertexArray vao;
 
+int view_mode = 0;
+int poly_mode = 0;
+
 static void setViewport(float w, float h)
 {
     width = w;
     height = h;
+    glViewport(0, 0, (GLsizei)w, (GLsizei)h);
     screen_projection = mat4_ortho(0.0f, w, h, 0.0f, -1.0f, 1.0f);
 }
 
@@ -77,10 +107,10 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
     ignisGenerateVertexArray(&vao);
 
     IgnisBufferElement layout[] = {
-        { GL_FLOAT, 3, GL_FALSE }
+        { GL_FLOAT, 3, GL_FALSE },
+        { GL_FLOAT, 4, GL_FALSE }
     };
-    ignisAddArrayBufferLayout(&vao, sizeof(vertices), vertices, GL_STATIC_DRAW, 0, layout, 1);
-    ignisLoadElementBuffer(&vao, indices, 36, GL_STATIC_DRAW);
+    ignisAddArrayBufferLayout(&vao, sizeof(vertices), vertices, GL_STATIC_DRAW, 0, layout, 2);
 
 
     /* shader */
@@ -115,10 +145,19 @@ int onEvent(MinimalApp *app, const MinimalEvent* e)
     case GLFW_KEY_ESCAPE:    minimalClose(app); break;
     case GLFW_KEY_F6:        minimalToggleVsync(app); break;
     case GLFW_KEY_F7:        minimalToggleDebug(app); break;
+    case GLFW_KEY_F9:        view_mode = !view_mode; break;
+    case GLFW_KEY_F10:       poly_mode = !poly_mode; break;
     }
 
     return MINIMAL_OK;
 }
+
+const vec3 tiles[] = {
+    { 0.0f, 0.0f, 0.0f, },
+    { 1.0f, 0.0f, 0.0f, },
+    { 2.0f, 0.0f, 0.0f, },
+    { 3.0f, 0.0f, 0.0f, }
+};
 
 void onUpdate(MinimalApp *app, float deltatime)
 {
@@ -127,21 +166,43 @@ void onUpdate(MinimalApp *app, float deltatime)
 
     vec3 camera_pos = (vec3){ 0.0f, 0.0f, 3.0f };
 
-    // create transformations
-    mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
-    mat4 view = mat4_translation(vec3_negate(camera_pos));
-    mat4 proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+    mat4 model = mat4_identity();
+    mat4 view = mat4_identity();
+    mat4 proj = mat4_identity();
 
-    ignisSetUniform3f(&shader, "lightPos", &camera_pos.x);
+    // create transformations
+    if (view_mode)
+    {
+        // model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
+        view = mat4_translation(vec3_negate(camera_pos));
+        proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+    }
+    else
+    {
+        view = mat4_rotate_x(view, degToRad(-30.0f));
+        view = mat4_rotate_z(view, degToRad(45.0f));
+
+        float w = width / 100.0f;
+        float h = height / 100.0f;
+        proj = mat4_ortho(-w / 2, w / 2, -h / 2, h / 2, -1.0f, 100.0f);
+    }
 
     ignisSetUniformMat4(&shader, "proj", proj.v[0]);
     ignisSetUniformMat4(&shader, "view", view.v[0]);
-    ignisSetUniformMat4(&shader, "model", model.v[0]);
 
     ignisUseShader(&shader);
-
     ignisBindVertexArray(&vao);
-    glDrawElements(GL_TRIANGLES, vao.element_count, GL_UNSIGNED_INT, NULL);
+
+    glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_FILL : GL_LINE);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        model = mat4_translation(tiles[i]);
+        ignisSetUniformMat4(&shader, "model", model.v[0]);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // render debug info
     ignisFontRendererSetProjection(screen_projection.v[0]);
@@ -154,8 +215,10 @@ void onUpdate(MinimalApp *app, float deltatime)
         /* Settings */
         ignisFontRendererTextFieldBegin(width - 220.0f, 8.0f, 8.0f);
 
-        ignisFontRendererTextFieldLine("F6: Toggle Vsync");
-        ignisFontRendererTextFieldLine("F7: Toggle debug mode");
+        ignisFontRendererTextFieldLine("F6:  Toggle Vsync");
+        ignisFontRendererTextFieldLine("F7:  Toggle debug mode");
+        ignisFontRendererTextFieldLine("F9:  Toggle view mode");
+        ignisFontRendererTextFieldLine("F10: Toggle polygon mode");
     }
 
     ignisFontRendererFlush();

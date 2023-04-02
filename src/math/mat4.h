@@ -16,5 +16,10 @@ mat4 mat4_ortho(float left, float right, float bottom, float top, float near, fl
 mat4 mat4_rotation(vec3 axis, float angle); /* angle in radians */
 mat4 mat4_translation(vec3 v);
 
+mat4 mat4_rotate_x(mat4 mat, float f);
+mat4 mat4_rotate_y(mat4 mat, float f);
+mat4 mat4_rotate_z(mat4 mat, float f);
+
+mat4 mat4_multiply(mat4 l, mat4 r);
 
 #endif /* !MAT4_H */

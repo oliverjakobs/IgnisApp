@@ -84,3 +84,64 @@ mat4 mat4_translation(vec3 v)
     result.v[3][2] = v.z;
     return result;
 }
+
+mat4 mat4_rotate_x(mat4 mat, float f)
+{
+    float c = cosf(f);
+    float s = sinf(f);
+
+    mat4 result = mat4_identity();
+    result.v[1][1] = c;
+    result.v[1][2] = s;
+    result.v[2][1] = -s;
+    result.v[2][2] = c;
+    return mat4_multiply(mat, result);
+}
+
+mat4 mat4_rotate_y(mat4 mat, float f)
+{
+    float c = cosf(f);
+    float s = sinf(f);
+
+    mat4 result = mat4_identity();
+    result.v[0][0] = c;
+    result.v[0][2] = -s;
+    result.v[2][0] = s;
+    result.v[2][2] = c;
+    return mat4_multiply(mat, result);
+}
+
+mat4 mat4_rotate_z(mat4 mat, float f)
+{
+    float c = cosf(f);
+    float s = sinf(f);
+
+    mat4 result = mat4_identity();
+    result.v[0][0] = c;
+    result.v[0][1] = s;
+    result.v[1][0] = -s;
+    result.v[1][1] = c;
+    return mat4_multiply(mat, result);
+}
+
+mat4 mat4_multiply(mat4 l, mat4 r)
+{
+    mat4 result;
+    result.v[0][0] = l.v[0][0] * r.v[0][0] + l.v[1][0] * r.v[0][1] + l.v[2][0] * r.v[0][2] + l.v[3][0] * r.v[0][3];
+    result.v[0][1] = l.v[0][1] * r.v[0][0] + l.v[1][1] * r.v[0][1] + l.v[2][1] * r.v[0][2] + l.v[3][1] * r.v[0][3];
+    result.v[0][2] = l.v[0][2] * r.v[0][0] + l.v[1][2] * r.v[0][1] + l.v[2][2] * r.v[0][2] + l.v[3][2] * r.v[0][3];
+    result.v[0][3] = l.v[0][3] * r.v[0][0] + l.v[1][3] * r.v[0][1] + l.v[2][3] * r.v[0][2] + l.v[3][3] * r.v[0][3];
+    result.v[1][0] = l.v[0][0] * r.v[1][0] + l.v[1][0] * r.v[1][1] + l.v[2][0] * r.v[1][2] + l.v[3][0] * r.v[1][3];
+    result.v[1][1] = l.v[0][1] * r.v[1][0] + l.v[1][1] * r.v[1][1] + l.v[2][1] * r.v[1][2] + l.v[3][1] * r.v[1][3];
+    result.v[1][2] = l.v[0][2] * r.v[1][0] + l.v[1][2] * r.v[1][1] + l.v[2][2] * r.v[1][2] + l.v[3][2] * r.v[1][3];
+    result.v[1][3] = l.v[0][3] * r.v[1][0] + l.v[1][3] * r.v[1][1] + l.v[2][3] * r.v[1][2] + l.v[3][3] * r.v[1][3];
+    result.v[2][0] = l.v[0][0] * r.v[2][0] + l.v[1][0] * r.v[2][1] + l.v[2][0] * r.v[2][2] + l.v[3][0] * r.v[2][3];
+    result.v[2][1] = l.v[0][1] * r.v[2][0] + l.v[1][1] * r.v[2][1] + l.v[2][1] * r.v[2][2] + l.v[3][1] * r.v[2][3];
+    result.v[2][2] = l.v[0][2] * r.v[2][0] + l.v[1][2] * r.v[2][1] + l.v[2][2] * r.v[2][2] + l.v[3][2] * r.v[2][3];
+    result.v[2][3] = l.v[0][3] * r.v[2][0] + l.v[1][3] * r.v[2][1] + l.v[2][3] * r.v[2][2] + l.v[3][3] * r.v[2][3];
+    result.v[3][0] = l.v[0][0] * r.v[3][0] + l.v[1][0] * r.v[3][1] + l.v[2][0] * r.v[3][2] + l.v[3][0] * r.v[3][3];
+    result.v[3][1] = l.v[0][1] * r.v[3][0] + l.v[1][1] * r.v[3][1] + l.v[2][1] * r.v[3][2] + l.v[3][1] * r.v[3][3];
+    result.v[3][2] = l.v[0][2] * r.v[3][0] + l.v[1][2] * r.v[3][1] + l.v[2][2] * r.v[3][2] + l.v[3][2] * r.v[3][3];
+    result.v[3][3] = l.v[0][3] * r.v[3][0] + l.v[1][3] * r.v[3][1] + l.v[2][3] * r.v[3][2] + l.v[3][3] * r.v[3][3];
+    return result;
+}
