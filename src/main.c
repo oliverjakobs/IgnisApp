@@ -64,6 +64,9 @@ IgnisVertexArray vao;
 int view_mode = 0;
 int poly_mode = 0;
 
+vec3 camera_pos = { 0.0f, 0.0f, 10.0f };
+float cameraspeed = 1.0f;
+
 static void setViewport(float w, float h)
 {
     width = w;
@@ -164,27 +167,34 @@ void onUpdate(MinimalApp *app, float deltatime)
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    vec3 camera_pos = (vec3){ 0.0f, 0.0f, 3.0f };
+
+    if (minimalKeyDown(GLFW_KEY_LEFT))  camera_pos.x -= cameraspeed * deltatime;
+    if (minimalKeyDown(GLFW_KEY_RIGHT)) camera_pos.x += cameraspeed * deltatime;
+    if (minimalKeyDown(GLFW_KEY_DOWN))  camera_pos.y += cameraspeed * deltatime;
+    if (minimalKeyDown(GLFW_KEY_UP))    camera_pos.y -= cameraspeed * deltatime;
 
     mat4 model = mat4_identity();
     mat4 view = mat4_identity();
     mat4 proj = mat4_identity();
 
     // create transformations
-    if (view_mode)
+    if (!view_mode)
     {
-        // model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
+        model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
         view = mat4_translation(vec3_negate(camera_pos));
         proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
     }
     else
     {
+        //camera_pos.z = 0.0f;
+        view = mat4_translation(vec3_negate(camera_pos));
         view = mat4_rotate_x(view, degToRad(-30.0f));
-        view = mat4_rotate_z(view, degToRad(45.0f));
+        view = mat4_rotate_z(view, degToRad(-45.0f));
 
         float w = width / 100.0f;
         float h = height / 100.0f;
-        proj = mat4_ortho(-w / 2, w / 2, -h / 2, h / 2, -1.0f, 100.0f);
+        proj = mat4_ortho(-w / 2, w / 2, -h / 2, h / 2, -1.0f, h + camera_pos.z);
+        //proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
     }
 
     ignisSetUniformMat4(&shader, "proj", proj.v[0]);
@@ -193,14 +203,18 @@ void onUpdate(MinimalApp *app, float deltatime)
     ignisUseShader(&shader);
     ignisBindVertexArray(&vao);
 
-    glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_FILL : GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_LINE : GL_FILL);
 
+    /*
     for (int i = 0; i < 4; ++i)
     {
         model = mat4_translation(tiles[i]);
         ignisSetUniformMat4(&shader, "model", model.v[0]);
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
+    */
+    ignisSetUniformMat4(&shader, "model", model.v[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
