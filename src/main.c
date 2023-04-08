@@ -4,6 +4,10 @@
 
 #include "math/math.h"
 
+#define CGLTF_IMPLEMENTATION
+#include "cgltf.h"
+
+
 static void ignisErrorCallback(ignisErrorLevel level, const char *desc);
 static void printVersionInfo();
 
@@ -11,52 +15,6 @@ IgnisFont font;
 
 float width, height;
 mat4 screen_projection;
-
-
-float vertices[] = {
-    // neg x, red
-    -0.5f,  0.5f,  0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.1f, 0.0f, 0.0f, 1.0f,
-    // pos x, red
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
-    // neg y, green
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.1f, 0.0f, 1.0f,
-    // pos y, green
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 1.0f,
-    // neg z, blue
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.1f, 1.0f,
-    // pos z, blue
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,
-};
 
 IgnisShader shader;
 IgnisVertexArray vao;
@@ -66,6 +24,205 @@ int poly_mode = 0;
 
 vec3 camera_pos = { 0.0f, 0.0f, 10.0f };
 float cameraspeed = 1.0f;
+
+typedef struct
+{
+    IgnisVertexArray vao;
+
+    size_t vertexCount;        // Number of vertices stored in arrays
+    size_t elementCount;      // Number of triangles stored (indexed or not)
+
+    // Vertex attributes data
+    float* positions;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float* texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float* texcoords2;      // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
+    float* normals;         // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float* tangents;        // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+    unsigned char* colors;      // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    GLuint* indices;    // Vertex indices (in case vertex data comes indexed)
+} Mesh;
+
+int uploadMesh(Mesh* mesh)
+{
+    ignisGenerateVertexArray(&mesh->vao);
+    
+    GLsizeiptr vertex_size = ignisGetOpenGLTypeSize(GL_FLOAT) * 3;
+    ignisAddArrayBuffer(&mesh->vao, mesh->vertexCount * vertex_size, mesh->positions, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+
+    if (mesh->indices != NULL)
+    {
+        ignisLoadElementBuffer(&mesh->vao, mesh->indices, mesh->elementCount, GL_STATIC_DRAW);
+    }
+    return 0;
+}
+
+typedef struct 
+{
+    Mesh* meshes;
+    size_t mesh_count;
+} Model;
+
+float* loadAttributef(cgltf_accessor *accessor, uint8_t components)
+{
+    if (accessor->count <= 0 || components <= 0) return NULL;
+
+    float* data = (float*)malloc(accessor->count * components * sizeof(float));
+
+    if (!data) return NULL;
+
+    size_t offset = accessor->buffer_view->offset + accessor->offset;
+    int8_t* buffer = accessor->buffer_view->buffer->data;
+    for (size_t i = 0; i < accessor->count; ++i)
+    {
+        for (uint8_t c = 0; c < components; ++c)
+        {
+            data[components * i + c] = ((float*)(buffer + offset))[c];
+        }
+        offset += accessor->stride;
+    }
+    return data;
+}
+
+int loadModel(Model* model, const char* filename)
+{
+    size_t size = 0;
+    char* filedata = ignisReadFile(filename, &size);
+
+    if (!filedata) return IGNIS_FAILURE;
+
+    cgltf_options options = { 0 };
+    cgltf_data* data = NULL;
+    cgltf_result result = cgltf_parse(&options, filedata, size, &data);
+    if (result != cgltf_result_success)
+    {
+        MINIMAL_ERROR("MODEL: [%s] Failed to load glTF data", filename);
+        return IGNIS_FAILURE;
+    }
+
+    if (data->file_type == cgltf_file_type_glb)       MINIMAL_TRACE("MODEL: [%s] Model basic data (glb) loaded successfully", filename);
+    else if (data->file_type == cgltf_file_type_gltf) MINIMAL_TRACE("MODEL: [%s] Model basic data (glTF) loaded successfully", filename);
+    else MINIMAL_TRACE("MODEL: [%s] Model format not recognized", filename);
+
+    MINIMAL_TRACE("    > Meshes count: %i", data->meshes_count);
+    MINIMAL_TRACE("    > Materials count: %i (+1 default)", data->materials_count);
+    MINIMAL_TRACE("    > Buffers count: %i", data->buffers_count);
+    MINIMAL_TRACE("    > Images count: %i", data->images_count);
+    MINIMAL_TRACE("    > Textures count: %i", data->textures_count);
+
+    result = cgltf_load_buffers(&options, data, filename);
+    if (result != cgltf_result_success)
+    {
+        MINIMAL_ERROR("MODEL: [%s] Failed to load mesh/material buffers", filename);
+        return IGNIS_FAILURE;
+    }
+
+    size_t primitivesCount = 0;
+    for (size_t i = 0; i < data->meshes_count; i++) primitivesCount += data->meshes[i].primitives_count;
+
+    // Load our model data: meshes and materials
+    model->mesh_count = primitivesCount;
+    model->meshes = calloc(model->mesh_count, sizeof(Mesh));
+
+    // Load meshes data
+    //----------------------------------------------------------------------------------------------------
+    for (unsigned int i = 0, meshIndex = 0; i < data->meshes_count; i++)
+    {
+        // NOTE: meshIndex accumulates primitives
+        for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
+        {
+            // NOTE: We only support primitives defined by triangles
+            // Other alternatives: points, lines, line_strip, triangle_strip
+            if (data->meshes[i].primitives[p].type != cgltf_primitive_type_triangles) continue;
+
+            // NOTE: Attributes data could be provided in several data formats (8, 8u, 16u, 32...),
+            // Only some formats for each attribute type are supported, read info at the top of this function!
+            for (unsigned int j = 0; j < data->meshes[i].primitives[p].attributes_count; j++)
+            {
+                cgltf_accessor* accessor = data->meshes[i].primitives[p].attributes[j].data;
+                switch (data->meshes[i].primitives[p].attributes[j].type)
+                {
+                case cgltf_attribute_type_position:
+                    if (accessor->type == cgltf_type_vec3 && accessor->component_type == cgltf_component_type_r_32f)
+                    {
+                        model->meshes[meshIndex].vertexCount = accessor->count;
+                        model->meshes[meshIndex].positions = loadAttributef(accessor, 3);
+                    }
+                    else MINIMAL_WARN("MODEL: [%s] Vertices attribute data format not supported, use vec3 float", filename);
+                    break;
+                case cgltf_attribute_type_normal:
+                    if (accessor->type == cgltf_type_vec3 && accessor->component_type == cgltf_component_type_r_32f)
+                    {
+                        model->meshes[meshIndex].normals = loadAttributef(accessor, 3);
+                    }
+                    else MINIMAL_WARN("MODEL: [%s] Normal attribute data format not supported, use vec3 float", filename);
+                    break;
+                case cgltf_attribute_type_texcoord:
+                    if (accessor->type == cgltf_type_vec2 && accessor->component_type == cgltf_component_type_r_32f)
+                    {
+                        model->meshes[meshIndex].texcoords = loadAttributef(accessor, 2);
+                    }
+                    else MINIMAL_WARN("MODEL: [%s] Texcoords attribute data format not supported, use vec2 float", filename);
+                    break;
+                case cgltf_attribute_type_tangent:
+                    if (accessor->type == cgltf_type_vec4 && accessor->component_type == cgltf_component_type_r_32f)
+                    {
+                        model->meshes[meshIndex].tangents = loadAttributef(accessor, 4);
+                    }
+                    else MINIMAL_WARN("MODEL: [%s] Tangent attribute data format not supported, use vec4 float", filename);
+                    break;
+                case cgltf_attribute_type_color:
+                    MINIMAL_WARN("MODEL: [%s] Color attribute not supported", filename);
+                    break;
+                }
+            }
+
+            // Load primitive indices data (if provided)
+            if (data->meshes[i].primitives[p].indices != NULL)
+            {
+                cgltf_accessor* attribute = data->meshes[i].primitives[p].indices;
+
+                model->meshes[meshIndex].elementCount = attribute->count;
+                model->meshes[meshIndex].indices = malloc(attribute->count * sizeof(GLuint));
+
+                if (attribute->component_type == cgltf_component_type_r_32u)
+                {
+                    size_t offset = attribute->buffer_view->offset + attribute->offset;
+                    int8_t* buffer = attribute->buffer_view->buffer->data;
+                    for (size_t k = 0; k < attribute->count; k++)
+                    {
+                        model->meshes[meshIndex].indices[k] = ((uint32_t*)(buffer + offset))[0];
+                        offset += attribute->stride;
+                    }
+                }
+                else if (attribute->component_type == cgltf_component_type_r_16u)
+                {
+                    size_t offset = attribute->buffer_view->offset + attribute->offset;
+                    int8_t* buffer = attribute->buffer_view->buffer->data;
+                    for (size_t k = 0; k < attribute->count; k++)
+                    {
+                        model->meshes[meshIndex].indices[k] = ((uint16_t*)(buffer + offset))[0];
+                        offset += attribute->stride;
+                    }
+                }
+                else MINIMAL_WARN("MODEL: [%s] Indices data format not supported, use u32", filename);
+            }
+            else model->meshes[meshIndex].elementCount = model->meshes[meshIndex].vertexCount;    // Unindexed mesh
+
+            meshIndex++;       // Move to next mesh
+        }
+    }
+
+    MINIMAL_INFO("Model loaded");
+    cgltf_free(data);
+
+    return IGNIS_SUCCESS;
+}
+
+Model robot;
 
 static void setViewport(float w, float h)
 {
@@ -106,18 +263,14 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 
     setViewport((float)w, (float)h);
 
-    /* cube */
-    ignisGenerateVertexArray(&vao);
-
-    IgnisBufferElement layout[] = {
-        { GL_FLOAT, 3, GL_FALSE },
-        { GL_FLOAT, 4, GL_FALSE }
-    };
-    ignisAddArrayBufferLayout(&vao, sizeof(vertices), vertices, GL_STATIC_DRAW, 0, layout, 2);
-
-
     /* shader */
-    ignisCreateShadervf(&shader, "res/shaders/shader.vert", "res/shaders/shader.frag");
+    shader = ignisCreateShadervf("res/shaders/shader.vert", "res/shaders/shader.frag");
+
+    /* gltf model */
+    loadModel(&robot, "res/models/box/Box.gltf");
+    //loadModel(&robot, "res/models/walking_robot/Scene.gltf");
+
+    for (int i = 0; i < robot.mesh_count; i++) uploadMesh(&robot.meshes[i]);
 
     printVersionInfo();
 
@@ -127,7 +280,7 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 void onDestroy(MinimalApp *app)
 {
     ignisDeleteVertexArray(&vao);
-    ignisDeleteShader(&shader);
+    ignisDeleteShader(shader);
     
     ignisDeleteFont(&font);
 
@@ -155,13 +308,6 @@ int onEvent(MinimalApp *app, const MinimalEvent* e)
     return MINIMAL_OK;
 }
 
-const vec3 tiles[] = {
-    { 0.0f, 0.0f, 0.0f, },
-    { 1.0f, 0.0f, 0.0f, },
-    { 2.0f, 0.0f, 0.0f, },
-    { 3.0f, 0.0f, 0.0f, }
-};
-
 void onUpdate(MinimalApp *app, float deltatime)
 {
     // clear screen
@@ -173,48 +319,23 @@ void onUpdate(MinimalApp *app, float deltatime)
     if (minimalKeyDown(GLFW_KEY_DOWN))  camera_pos.y += cameraspeed * deltatime;
     if (minimalKeyDown(GLFW_KEY_UP))    camera_pos.y -= cameraspeed * deltatime;
 
-    mat4 model = mat4_identity();
-    mat4 view = mat4_identity();
-    mat4 proj = mat4_identity();
+    mat4 model = model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
+    mat4 view = view = mat4_translation(vec3_negate(camera_pos));
+    mat4 proj = proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 
-    // create transformations
-    if (!view_mode)
-    {
-        model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
-        view = mat4_translation(vec3_negate(camera_pos));
-        proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-    }
-    else
-    {
-        //camera_pos.z = 0.0f;
-        view = mat4_translation(vec3_negate(camera_pos));
-        view = mat4_rotate_x(view, degToRad(-30.0f));
-        view = mat4_rotate_z(view, degToRad(-45.0f));
+    ignisSetUniformMat4(shader, "proj", proj.v[0]);
+    ignisSetUniformMat4(shader, "view", view.v[0]);
+    ignisSetUniformMat4(shader, "model", model.v[0]);
 
-        float w = width / 100.0f;
-        float h = height / 100.0f;
-        proj = mat4_ortho(-w / 2, w / 2, -h / 2, h / 2, -1.0f, h + camera_pos.z);
-        //proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-    }
-
-    ignisSetUniformMat4(&shader, "proj", proj.v[0]);
-    ignisSetUniformMat4(&shader, "view", view.v[0]);
-
-    ignisUseShader(&shader);
-    ignisBindVertexArray(&vao);
-
+    ignisUseShader(shader);
     glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_LINE : GL_FILL);
 
-    /*
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < robot.mesh_count; i++)
     {
-        model = mat4_translation(tiles[i]);
-        ignisSetUniformMat4(&shader, "model", model.v[0]);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        Mesh* mesh = &robot.meshes[i];
+        ignisBindVertexArray(&mesh->vao);
+        glDrawElements(GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_INT, NULL);
     }
-    */
-    ignisSetUniformMat4(&shader, "model", model.v[0]);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
