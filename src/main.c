@@ -13,130 +13,15 @@ IgnisFont font;
 
 float width, height;
 mat4 screen_projection;
-
-IgnisShader shader;
-
 int view_mode = 0;
 int poly_mode = 0;
 
-vec3 camera_pos = { 0.0f, 0.0f, 10.0f };
-float cameraspeed = 1.0f;
+float camera_rotation = 0.0f;
+float camera_radius = 32.0f;
+float camera_speed = 1.0f;
+float camera_zoom = 4.0f;
 
-int uploadMesh(Mesh* mesh)
-{
-    ignisGenerateVertexArray(&mesh->vao);
-
-    GLsizeiptr size2f = (GLsizeiptr)ignisGetOpenGLTypeSize(GL_FLOAT) * 2;
-    GLsizeiptr size3f = (GLsizeiptr)ignisGetOpenGLTypeSize(GL_FLOAT) * 3;
-
-    // positions
-    ignisAddArrayBuffer(&mesh->vao, mesh->vertex_count * size3f, mesh->positions, GL_STATIC_DRAW);
-    ignisVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    // texcoords
-    ignisAddArrayBuffer(&mesh->vao, mesh->vertex_count * size2f, mesh->texcoords, GL_STATIC_DRAW);
-    ignisVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-    if (mesh->normals) // normals
-    {
-        ignisAddArrayBuffer(&mesh->vao, mesh->vertex_count * size3f, mesh->normals, GL_STATIC_DRAW);
-        ignisVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    }
-    else
-    {
-        float value[3] = { 0.0f, 0.0f, 0.0f };
-        glVertexAttrib3fv(2, value);
-        glDisableVertexAttribArray(2);
-    }
-
-
-    if (mesh->indices)
-    {
-        ignisLoadElementBuffer(&mesh->vao, mesh->indices, mesh->element_count, GL_STATIC_DRAW);
-    }
-    return 0;
-}
-
-int loadModel(Model* model, const char* dir, const char* filename)
-{
-    size_t size = 0;
-    const char* path = ignisTextFormat("%s/%s", dir, filename);
-    char* filedata = ignisReadFile(path, &size);
-
-    if (!filedata) return IGNIS_FAILURE;
-
-    cgltf_options options = { 0 };
-    cgltf_data* data = NULL;
-    cgltf_result result = cgltf_parse(&options, filedata, size, &data);
-    if (result != cgltf_result_success)
-    {
-        MINIMAL_ERROR("MODEL: [%s] Failed to load glTF data", path);
-        return IGNIS_FAILURE;
-    }
-
-    if (data->file_type == cgltf_file_type_glb)       MINIMAL_TRACE("MODEL: [%s] Model basic data (glb) loaded successfully", filename);
-    else if (data->file_type == cgltf_file_type_gltf) MINIMAL_TRACE("MODEL: [%s] Model basic data (glTF) loaded successfully", filename);
-    else MINIMAL_TRACE("MODEL: [%s] Model format not recognized", path);
-
-    MINIMAL_INFO("    > Meshes count: %i",     data->meshes_count);
-    MINIMAL_INFO("    > Materials count: %i",  data->materials_count);
-    MINIMAL_INFO("    > Buffers count: %i",    data->buffers_count);
-    MINIMAL_INFO("    > Images count: %i",     data->images_count);
-    MINIMAL_INFO("    > Textures count: %i",   data->textures_count);
-
-    result = cgltf_load_buffers(&options, data, path);
-    if (result != cgltf_result_success)
-    {
-        MINIMAL_ERROR("MODEL: [%s] Failed to load mesh/material buffers", path);
-        return IGNIS_FAILURE;
-    }
-
-    size_t primitivesCount = 0;
-    for (size_t i = 0; i < data->meshes_count; i++) primitivesCount += data->meshes[i].primitives_count;
-
-    // Load our model data: meshes and materials
-    model->mesh_count = primitivesCount;
-    model->meshes = calloc(model->mesh_count, sizeof(Mesh));
-
-    if (!model->meshes) return IGNIS_FAILURE;
-
-    model->material_count = data->materials_count; // extra slot for default material
-    model->materials = calloc(model->material_count, sizeof(Material));
-
-    if (!model->materials) return IGNIS_FAILURE;
-
-    model->mesh_materials = calloc(model->mesh_count, sizeof(uint32_t));
-
-    // Load materials data
-    //----------------------------------------------------------------------------------------------------
-    for (unsigned int i = 0; i < data->materials_count; i++)
-    {
-        loadMaterialGLTF(&data->materials[i], &model->materials[i], dir);
-    }
-
-    // Load meshes data
-    //----------------------------------------------------------------------------------------------------
-    for (unsigned int i = 0, meshIndex = 0; i < data->meshes_count; i++)
-    {
-        // NOTE: meshIndex accumulates primitives
-        for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
-        {
-            // NOTE: We only support primitives defined by triangles
-            // Other alternatives: points, lines, line_strip, triangle_strip
-            if (data->meshes[i].primitives[p].type != cgltf_primitive_type_triangles) continue;
-
-            loadMeshGLTF(&data->meshes[i].primitives[p], &model->meshes[meshIndex]);
-
-            meshIndex++;       // Move to next mesh
-        }
-    }
-
-    MINIMAL_INFO("Model loaded");
-    cgltf_free(data);
-
-    return IGNIS_SUCCESS;
-}
-
+IgnisShader shader;
 Model robot;
 
 static void setViewport(float w, float h)
@@ -194,6 +79,7 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 
 void onDestroy(MinimalApp *app)
 {
+    destroyModel(&robot);
     ignisDeleteShader(shader);
     
     ignisDeleteFont(&font);
@@ -229,15 +115,24 @@ void onUpdate(MinimalApp *app, float deltatime)
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    if (minimalKeyDown(GLFW_KEY_LEFT))  camera_rotation -= camera_speed * deltatime;
+    if (minimalKeyDown(GLFW_KEY_RIGHT)) camera_rotation += camera_speed * deltatime;
+    if (minimalKeyDown(GLFW_KEY_DOWN))  camera_radius += camera_zoom * deltatime;
+    if (minimalKeyDown(GLFW_KEY_UP))    camera_radius -= camera_zoom * deltatime;
 
-    if (minimalKeyDown(GLFW_KEY_LEFT))  camera_pos.x -= cameraspeed * deltatime;
-    if (minimalKeyDown(GLFW_KEY_RIGHT)) camera_pos.x += cameraspeed * deltatime;
-    if (minimalKeyDown(GLFW_KEY_DOWN))  camera_pos.y += cameraspeed * deltatime;
-    if (minimalKeyDown(GLFW_KEY_UP))    camera_pos.y -= cameraspeed * deltatime;
+    //mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
+    //mat4 view = mat4_translation(vec3_negate(camera_pos));
+    mat4 proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 
-    mat4 model = model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
-    mat4 view = view = mat4_translation(vec3_negate(camera_pos));
-    mat4 proj = proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+    vec3 eye = {
+        sinf(camera_rotation) * camera_radius,
+        0.0f,
+        cosf(camera_rotation) * camera_radius
+    };
+    vec3 look_at = { 0.0f, 0.0f, 0.0f };
+    vec3 up = { 0.0f, 1.0f, 0.0f };
+    mat4 view = mat4_look_at(eye, look_at, up);
+    mat4 model = mat4_identity();
 
     ignisSetUniformMat4(shader, "proj", proj.v[0]);
     ignisSetUniformMat4(shader, "view", view.v[0]);
@@ -248,16 +143,19 @@ void onUpdate(MinimalApp *app, float deltatime)
     ignisUseShader(shader);
     glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_LINE : GL_FILL);
 
-    // use material
-    IgnisTexture2D* texture = &robot.materials[0].base_texture;
-    ignisBindTexture2D(texture, 0);
 
-    ignisSetUniform1i(shader, "base_texture", 0);
-    ignisSetUniform3f(shader, "objectColor", &robot.materials[0].color.r);
-
-    for (int i = 0; i < robot.mesh_count; i++)
+    for (int i = 0; i < robot.mesh_count; ++i)
     {
         Mesh* mesh = &robot.meshes[i];
+        uint32_t material = robot.mesh_materials[i];
+
+        // bind material
+        IgnisTexture2D* texture = &robot.materials[material].base_texture;
+        ignisBindTexture2D(texture, 0);
+
+        ignisSetUniform1i(shader, "base_texture", 0);
+        ignisSetUniform3f(shader, "objectColor", &robot.materials[material].color.r);
+
         ignisBindVertexArray(&mesh->vao);
         glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, NULL);
     }

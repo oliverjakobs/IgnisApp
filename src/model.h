@@ -9,6 +9,7 @@ typedef struct
     IgnisColorRGBA color;
     IgnisTexture2D base_texture;
 
+    IgnisTexture2D metallic_roughness;
     float roughness;
     float metallic;
 
@@ -38,6 +39,8 @@ typedef struct
 
 int loadMeshGLTF(const cgltf_primitive* primitive, Mesh* mesh);
 
+int uploadMesh(Mesh* mesh);
+
 typedef struct
 {
     Mesh* meshes;
@@ -47,5 +50,8 @@ typedef struct
     Material* materials;
     size_t material_count;
 } Model;
+
+int loadModel(Model* model, const char* dir, const char* filename);
+void destroyModel(Model* model);
 
 #endif // !MODEL_H
