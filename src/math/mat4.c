@@ -13,6 +13,35 @@ mat4 mat4_identity()
     return result;
 }
 
+mat4 mat4_cast(quat q)
+{
+    float a = q.w;
+    float b = q.x;
+    float c = q.y;
+    float d = q.z;
+    float a2 = a * a;
+    float b2 = b * b;
+    float c2 = c * c;
+    float d2 = d * d;
+
+    mat4 result = { 0.0f };
+    result.v[0][0] = a2 + b2 - c2 - d2;
+    result.v[0][1] = 2.f * (b * c + a * d);
+    result.v[0][2] = 2.f * (b * d - a * c);
+
+    result.v[1][0] = 2 * (b * c - a * d);
+    result.v[1][1] = a2 - b2 + c2 - d2;
+    result.v[1][2] = 2.f * (c * d + a * b);
+
+    result.v[2][0] = 2.f * (b * d + a * c);
+    result.v[2][1] = 2.f * (c * d - a * b);
+    result.v[2][2] = a2 - b2 - c2 + d2;
+
+    result.v[3][3] = 1.f;
+
+    return result;
+}
+
 mat4 mat4_perspective(float fov_y, float aspect, float near, float far)
 {
     float tan_half_fov_y = 1.0f / tanf(fov_y * 0.5f);
@@ -172,4 +201,59 @@ mat4 mat4_multiply(mat4 l, mat4 r)
     result.v[3][2] = l.v[0][2] * r.v[3][0] + l.v[1][2] * r.v[3][1] + l.v[2][2] * r.v[3][2] + l.v[3][2] * r.v[3][3];
     result.v[3][3] = l.v[0][3] * r.v[3][0] + l.v[1][3] * r.v[3][1] + l.v[2][3] * r.v[3][2] + l.v[3][3] * r.v[3][3];
     return result;
+}
+
+mat4 mat4_interpolate(mat4 mat0, mat4 mat1, float time)
+{
+    quat rot0 = quat_cast(mat0);
+    quat rot1 = quat_cast(mat1);
+
+    quat final_rot = quat_slerp(rot0, rot1, time);
+
+    mat4 final_mat = mat4_cast(final_rot);
+
+    final_mat.v[3][0] = mat0.v[3][0] * (1 - time) + mat1.v[3][0] * time;
+    final_mat.v[3][1] = mat0.v[3][1] * (1 - time) + mat1.v[3][1] * time;
+    final_mat.v[3][2] = mat0.v[3][2] * (1 - time) + mat1.v[3][2] * time;
+
+    return final_mat;
+}
+
+quat quat_identity()
+{
+    return (quat) { 0.0f, 0.0f, 0.0f, 1.0f };
+}
+
+quat quat_slerp(quat q0, quat q1, float value)
+{
+
+}
+
+quat quat_cast(mat4 mat)
+{
+    float r = 0.f;
+    int i;
+
+    int perm[] = { 0, 1, 2, 0, 1 };
+    int* p = perm;
+
+    for (i = 0; i < 3; i++)
+    {
+        float m = mat.v[i][i];
+        if (m < r) continue;
+        m = r;
+        p = &perm[i];
+    }
+
+    r = sqrtf(1.f + mat.v[p[0]][p[0]] - mat.v[p[1]][p[1]] - mat.v[p[2]][p[2]]);
+
+    if (r < 1e-6) return (quat) { 1.0f, 0.0f, 0.0f, 0.0f };
+
+    quat q = {
+        r / 2.f,
+        (mat.v[p[0]][p[1]] - mat.v[p[1]][p[0]]) / (2.f * r),
+        (mat.v[p[2]][p[0]] - mat.v[p[0]][p[2]]) / (2.f * r),
+        (mat.v[p[2]][p[1]] - mat.v[p[1]][p[2]]) / (2.f * r)
+    };
+    return q;
 }

@@ -17,12 +17,12 @@ int view_mode = 0;
 int poly_mode = 0;
 
 float camera_rotation = 0.0f;
-float camera_radius = 32.0f;
+float camera_radius = 16.0f;
 float camera_speed = 1.0f;
 float camera_zoom = 4.0f;
 
 IgnisShader shader;
-Model robot;
+Model robot = { 0 };
 
 static void setViewport(float w, float h)
 {
@@ -63,14 +63,19 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
     ignisFontRendererInit();
     ignisFontRendererBindFontColor(&font, IGNIS_WHITE);
 
+    ignisPrimitivesRendererInit();
+
     setViewport((float)w, (float)h);
 
     /* shader */
     shader = ignisCreateShadervf("res/shaders/shader.vert", "res/shaders/shader.frag");
 
     /* gltf model */
-    //loadModel(&robot, "res/models/box", "Box.gltf");
-    loadModel(&robot, "res/models/walking_robot", "scene.gltf");
+    //loadModel(&robot, "res/models/", "Box.gltf");
+    //loadModel(&robot, "res/models/walking_robot", "scene.gltf");
+    loadModel(&robot, "res/models/", "RiggedSimple.gltf");
+    //loadModel(&robot, "res/models/", "RiggedFigure.gltf");
+    //loadModel(&robot, "res/models/", "BoxAnimated.gltf");
 
     for (int i = 0; i < robot.mesh_count; i++) uploadMesh(&robot.meshes[i]);
 
@@ -85,6 +90,7 @@ void onDestroy(MinimalApp *app)
     ignisDeleteFont(&font);
 
     ignisFontRendererDestroy();
+    ignisPrimitivesRendererDestroy();
 
     ignisDestroy();
 }
@@ -126,39 +132,35 @@ void onUpdate(MinimalApp *app, float deltatime)
 
     vec3 eye = {
         sinf(camera_rotation) * camera_radius,
+        cosf(camera_rotation) * camera_radius,
         0.0f,
-        cosf(camera_rotation) * camera_radius
     };
     vec3 look_at = { 0.0f, 0.0f, 0.0f };
-    vec3 up = { 0.0f, 1.0f, 0.0f };
+    vec3 up = { 0.0f, 0.0f, 1.0f };
     mat4 view = mat4_look_at(eye, look_at, up);
     mat4 model = mat4_identity();
 
-    ignisSetUniformMat4(shader, "proj", proj.v[0]);
-    ignisSetUniformMat4(shader, "view", view.v[0]);
-    ignisSetUniformMat4(shader, "model", model.v[0]);
+    ignisSetUniformMat4(shader, "proj", 1, proj.v[0]);
+    ignisSetUniformMat4(shader, "view", 1, view.v[0]);
+    ignisSetUniformMat4(shader, "model", 1, model.v[0]);
 
     //ignisSetUniform3f(shader, "lightPos", &camera_pos.x);
 
     ignisUseShader(shader);
     glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_LINE : GL_FILL);
 
+    renderModel(&robot, shader);
+
+    mat4 view_proj = mat4_multiply(proj, view);
+    ignisPrimitivesRendererSetViewProjection(view_proj.v[0]);
 
     for (int i = 0; i < robot.mesh_count; ++i)
     {
         Mesh* mesh = &robot.meshes[i];
-        uint32_t material = robot.mesh_materials[i];
-
-        // bind material
-        IgnisTexture2D* texture = &robot.materials[material].base_texture;
-        ignisBindTexture2D(texture, 0);
-
-        ignisSetUniform1i(shader, "base_texture", 0);
-        ignisSetUniform3f(shader, "objectColor", &robot.materials[material].color.r);
-
-        ignisBindVertexArray(&mesh->vao);
-        glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, NULL);
+        ignisPrimitives3DRenderBox(&mesh->min.x, &mesh->max.x, IGNIS_WHITE);
     }
+
+    ignisPrimitivesRendererFlush();
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
