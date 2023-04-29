@@ -15,7 +15,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 
-uniform mat4 jointTransforms[4];
+uniform mat4 jointTransforms[32];
 
 void main()
 {

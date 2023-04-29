@@ -142,6 +142,15 @@ mat4 mat4_translation(vec3 v)
     return result;
 }
 
+mat4 mat4_scale(vec3 v)
+{
+    mat4 result = mat4_identity();
+    result.v[0][0] = v.x;
+    result.v[1][1] = v.y;
+    result.v[2][2] = v.z;
+    return result;
+}
+
 mat4 mat4_rotate_x(mat4 mat, float f)
 {
     float c = cosf(f);
@@ -200,6 +209,50 @@ mat4 mat4_multiply(mat4 l, mat4 r)
     result.v[3][1] = l.v[0][1] * r.v[3][0] + l.v[1][1] * r.v[3][1] + l.v[2][1] * r.v[3][2] + l.v[3][1] * r.v[3][3];
     result.v[3][2] = l.v[0][2] * r.v[3][0] + l.v[1][2] * r.v[3][1] + l.v[2][2] * r.v[3][2] + l.v[3][2] * r.v[3][3];
     result.v[3][3] = l.v[0][3] * r.v[3][0] + l.v[1][3] * r.v[3][1] + l.v[2][3] * r.v[3][2] + l.v[3][3] * r.v[3][3];
+    return result;
+}
+
+mat4 mat4_invert(mat4 m)
+{
+    float s[6];
+    float c[6];
+    s[0] = m.v[0][0] * m.v[1][1] - m.v[1][0] * m.v[0][1];
+    s[1] = m.v[0][0] * m.v[1][2] - m.v[1][0] * m.v[0][2];
+    s[2] = m.v[0][0] * m.v[1][3] - m.v[1][0] * m.v[0][3];
+    s[3] = m.v[0][1] * m.v[1][2] - m.v[1][1] * m.v[0][2];
+    s[4] = m.v[0][1] * m.v[1][3] - m.v[1][1] * m.v[0][3];
+    s[5] = m.v[0][2] * m.v[1][3] - m.v[1][2] * m.v[0][3];
+
+    c[0] = m.v[2][0] * m.v[3][1] - m.v[3][0] * m.v[2][1];
+    c[1] = m.v[2][0] * m.v[3][2] - m.v[3][0] * m.v[2][2];
+    c[2] = m.v[2][0] * m.v[3][3] - m.v[3][0] * m.v[2][3];
+    c[3] = m.v[2][1] * m.v[3][2] - m.v[3][1] * m.v[2][2];
+    c[4] = m.v[2][1] * m.v[3][3] - m.v[3][1] * m.v[2][3];
+    c[5] = m.v[2][2] * m.v[3][3] - m.v[3][2] * m.v[2][3];
+
+    /* Assumes it is invertible */
+    float idet = 1.0f / (s[0] * c[5] - s[1] * c[4] + s[2] * c[3] + s[3] * c[2] - s[4] * c[1] + s[5] * c[0]);
+
+    mat4 result = { 0 };
+    result.v[0][0] = (m.v[1][1] * c[5] - m.v[1][2] * c[4] + m.v[1][3] * c[3]) * idet;
+    result.v[0][1] = (-m.v[0][1] * c[5] + m.v[0][2] * c[4] - m.v[0][3] * c[3]) * idet;
+    result.v[0][2] = (m.v[3][1] * s[5] - m.v[3][2] * s[4] + m.v[3][3] * s[3]) * idet;
+    result.v[0][3] = (-m.v[2][1] * s[5] + m.v[2][2] * s[4] - m.v[2][3] * s[3]) * idet;
+
+    result.v[1][0] = (-m.v[1][0] * c[5] + m.v[1][2] * c[2] - m.v[1][3] * c[1]) * idet;
+    result.v[1][1] = (m.v[0][0] * c[5] - m.v[0][2] * c[2] + m.v[0][3] * c[1]) * idet;
+    result.v[1][2] = (-m.v[3][0] * s[5] + m.v[3][2] * s[2] - m.v[3][3] * s[1]) * idet;
+    result.v[1][3] = (m.v[2][0] * s[5] - m.v[2][2] * s[2] + m.v[2][3] * s[1]) * idet;
+
+    result.v[2][0] = (m.v[1][0] * c[4] - m.v[1][1] * c[2] + m.v[1][3] * c[0]) * idet;
+    result.v[2][1] = (-m.v[0][0] * c[4] + m.v[0][1] * c[2] - m.v[0][3] * c[0]) * idet;
+    result.v[2][2] = (m.v[3][0] * s[4] - m.v[3][1] * s[2] + m.v[3][3] * s[0]) * idet;
+    result.v[2][3] = (-m.v[2][0] * s[4] + m.v[2][1] * s[2] - m.v[2][3] * s[0]) * idet;
+
+    result.v[3][0] = (-m.v[1][0] * c[3] + m.v[1][1] * c[1] - m.v[1][2] * c[0]) * idet;
+    result.v[3][1] = (m.v[0][0] * c[3] - m.v[0][1] * c[1] + m.v[0][2] * c[0]) * idet;
+    result.v[3][2] = (-m.v[3][0] * s[3] + m.v[3][1] * s[1] - m.v[3][2] * s[0]) * idet;
+    result.v[3][3] = (m.v[2][0] * s[3] - m.v[2][1] * s[1] + m.v[2][2] * s[0]) * idet;
     return result;
 }
 

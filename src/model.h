@@ -5,8 +5,7 @@
 
 #include <ignis/ignis.h>
 
-#include "math/vec3.h"
-#include "math/mat4.h"
+#include "math/math.h"
 
 typedef struct Material
 {
@@ -22,8 +21,9 @@ typedef struct Material
     IgnisTexture2D emmisive;
 } Material;
 
-int loadDefaultMaterial(Material* material);
-int loadMaterialGLTF(const cgltf_material* gltf_material, Material* material, const char* dir);
+int  loadDefaultMaterial(Material* material);
+int  loadMaterialGLTF(Material* material, const cgltf_material* gltf_material, const char* dir);
+void destroyMaterial(Material* material);
 
 typedef struct Mesh
 {
@@ -49,16 +49,8 @@ typedef struct Mesh
     uint32_t* indices;  // Vertex indices (in case vertex data comes indexed)
 } Mesh;
 
-int loadMeshGLTF(const cgltf_primitive* primitive, Mesh* mesh);
-
-int uploadMesh(Mesh* mesh);
-
-
-typedef struct JointInfo
-{
-    uint32_t parent;
-    mat4 local;
-} JointInfo;
+int  loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive);
+void destroyMesh(Mesh* mesh);
 
 typedef struct Model
 {
@@ -69,21 +61,44 @@ typedef struct Model
     Material* materials;
     size_t material_count;
 
-    JointInfo* joints;
-    mat4* joint_inv_transform;
+    // skin
+    uint32_t* joints;
+    mat4* joint_locals;
+    mat4* joint_inv_transforms;
     size_t joint_count;
 } Model;
 
-int loadModel(Model* model, const char* dir, const char* filename);
+int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir);
 
+typedef struct Animation
+{
+    float* times;
+    mat4** transforms;
+
+    uint32_t frame_count;
+    uint32_t joint_count;
+
+    uint32_t current_frame;
+
+    float duration;
+} Animation;
+
+typedef struct TransformSampler
+{
+    cgltf_accessor* translation;
+    cgltf_accessor* rotation;
+    cgltf_accessor* scale;
+} TransformSampler;
+
+int loadAnimation(Animation* animation, cgltf_accessor* times, TransformSampler* transforms);
+void destroyAnimation(Animation* animation);
+
+void getAnimationPoses(Model* model, mat4* in, mat4* out);
+
+int loadModel(Model* model, Animation* animation, const char* dir, const char* filename);
 void destroyModel(Model* model);
 
-void renderModel(const Model* model, IgnisShader shader);
-
-typedef struct AnimationFrame
-{
-    float time;
-    mat4 transform;
-} AnimationFrame;
+int uploadMesh(Mesh* mesh);
+void renderModel(const Model* model, const Animation* animation, IgnisShader shader);
 
 #endif // !MODEL_H

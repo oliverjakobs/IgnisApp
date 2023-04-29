@@ -23,12 +23,15 @@ mat4 mat4_look_at(vec3 eye, vec3 look_at, vec3 up);
 
 mat4 mat4_rotation(vec3 axis, float angle); /* angle in radians */
 mat4 mat4_translation(vec3 v);
+mat4 mat4_scale(vec3 v);
 
 mat4 mat4_rotate_x(mat4 mat, float f);
 mat4 mat4_rotate_y(mat4 mat, float f);
 mat4 mat4_rotate_z(mat4 mat, float f);
 
 mat4 mat4_multiply(mat4 l, mat4 r);
+
+mat4 mat4_invert(mat4 m);
 
 mat4 mat4_interpolate(mat4 mat0, mat4 mat1, float time);
 

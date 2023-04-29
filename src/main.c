@@ -23,6 +23,7 @@ float camera_zoom = 4.0f;
 
 IgnisShader shader;
 Model robot = { 0 };
+Animation animation = { 0 };
 
 static void setViewport(float w, float h)
 {
@@ -72,9 +73,9 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 
     /* gltf model */
     //loadModel(&robot, "res/models/", "Box.gltf");
-    //loadModel(&robot, "res/models/walking_robot", "scene.gltf");
-    loadModel(&robot, "res/models/", "RiggedSimple.gltf");
-    //loadModel(&robot, "res/models/", "RiggedFigure.gltf");
+    //loadModel(&robot, &animation, "res/models/walking_robot", "scene.gltf");
+    loadModel(&robot, &animation, "res/models/", "RiggedSimple.gltf");
+    //loadModel(&robot, &animation, "res/models/", "RiggedFigure.gltf");
     //loadModel(&robot, "res/models/", "BoxAnimated.gltf");
 
     for (int i = 0; i < robot.mesh_count; i++) uploadMesh(&robot.meshes[i]);
@@ -85,6 +86,8 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 void onDestroy(MinimalApp *app)
 {
     destroyModel(&robot);
+    destroyAnimation(&animation);
+
     ignisDeleteShader(shader);
     
     ignisDeleteFont(&font);
@@ -111,6 +114,9 @@ int onEvent(MinimalApp *app, const MinimalEvent* e)
     case GLFW_KEY_F7:        minimalToggleDebug(app); break;
     case GLFW_KEY_F9:        view_mode = !view_mode; break;
     case GLFW_KEY_F10:       poly_mode = !poly_mode; break;
+    case GLFW_KEY_SPACE:
+        animation.current_frame++;
+        if (animation.current_frame >= animation.frame_count) animation.current_frame = 0;
     }
 
     return MINIMAL_OK;
@@ -149,7 +155,7 @@ void onUpdate(MinimalApp *app, float deltatime)
     ignisUseShader(shader);
     glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_LINE : GL_FILL);
 
-    renderModel(&robot, shader);
+    renderModel(&robot, &animation, shader);
 
     mat4 view_proj = mat4_multiply(proj, view);
     ignisPrimitivesRendererSetViewProjection(view_proj.v[0]);
