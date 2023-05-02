@@ -156,13 +156,31 @@ static void calcInverseBindTransform(const uint32_t* joints, size_t count, const
     }
 }
 
-static uint32_t getJointIndex(cgltf_node* target, cgltf_skin* skin, uint32_t value)
+static uint32_t getJointIndex(const cgltf_node* target, const cgltf_skin* skin, uint32_t value)
 {
     for (uint32_t k = 0; k < skin->joints_count; k++)
     {
         if (target == skin->joints[k]) return k;
     }
     return value;
+}
+
+static mat4 getNodeTransform(const cgltf_node* node)
+{
+    mat4 transform = mat4_identity();
+    if(node->has_matrix)
+    {
+        memcpy(transform.v, node->matrix, sizeof(mat4));
+    }
+    else
+    {
+        // load T * R * S
+        mat4 T = mat4_translation((vec3) { node->translation[0], node->translation[1], node->translation[2] });
+        mat4 R = mat4_cast((quat) { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] });
+        mat4 S = mat4_scale((vec3) { node->scale[0], node->scale[1], node->scale[2] });
+        transform = mat4_multiply(mat4_multiply(T, R), S);
+    }
+    return transform;
 }
 
 int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir)
@@ -227,6 +245,7 @@ int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir)
     model->joint_locals = malloc(skin->joints_count * sizeof(mat4));
     model->joint_inv_transforms = malloc(skin->joints_count * sizeof(mat4));
 
+    model->joint_locals[0] = mat4_identity();
     for (uint32_t i = 0; i < skin->joints_count; i++)
     {
         cgltf_node* node = skin->joints[i];
@@ -234,23 +253,17 @@ int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir)
         MINIMAL_INFO("MODEL: Joint (%i) %s", i, node->name);
 
         // get joint parent
-        model->joints[i] = getJointIndex(node->parent, skin, 0);
-
-        if (node->has_matrix)
-        {
-            memcpy(model->joint_locals[i].v, node->matrix, sizeof(mat4));
-        }
-        else
-        {
-            // load T * R * S
-            mat4 T = mat4_translation((vec3) { node->translation[0], node->translation[1], node->translation[2] });
-            mat4 R = mat4_cast((quat) { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] });
-            mat4 S = mat4_scale((vec3) { node->scale[0], node->scale[1], node->scale[2] });
-            model->joint_locals[i] = mat4_multiply(T, mat4_multiply(R, S));
-        }
+        uint32_t parent = getJointIndex(node->parent, skin, 0);
+        model->joints[i] = parent;
+        model->joint_locals[i] = mat4_multiply(model->joint_locals[parent], getNodeTransform(node));
     }
 
-    calcInverseBindTransform(model->joints, model->joint_count, model->joint_locals, model->joint_inv_transforms);
+    for (uint32_t i = 0; i < skin->inverse_bind_matrices->count; ++i)
+    {
+        cgltf_accessor_read_float(skin->inverse_bind_matrices, i, model->joint_inv_transforms[i].v, 16);
+    }
+
+    //calcInverseBindTransform(model->joints, model->joint_count, model->joint_locals, model->joint_inv_transforms);
 
     return IGNIS_SUCCESS;
 }
@@ -410,10 +423,11 @@ int loadAnimation(Animation* animation, cgltf_accessor* times, TransformSampler*
             if (sampler.scale) cgltf_accessor_read_float(sampler.scale, frame, &scale.x, 3);
 
             // set T * R * S
+            //mat4 T = mat4_identity(); 
             mat4 T = mat4_translation(translation);
             mat4 R = mat4_cast(rotation);
             mat4 S = mat4_scale(scale);
-            animation->transforms[frame][joint] = mat4_multiply(T, mat4_multiply(R, S));
+            animation->transforms[frame][joint] = mat4_multiply(mat4_multiply(T, R), S);
         }
     }
 
@@ -430,7 +444,7 @@ void destroyAnimation(Animation* animation)
     free(animation->times);
 }
 
-void getAnimationPoses(Model* model, mat4* in, mat4* out)
+void getAnimationPoses(const Model* model, const mat4* in, mat4* out)
 {
     mat4 model_transforms[32] = { 0 };
     model_transforms[0] = mat4_identity();
@@ -442,9 +456,8 @@ void getAnimationPoses(Model* model, mat4* in, mat4* out)
         uint32_t parent = model->joints[i];
         model_transforms[i] = mat4_multiply(model_transforms[parent], local_transform);
 
-        //out[i] = in[i];
-        //out[i] = mat4_multiply(model_transforms[i], model->joint_inv_transforms[i]);
-        out[i] = mat4_multiply(model_transforms[i], mat4_invert(model->joint_inv_transforms[i]));
+        //out[i] = mat4_identity();
+        out[i] = mat4_multiply(model_transforms[i], model->joint_inv_transforms[i]);
     }
 }
 

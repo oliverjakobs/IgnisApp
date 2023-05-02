@@ -93,7 +93,7 @@ typedef struct TransformSampler
 int loadAnimation(Animation* animation, cgltf_accessor* times, TransformSampler* transforms);
 void destroyAnimation(Animation* animation);
 
-void getAnimationPoses(Model* model, mat4* in, mat4* out);
+void getAnimationPoses(const Model* model, const mat4* in, mat4* out);
 
 int loadModel(Model* model, Animation* animation, const char* dir, const char* filename);
 void destroyModel(Model* model);

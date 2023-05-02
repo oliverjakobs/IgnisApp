@@ -150,8 +150,6 @@ void onUpdate(MinimalApp *app, float deltatime)
     ignisSetUniformMat4(shader, "view", 1, view.v[0]);
     ignisSetUniformMat4(shader, "model", 1, model.v[0]);
 
-    //ignisSetUniform3f(shader, "lightPos", &camera_pos.x);
-
     ignisUseShader(shader);
     glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_LINE : GL_FILL);
 
