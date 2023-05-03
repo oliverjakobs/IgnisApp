@@ -7,6 +7,9 @@
 
 #include "math/math.h"
 
+// ----------------------------------------------------------------
+// material
+// ----------------------------------------------------------------
 typedef struct Material
 {
     IgnisColorRGBA color;
@@ -25,12 +28,15 @@ int  loadDefaultMaterial(Material* material);
 int  loadMaterialGLTF(Material* material, const cgltf_material* gltf_material, const char* dir);
 void destroyMaterial(Material* material);
 
+// ----------------------------------------------------------------
+// mesh
+// ----------------------------------------------------------------
 typedef struct Mesh
 {
     IgnisVertexArray vao;
 
-    uint32_t vertex_count;
-    uint32_t element_count;
+    size_t vertex_count;
+    size_t element_count;
 
     vec3 min;
     vec3 max;
@@ -52,6 +58,9 @@ typedef struct Mesh
 int  loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive);
 void destroyMesh(Mesh* mesh);
 
+// ----------------------------------------------------------------
+// model + skin
+// ----------------------------------------------------------------
 typedef struct Model
 {
     Mesh* meshes;
@@ -68,15 +77,21 @@ typedef struct Model
     size_t joint_count;
 } Model;
 
+int  loadSkinGLTF(Model* model, cgltf_skin* skin);
+void destroySkin(Model* model);
+
 int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir);
 
+// ----------------------------------------------------------------
+// animation
+// ----------------------------------------------------------------
 typedef struct Animation
 {
     float* times;
     mat4** transforms;
 
-    uint32_t frame_count;
-    uint32_t joint_count;
+    size_t frame_count;
+    size_t joint_count;
 
     uint32_t current_frame;
 
@@ -94,6 +109,9 @@ int loadAnimation(Animation* animation, cgltf_accessor* times, TransformSampler*
 void destroyAnimation(Animation* animation);
 
 void getAnimationPoses(const Model* model, const mat4* in, mat4* out);
+
+
+
 
 int loadModel(Model* model, Animation* animation, const char* dir, const char* filename);
 void destroyModel(Model* model);

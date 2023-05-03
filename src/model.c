@@ -5,155 +5,16 @@
 
 #include "minimal/utils.h"
 
-#define LOAD_ATTRIBUTE(dst, accessor, components, type)             \
-size_t offset = accessor->buffer_view->offset + accessor->offset;   \
-int8_t* src = accessor->buffer_view->buffer->data;                  \
-for (size_t i = 0; i < accessor->count; ++i)                        \
-{                                                                   \
-    for (uint8_t c = 0; c < components; ++c)                        \
-        dst[components * i + c] = ((type*)(src + offset))[c];       \
-    offset += accessor->stride;                                     \
-}
-
-int loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive)
-{
-    // NOTE: Attributes data could be provided in several data formats (8, 8u, 16u, 32...),
-    // Only some formats for each attribute type are supported, read info at the top of this function!
-    for (unsigned int j = 0; j < primitive->attributes_count; j++)
-    {
-        cgltf_accessor* accessor = primitive->attributes[j].data;
-        switch (primitive->attributes[j].type)
-        {
-        case cgltf_attribute_type_position:
-            if (accessor->type == cgltf_type_vec3 && accessor->component_type == cgltf_component_type_r_32f)
-            {
-                mesh->vertex_count = (uint32_t)accessor->count;
-                mesh->positions = malloc(accessor->count * 3 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->positions, accessor, 3, float)
-
-                mesh->min = (vec3){ accessor->min[0], accessor->min[1], accessor->min[2] };
-                mesh->max = (vec3){ accessor->max[0], accessor->max[1], accessor->max[2] };
-            }
-            else IGNIS_WARN("MODEL: Vertices attribute data format not supported, use vec3 float");
-            break;
-        case cgltf_attribute_type_normal:
-            if (accessor->type == cgltf_type_vec3 && accessor->component_type == cgltf_component_type_r_32f)
-            {
-                mesh->normals = malloc(accessor->count * 3 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->normals, accessor, 3, float)
-            }
-            else IGNIS_WARN("MODEL: Normal attribute data format not supported, use vec3 float");
-            break;
-        case cgltf_attribute_type_tangent:
-            if (accessor->type == cgltf_type_vec4 && accessor->component_type == cgltf_component_type_r_32f)
-            {
-                mesh->tangents = malloc(accessor->count * 4 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->tangents, accessor, 4, float)
-            }
-            else IGNIS_WARN("MODEL: Tangent attribute data format not supported, use vec4 float");
-            break;
-        case cgltf_attribute_type_texcoord:
-            if (accessor->type == cgltf_type_vec2 && accessor->component_type == cgltf_component_type_r_32f)
-            {
-                mesh->texcoords = malloc(accessor->count * 2 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->texcoords, accessor, 2, float)
-            }
-            else IGNIS_WARN("MODEL: Texcoords attribute data format not supported, use vec2 float");
-            break;
-        case cgltf_attribute_type_color:
-            IGNIS_WARN("MODEL: Color attribute not supported");
-            break;
-        case cgltf_attribute_type_joints:
-            if (accessor->type == cgltf_type_vec4)
-            {
-                mesh->joints = malloc(accessor->count * 4 * sizeof(uint16_t));
-                if (accessor->component_type == cgltf_component_type_r_16u)
-                {
-                    LOAD_ATTRIBUTE(mesh->joints, accessor, 4, uint16_t)
-                }
-                else if (accessor->component_type == cgltf_component_type_r_8u)
-                {
-                    LOAD_ATTRIBUTE(mesh->joints, accessor, 4, uint8_t)
-                }
-            }
-            else IGNIS_WARN("MODEL: Joint attribute data format not supported, use vec4 u16");
-            break;
-        case cgltf_attribute_type_weights:
-            if (accessor->type == cgltf_type_vec4 && accessor->component_type == cgltf_component_type_r_32f)
-            {
-                mesh->weights = malloc(accessor->count * 4 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->weights, accessor, 4, float)
-            }
-            else IGNIS_WARN("MODEL: Joint weight attribute data format not supported, use vec4 float");
-            break;
-        default:
-            IGNIS_WARN("MODEL: Unsupported attribute");
-
-        }
-    }
-
-    // Load primitive indices data (if provided)
-    if (primitive->indices != NULL)
-    {
-        cgltf_accessor* accessor = primitive->indices;
-
-        mesh->element_count = (uint32_t)accessor->count;
-        mesh->indices = malloc(accessor->count * sizeof(uint32_t));
-
-        if (accessor->component_type == cgltf_component_type_r_32u)
-        {
-            LOAD_ATTRIBUTE(mesh->indices, accessor, 1, uint32_t)
-        }
-        else if (accessor->component_type == cgltf_component_type_r_16u)
-        {
-            LOAD_ATTRIBUTE(mesh->indices, accessor, 1, uint16_t)
-        }
-        else IGNIS_WARN("MODEL: Indices data format not supported, use u32");
-    }
-
-    return IGNIS_SUCCESS;
-}
-
-void destroyMesh(Mesh* mesh)
-{
-    ignisDeleteVertexArray(&mesh->vao);
-    if (mesh->positions) free(mesh->positions);
-    if (mesh->texcoords) free(mesh->texcoords);
-    if (mesh->normals)   free(mesh->normals);
-    if (mesh->colors)    free(mesh->colors);
-    if (mesh->tangents)  free(mesh->tangents);
-    if (mesh->joints)    free(mesh->joints);
-    if (mesh->weights)   free(mesh->weights);
-    if (mesh->indices)   free(mesh->indices);
-}
-
+// ----------------------------------------------------------------
+// utility
+// ----------------------------------------------------------------
 static uint32_t getMaterialIndex(const cgltf_material* materials, size_t count, const cgltf_primitive* primitive)
 {
     for (size_t m = 0; m < count; ++m)
     {
-        if (&materials[m] == primitive->material)
-            return (uint32_t)m;
+        if (primitive->material == &materials[m]) return (uint32_t)m;
     }
     return 0;
-}
-
-static void calcInverseBindTransform(const uint32_t* joints, size_t count, const mat4* locals, mat4* transforms)
-{
-    transforms[0] = mat4_identity();
-    for (size_t i = 0; i < count; ++i)
-    {
-        uint32_t parent = joints[i];
-        if (parent >= 0)
-        {
-            if (parent > i)
-            {
-                IGNIS_WARN("Assumes bones are toplogically sorted, but bone %d has parent %d. Skipping.", i, parent);
-                continue;
-            }
-
-            transforms[i] = mat4_multiply(transforms[parent], locals[i]);
-        }
-    }
 }
 
 static uint32_t getJointIndex(const cgltf_node* target, const cgltf_skin* skin, uint32_t value)
@@ -183,10 +44,53 @@ static mat4 getNodeTransform(const cgltf_node* node)
     return transform;
 }
 
+// ----------------------------------------------------------------
+// skin
+// ----------------------------------------------------------------
+int loadSkinGLTF(Model* model, cgltf_skin* skin)
+{
+    model->joint_count = skin->joints_count;
+    model->joints = malloc(skin->joints_count * sizeof(uint32_t));
+    model->joint_locals = malloc(skin->joints_count * sizeof(mat4));
+    model->joint_inv_transforms = malloc(skin->joints_count * sizeof(mat4));
+
+    if (!(model->joints && model->joint_locals && model->joint_inv_transforms)) return IGNIS_FAILURE;
+
+    model->joint_locals[0] = mat4_identity();
+    for (size_t i = 0; i < skin->joints_count; ++i)
+    {
+        cgltf_node* node = skin->joints[i];
+
+        MINIMAL_INFO("MODEL: Joint (%i) %s", i, node->name);
+
+        // get joint parent
+        uint32_t parent = getJointIndex(node->parent, skin, 0);
+        model->joints[i] = parent;
+        model->joint_locals[i] = mat4_multiply(model->joint_locals[parent], getNodeTransform(node));
+    }
+
+    for (size_t i = 0; i < skin->inverse_bind_matrices->count; ++i)
+    {
+        cgltf_accessor_read_float(skin->inverse_bind_matrices, i, model->joint_inv_transforms[i].v[0], 16);
+    }
+
+    return IGNIS_SUCCESS;
+}
+
+void destroySkin(Model* model)
+{
+    if (model->joints) free(model->joints);
+    if (model->joint_locals) free(model->joint_locals);
+    if (model->joint_inv_transforms) free(model->joint_inv_transforms);
+}
+
+// ----------------------------------------------------------------
+// model
+// ----------------------------------------------------------------
 int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir)
 {
     size_t primitivesCount = 0;
-    for (size_t i = 0; i < data->meshes_count; i++) primitivesCount += data->meshes[i].primitives_count;
+    for (size_t i = 0; i < data->meshes_count; ++i) primitivesCount += data->meshes[i].primitives_count;
 
     // Load our model data: meshes and materials
     model->mesh_count = primitivesCount;
@@ -204,66 +108,34 @@ int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir)
     if (!model->mesh_materials) return IGNIS_FAILURE;
 
     // Load materials data
-    //----------------------------------------------------------------------------------------------------
-    for (unsigned int i = 0; i < data->materials_count; i++)
+    for (size_t i = 0; i < data->materials_count; ++i)
     {
         loadMaterialGLTF(&model->materials[i], &data->materials[i], dir);
     }
 
     // Load meshes data
-    //----------------------------------------------------------------------------------------------------
-    for (unsigned int i = 0, meshIndex = 0; i < data->meshes_count; i++)
+    for (size_t i = 0, meshIndex = 0; i < data->meshes_count; ++i)
     {
-        // NOTE: meshIndex accumulates primitives
-        for (unsigned int p = 0; p < data->meshes[i].primitives_count; p++)
+        for (size_t p = 0; p < data->meshes[i].primitives_count; ++p)
         {
             cgltf_primitive* primitive = &data->meshes[i].primitives[p];
-            // NOTE: We only support primitives defined by triangles
-            // Other alternatives: points, lines, line_strip, triangle_strip
             if (primitive->type != cgltf_primitive_type_triangles) continue;
 
             loadMeshGLTF(&model->meshes[meshIndex], primitive);
-
-            // Assign to the primitive mesh the corresponding material index
             model->mesh_materials[meshIndex] = getMaterialIndex(data->materials, data->materials_count, primitive);
 
-            meshIndex++;    // Move to next mesh
+            meshIndex++;
         }
     }
 
+    // Load skin
     if (data->skins_count > 1)
     {
         IGNIS_ERROR("MODEL: can only load one skin (armature) per model, but gltf skins_count == %i", data->skins_count);
         return IGNIS_FAILURE;
     }
 
-    // Load joints
-    //----------------------------------------------------------------------------------------------------
-    cgltf_skin* skin = &data->skins[0];
-    model->joint_count = skin->joints_count;
-    model->joints = malloc(skin->joints_count * sizeof(uint32_t));
-    model->joint_locals = malloc(skin->joints_count * sizeof(mat4));
-    model->joint_inv_transforms = malloc(skin->joints_count * sizeof(mat4));
-
-    model->joint_locals[0] = mat4_identity();
-    for (uint32_t i = 0; i < skin->joints_count; i++)
-    {
-        cgltf_node* node = skin->joints[i];
-
-        MINIMAL_INFO("MODEL: Joint (%i) %s", i, node->name);
-
-        // get joint parent
-        uint32_t parent = getJointIndex(node->parent, skin, 0);
-        model->joints[i] = parent;
-        model->joint_locals[i] = mat4_multiply(model->joint_locals[parent], getNodeTransform(node));
-    }
-
-    for (uint32_t i = 0; i < skin->inverse_bind_matrices->count; ++i)
-    {
-        cgltf_accessor_read_float(skin->inverse_bind_matrices, i, model->joint_inv_transforms[i].v, 16);
-    }
-
-    //calcInverseBindTransform(model->joints, model->joint_count, model->joint_locals, model->joint_inv_transforms);
+    loadSkinGLTF(model, &data->skins[0]);
 
     return IGNIS_SUCCESS;
 }
@@ -313,7 +185,7 @@ int loadModel(Model* model, Animation* animation, const char* dir, const char* f
     {
         cgltf_skin skin = data->skins[0];
         MINIMAL_INFO("MODEL: Skin has %i joints", skin.joints_count);
-        for (unsigned int i = 0; i < data->animations_count; i++)
+        for (size_t i = 0; i < data->animations_count; ++i)
         {
             animation->joint_count = skin.joints_count;
 
@@ -321,7 +193,7 @@ int loadModel(Model* model, Animation* animation, const char* dir, const char* f
             cgltf_accessor* times = NULL;
 
             MINIMAL_INFO("MODEL: Animation %i (%i channels):", i, data->animations[i].channels_count);
-            for (unsigned int j = 0; j < data->animations[i].channels_count; j++)
+            for (size_t j = 0; j < data->animations[i].channels_count; ++j)
             {
                 uint32_t joint_index = getJointIndex(data->animations[i].channels[j].target_node, &skin, skin.joints_count);
                 if (joint_index >= skin.joints_count) // Animation channel for a node not in the armature
@@ -388,12 +260,17 @@ void destroyModel(Model* model)
     free(model->meshes);
     free(model->mesh_materials);
 
+    destroySkin(model);
+
     for (int i = 0; i < model->material_count; ++i)
         destroyMaterial(&model->materials[i]);
 
     free(model->materials);
 }
 
+// ----------------------------------------------------------------
+// animation
+// ----------------------------------------------------------------
 int loadAnimation(Animation* animation, cgltf_accessor* times, TransformSampler* transforms)
 {
     animation->frame_count = times->count;
@@ -461,6 +338,9 @@ void getAnimationPoses(const Model* model, const mat4* in, mat4* out)
     }
 }
 
+// ----------------------------------------------------------------
+// openGL stuff
+// ----------------------------------------------------------------
 int uploadMesh(Mesh* mesh)
 {
     ignisGenerateVertexArray(&mesh->vao, 5);
@@ -530,7 +410,10 @@ int uploadMesh(Mesh* mesh)
 
 void renderModel(const Model* model, const Animation* animation, IgnisShader shader)
 {
-    for (int i = 0; i < model->mesh_count; ++i)
+    mat4 transform = mat4_identity();
+    ignisSetUniformMat4(shader, "model", 1, transform.v[0]);
+
+    for (size_t i = 0; i < model->mesh_count; ++i)
     {
         Mesh* mesh = &model->meshes[i];
         uint32_t material = model->mesh_materials[i];

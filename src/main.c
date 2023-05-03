@@ -144,11 +144,9 @@ void onUpdate(MinimalApp *app, float deltatime)
     vec3 look_at = { 0.0f, 0.0f, 0.0f };
     vec3 up = { 0.0f, 0.0f, 1.0f };
     mat4 view = mat4_look_at(eye, look_at, up);
-    mat4 model = mat4_identity();
 
     ignisSetUniformMat4(shader, "proj", 1, proj.v[0]);
     ignisSetUniformMat4(shader, "view", 1, view.v[0]);
-    ignisSetUniformMat4(shader, "model", 1, model.v[0]);
 
     ignisUseShader(shader);
     glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_LINE : GL_FILL);
