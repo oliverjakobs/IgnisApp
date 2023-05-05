@@ -157,6 +157,7 @@
     "skins": [
         {
             "inverseBindMatrices": 9,
+            "skeleton": 3,
             "joints": [
                 3,
                 4

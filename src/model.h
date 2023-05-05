@@ -85,36 +85,42 @@ int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir);
 // ----------------------------------------------------------------
 // animation
 // ----------------------------------------------------------------
-typedef struct Animation
+typedef struct JointAnimation
 {
     float* times;
-    mat4** transforms;
+    mat4* transforms;
 
     size_t frame_count;
+} JointAnimation;
+
+typedef struct Animation
+{
+    JointAnimation* joints;
     size_t joint_count;
 
     uint32_t current_frame;
+    size_t frame_count;
 
     float duration;
 } Animation;
 
 typedef struct TransformSampler
 {
+    cgltf_accessor* time;
     cgltf_accessor* translation;
     cgltf_accessor* rotation;
     cgltf_accessor* scale;
 } TransformSampler;
 
-int loadAnimation(Animation* animation, cgltf_accessor* times, TransformSampler* transforms);
+int loadAnimation(Animation* animation, TransformSampler* transforms);
 void destroyAnimation(Animation* animation);
 
-void getAnimationPoses(const Model* model, const mat4* in, mat4* out);
-
-
+void getAnimationPoses(const Model* model, const Animation* animation, mat4* out);
 
 
 int loadModel(Model* model, Animation* animation, const char* dir, const char* filename);
 void destroyModel(Model* model);
+
 
 int uploadMesh(Mesh* mesh);
 void renderModel(const Model* model, const Animation* animation, IgnisShader shader);

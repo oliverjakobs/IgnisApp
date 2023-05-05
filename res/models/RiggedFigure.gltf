@@ -1281,8 +1281,8 @@
             "min": [
                 0.0
             ],
-          "type": "SCALAR",
-          "name": "times0"
+            "type": "SCALAR",
+            "name": "times0"
         },
         {
             "bufferView": 5,
@@ -1348,7 +1348,8 @@
             "min": [
                 0.0
             ],
-            "type": "SCALAR"
+            "type": "SCALAR",
+            "name": "times1"
         },
         {
             "bufferView": 5,

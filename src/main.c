@@ -74,8 +74,8 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
     /* gltf model */
     //loadModel(&robot, "res/models/", "Box.gltf");
     //loadModel(&robot, &animation, "res/models/walking_robot", "scene.gltf");
-    loadModel(&robot, &animation, "res/models/", "RiggedSimple.gltf");
-    //loadModel(&robot, &animation, "res/models/", "RiggedFigure.gltf");
+    //loadModel(&robot, &animation, "res/models/", "RiggedSimple.gltf");
+    loadModel(&robot, &animation, "res/models/", "RiggedFigure.gltf");
     //loadModel(&robot, "res/models/", "BoxAnimated.gltf");
 
     for (int i = 0; i < robot.mesh_count; i++) uploadMesh(&robot.meshes[i]);
