@@ -25,6 +25,8 @@ IgnisShader shader;
 Model robot = { 0 };
 Animation animation = { 0 };
 
+int paused = 0;
+
 static void setViewport(float w, float h)
 {
     width = w;
@@ -74,8 +76,9 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
     /* gltf model */
     //loadModel(&robot, "res/models/", "Box.gltf");
     //loadModel(&robot, &animation, "res/models/walking_robot", "scene.gltf");
-    //loadModel(&robot, &animation, "res/models/", "RiggedSimple.gltf");
-    loadModel(&robot, &animation, "res/models/", "RiggedFigure.gltf");
+    //loadModel(&robot, &animation, "res/models/robot", "scene.gltf");
+    loadModel(&robot, &animation, "res/models/", "RiggedSimple.gltf");
+    //loadModel(&robot, &animation, "res/models/", "RiggedFigure.gltf");
     //loadModel(&robot, "res/models/", "BoxAnimated.gltf");
 
     for (int i = 0; i < robot.mesh_count; i++) uploadMesh(&robot.meshes[i]);
@@ -109,14 +112,12 @@ int onEvent(MinimalApp *app, const MinimalEvent* e)
 
     switch (minimalEventKeyPressed(e))
     {
-    case GLFW_KEY_ESCAPE:    minimalClose(app); break;
-    case GLFW_KEY_F6:        minimalToggleVsync(app); break;
-    case GLFW_KEY_F7:        minimalToggleDebug(app); break;
-    case GLFW_KEY_F9:        view_mode = !view_mode; break;
-    case GLFW_KEY_F10:       poly_mode = !poly_mode; break;
-    case GLFW_KEY_SPACE:
-        animation.current_frame++;
-        if (animation.current_frame >= animation.frame_count) animation.current_frame = 0;
+    case GLFW_KEY_ESCAPE:   minimalClose(app); break;
+    case GLFW_KEY_F6:       minimalToggleVsync(app); break;
+    case GLFW_KEY_F7:       minimalToggleDebug(app); break;
+    case GLFW_KEY_F9:       view_mode = !view_mode; break;
+    case GLFW_KEY_F10:      poly_mode = !poly_mode; break;
+    case GLFW_KEY_SPACE:    paused = !paused; break;
     }
 
     return MINIMAL_OK;
@@ -131,6 +132,12 @@ void onUpdate(MinimalApp *app, float deltatime)
     if (minimalKeyDown(GLFW_KEY_RIGHT)) camera_rotation += camera_speed * deltatime;
     if (minimalKeyDown(GLFW_KEY_DOWN))  camera_radius += camera_zoom * deltatime;
     if (minimalKeyDown(GLFW_KEY_UP))    camera_radius -= camera_zoom * deltatime;
+
+    if (!paused)
+    {
+        animation.time += deltatime;
+        animation.time = fmodf(animation.time, animation.duration);
+    }
 
     //mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
     //mat4 view = mat4_translation(vec3_negate(camera_pos));
@@ -182,6 +189,11 @@ void onUpdate(MinimalApp *app, float deltatime)
         ignisFontRendererTextFieldLine("F9:  Toggle view mode");
         ignisFontRendererTextFieldLine("F10: Toggle polygon mode");
     }
+
+    ignisFontRendererTextFieldBegin(8.0f, 30.0f, 6.0f);
+
+    ignisFontRendererTextFieldLine("Animation Duration: %4.2f", animation.duration);
+    ignisFontRendererTextFieldLine("Animation Time:     %4.2f", animation.time);
 
     ignisFontRendererFlush();
 }

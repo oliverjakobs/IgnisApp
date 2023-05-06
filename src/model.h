@@ -85,12 +85,23 @@ int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir);
 // ----------------------------------------------------------------
 // animation
 // ----------------------------------------------------------------
-typedef struct JointAnimation
+typedef struct AnimationChannel
 {
     float* times;
-    mat4* transforms;
+    float* transforms;
 
     size_t frame_count;
+    size_t last_frame;
+} AnimationChannel;
+
+int  loadAnimationChannelGLTF(AnimationChannel* channel, cgltf_animation_sampler* sampler);
+void destroyAnimationChannel(AnimationChannel* channel);
+
+typedef struct JointAnimation
+{
+    AnimationChannel translation;
+    AnimationChannel rotation;
+    AnimationChannel scale;
 } JointAnimation;
 
 typedef struct Animation
@@ -98,24 +109,12 @@ typedef struct Animation
     JointAnimation* joints;
     size_t joint_count;
 
-    uint32_t current_frame;
-    size_t frame_count;
-
+    float time;
     float duration;
 } Animation;
 
-typedef struct TransformSampler
-{
-    cgltf_accessor* time;
-    cgltf_accessor* translation;
-    cgltf_accessor* rotation;
-    cgltf_accessor* scale;
-} TransformSampler;
-
-int loadAnimation(Animation* animation, TransformSampler* transforms);
+int  loadAnimationGLTF(Animation* animation, cgltf_animation* gltf_animation, cgltf_skin* skin);
 void destroyAnimation(Animation* animation);
-
-void getAnimationPoses(const Model* model, const Animation* animation, mat4* out);
 
 
 int loadModel(Model* model, Animation* animation, const char* dir, const char* filename);

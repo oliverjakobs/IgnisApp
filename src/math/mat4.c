@@ -277,9 +277,70 @@ quat quat_identity()
     return (quat) { 0.0f, 0.0f, 0.0f, 1.0f };
 }
 
+// Calculate slerp-optimized interpolation between two quaternions
+quat quat_nlerp(quat q0, quat q1, float value)
+{
+    quat result = { 0 };
+
+    // QuaternionLerp(q1, q2, amount)
+    result.x = q0.x + value * (q1.x - q0.x);
+    result.y = q0.y + value * (q1.y - q0.y);
+    result.z = q0.z + value * (q1.z - q0.z);
+    result.w = q0.w + value * (q1.w - q0.w);
+
+    // QuaternionNormalize(q);
+    quat q = result;
+    float length = sqrtf(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+    if (length == 0.0f) length = 1.0f;
+    float ilength = 1.0f / length;
+
+    result.x = q.x * ilength;
+    result.y = q.y * ilength;
+    result.z = q.z * ilength;
+    result.w = q.w * ilength;
+
+    return result;
+}
+
 quat quat_slerp(quat q0, quat q1, float value)
 {
+    quat result = { 0 };
 
+    float cosHalfTheta = q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w;
+
+    if (cosHalfTheta < 0)
+    {
+        q1.x = -q1.x; q1.y = -q1.y; q1.z = -q1.z; q1.w = -q1.w;
+        cosHalfTheta = -cosHalfTheta;
+    }
+
+    if (fabsf(cosHalfTheta) >= 1.0f) return q0;
+
+    if (cosHalfTheta > 0.95f) return quat_nlerp(q0, q1, value);
+
+
+    float halfTheta = acosf(cosHalfTheta);
+    float sinHalfTheta = sqrtf(1.0f - cosHalfTheta * cosHalfTheta);
+
+    if (fabsf(sinHalfTheta) < 0.001f)
+    {
+        result.x = (q0.x * 0.5f + q1.x * 0.5f);
+        result.y = (q0.y * 0.5f + q1.y * 0.5f);
+        result.z = (q0.z * 0.5f + q1.z * 0.5f);
+        result.w = (q0.w * 0.5f + q1.w * 0.5f);
+    }
+    else
+    {
+        float ratioA = sinf((1 - value) * halfTheta) / sinHalfTheta;
+        float ratioB = sinf(value * halfTheta) / sinHalfTheta;
+
+        result.x = (q0.x * ratioA + q1.x * ratioB);
+        result.y = (q0.y * ratioA + q1.y * ratioB);
+        result.z = (q0.z * ratioA + q1.z * ratioB);
+        result.w = (q0.w * ratioA + q1.w * ratioB);
+    }
+
+    return result;
 }
 
 quat quat_cast(mat4 mat)

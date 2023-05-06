@@ -26,24 +26,6 @@ static uint32_t getJointIndex(const cgltf_node* target, const cgltf_skin* skin, 
     return value;
 }
 
-static mat4 getNodeTransform(const cgltf_node* node)
-{
-    mat4 transform = mat4_identity();
-    if(node->has_matrix)
-    {
-        memcpy(transform.v, node->matrix, sizeof(mat4));
-    }
-    else
-    {
-        // load T * R * S
-        mat4 T = mat4_translation((vec3) { node->translation[0], node->translation[1], node->translation[2] });
-        mat4 R = mat4_cast((quat) { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] });
-        mat4 S = mat4_scale((vec3) { node->scale[0], node->scale[1], node->scale[2] });
-        transform = mat4_multiply(T, mat4_multiply(R, S));
-    }
-    return transform;
-}
-
 // ----------------------------------------------------------------
 // skin
 // ----------------------------------------------------------------
@@ -59,17 +41,11 @@ int loadSkinGLTF(Model* model, cgltf_skin* skin)
     for (size_t i = 0; i < skin->joints_count; ++i)
     {
         cgltf_node* node = skin->joints[i];
-
-        // get joint parent
-        uint32_t parent = getJointIndex(node->parent, skin, 0);
-        MINIMAL_INFO("MODEL: Joint (%i) %s; parent: %i", i, node->name, parent);
-        model->joints[i] = parent;
-        model->joint_locals[i] = getNodeTransform(node);
-    }
-
-    for (size_t i = 0; i < skin->inverse_bind_matrices->count; ++i)
-    {
+        model->joints[i] = getJointIndex(node->parent, skin, 0);
+        cgltf_node_transform_local(node, model->joint_locals[i].v[0]);
         cgltf_accessor_read_float(skin->inverse_bind_matrices, i, model->joint_inv_transforms[i].v[0], 16);
+
+        MINIMAL_INFO("MODEL: Joint (%i) %s; parent: %i", i, node->name, model->joints[i]);
     }
 
     return IGNIS_SUCCESS;
@@ -138,6 +114,29 @@ int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir)
     return IGNIS_SUCCESS;
 }
 
+int loadAnimationChannelGLTF(AnimationChannel* channel, cgltf_animation_sampler* sampler)
+{
+    channel->frame_count = sampler->input->count;
+    channel->last_frame = 0;
+
+    // load input
+    channel->times = malloc(channel->frame_count * sizeof(float));
+    cgltf_accessor_unpack_floats(sampler->input, channel->times, channel->frame_count);
+
+    // load output
+    size_t comps = cgltf_num_components(sampler->output->component_type);
+    channel->transforms = malloc(channel->frame_count * comps * sizeof(float));
+    cgltf_accessor_unpack_floats(sampler->output, channel->transforms, channel->frame_count * comps);
+
+    return IGNIS_SUCCESS;
+}
+
+void destroyAnimationChannel(AnimationChannel* channel)
+{
+    free(channel->times);
+    free(channel->transforms);
+}
+
 int loadModel(Model* model, Animation* animation, const char* dir, const char* filename)
 {
     size_t size = 0;
@@ -185,62 +184,7 @@ int loadModel(Model* model, Animation* animation, const char* dir, const char* f
         MINIMAL_INFO("MODEL: Skin has %i joints", skin.joints_count);
         for (size_t i = 0; i < data->animations_count; ++i)
         {
-            animation->joint_count = skin.joints_count; 
-            animation->frame_count = 0;
-
-            TransformSampler* transforms = calloc(skin.joints_count, sizeof(TransformSampler));
-            if (!transforms) return IGNIS_FAILURE;
-
-            MINIMAL_INFO("MODEL: Animation %i (%i channels):", i, data->animations[i].channels_count);
-            for (size_t j = 0; j < data->animations[i].channels_count; ++j)
-            {
-                uint32_t joint_index = getJointIndex(data->animations[i].channels[j].target_node, &skin, skin.joints_count);
-                if (joint_index >= skin.joints_count) // Animation channel for a node not in the armature
-                    continue;
-
-                TransformSampler* sampler = &transforms[joint_index];
-
-                cgltf_animation_channel* channel = &data->animations[i].channels[j];
-                switch (channel->target_path)
-                {
-                case cgltf_animation_path_type_translation:
-                    MINIMAL_INFO("MODEL: Translation Channel (%i): %i frames", joint_index, channel->sampler->input->count);
-                    if (!sampler->time) sampler->time = channel->sampler->input;
-                    else if (sampler->time != channel->sampler->input)
-                    {
-                        IGNIS_WARN("Different input");
-                        break;
-                    }
-                    sampler->translation = channel->sampler->output;
-                    break;
-                case cgltf_animation_path_type_rotation:
-                    MINIMAL_INFO("MODEL: Rotation    Channel (%i): %i frames", joint_index, channel->sampler->input->count);
-                    if (!sampler->time) sampler->time = channel->sampler->input;
-                    else if (sampler->time != channel->sampler->input)
-                    {
-                        IGNIS_WARN("Different input");
-                        break;
-                    }
-                    sampler->rotation = channel->sampler->output;
-                    break;
-                case cgltf_animation_path_type_scale:
-                    MINIMAL_INFO("MODEL: Scale       Channel (%i): %i frames", joint_index, channel->sampler->input->count);
-                    if (!sampler->time) sampler->time = channel->sampler->input;
-                    else if (sampler->time != channel->sampler->input)
-                    {
-                        IGNIS_WARN("Different input");
-                        break;
-                    }
-                    sampler->scale = channel->sampler->output;
-                    break;
-                default:
-                    IGNIS_WARN("MODEL: Unsupported target_path on channel %d's sampler for animation %d. Skipping.", j, i);
-                    break;
-                }
-            }
-            loadAnimation(animation, transforms);
-
-            free(transforms);
+            loadAnimationGLTF(animation, &data->animations[i], &skin);
         }
     }
 
@@ -270,53 +214,87 @@ void destroyModel(Model* model)
 // ----------------------------------------------------------------
 // animation
 // ----------------------------------------------------------------
-int loadAnimation(Animation* animation, TransformSampler* transforms)
+
+int loadAnimationGLTF(Animation* animation, cgltf_animation* gltf_animation, cgltf_skin* skin)
 {
-    //animation->frame_count = times->count;
-    //animation->times = malloc(times->count * sizeof(float));
-    //animation->transforms = malloc(times->count * sizeof(mat4*));
+    animation->joint_count = skin->joints_count;
 
-    animation->joints = calloc(animation->joint_count, sizeof(JointAnimation));
+    animation->time = 0.0f;
+    animation->duration = 0.0f;
 
-    MINIMAL_INFO("Animation duration: %f", animation->duration);
+    animation->joints = calloc(skin->joints_count, sizeof(JointAnimation));
+    if (!animation->joints) return IGNIS_FAILURE;
 
-    //if (!(animation->times && animation->transforms)) return IGNIS_FAILURE;
-
-    for (size_t j = 0; j < animation->joint_count; ++j)
+    for (size_t i = 0; i < gltf_animation->channels_count; ++i)
     {
-        TransformSampler* sampler = &transforms[j];
+        uint32_t joint_index = getJointIndex(gltf_animation->channels[i].target_node, skin, skin->joints_count);
+        if (joint_index >= skin->joints_count) // Animation channel for a node not in the armature
+            continue;
 
-        if (!sampler->time) continue;
+        JointAnimation* joint = &animation->joints[joint_index];
 
-        JointAnimation* joint = &animation->joints[j];
-        
-        joint->frame_count = sampler->time->count;
-        animation->frame_count = max(joint->frame_count, animation->frame_count);
-
-        joint->times = malloc(joint->frame_count * sizeof(float));
-        joint->transforms = malloc(joint->frame_count * sizeof(mat4));
-
-        for (size_t frame = 0; frame < joint->frame_count; ++frame)
+        cgltf_animation_channel* channel = &gltf_animation->channels[i];
+        switch (channel->target_path)
         {
-            cgltf_accessor_read_float(sampler->time, frame, &joint->times[frame], 1);
+        case cgltf_animation_path_type_translation:
+            MINIMAL_INFO("MODEL: Translation Channel (%i): %i frames", joint_index, channel->sampler->input->count);
+            loadAnimationChannelGLTF(&joint->translation, channel->sampler);
+            break;
+        case cgltf_animation_path_type_rotation:
+            MINIMAL_INFO("MODEL: Rotation    Channel (%i): %i frames", joint_index, channel->sampler->input->count);
+            loadAnimationChannelGLTF(&joint->rotation, channel->sampler);
+            break;
+        case cgltf_animation_path_type_scale:
+            MINIMAL_INFO("MODEL: Scale       Channel (%i): %i frames", joint_index, channel->sampler->input->count);
+            loadAnimationChannelGLTF(&joint->scale, channel->sampler);
+            break;
+        default:
+            IGNIS_WARN("MODEL: Unsupported target_path on channel %d's sampler. Skipping.", i);
+            break;
+        }
 
-            vec3 translation = { 0.0f };
-            if (sampler->translation) cgltf_accessor_read_float(sampler->translation, frame, &translation.x, 3);
+        // update animation duration
+        animation->duration = max(animation->duration, channel->sampler->input->max[0]);
+    }
 
-            quat rotation = quat_identity();
-            if (sampler->rotation) cgltf_accessor_read_float(sampler->rotation, frame, &rotation.x, 4);
+    // fill missing channels
+    for (size_t i = 0; i < animation->joint_count; ++i)
+    {
+        JointAnimation* joint = &animation->joints[i];
+        cgltf_node* node = skin->joints[i];
 
-            vec3 scale = { 1.0f, 1.0f, 1.0f };
-            if (sampler->scale) cgltf_accessor_read_float(sampler->scale, frame, &scale.x, 3);
+        // load translation
+        if (joint->translation.frame_count == 0 && node->has_translation)
+        {
+            joint->translation.transforms = malloc(3 * sizeof(float));
+            joint->translation.transforms[0] = node->translation[0];
+            joint->translation.transforms[1] = node->translation[1];
+            joint->translation.transforms[2] = node->translation[2];
+            joint->translation.frame_count = 1;
+        }
 
-            // set T * R * S
-            //mat4 T = mat4_identity(); 
-            mat4 T = mat4_translation(translation);
-            mat4 R = mat4_cast(rotation);
-            mat4 S = mat4_scale(scale);
-            joint->transforms[frame] = mat4_multiply(T, mat4_multiply(R, S));
+        // load rotation
+        if (joint->rotation.frame_count == 0 && node->has_rotation)
+        {
+            joint->rotation.transforms = malloc(4 * sizeof(float));
+            joint->rotation.transforms[0] = node->rotation[0];
+            joint->rotation.transforms[1] = node->rotation[1];
+            joint->rotation.transforms[2] = node->rotation[2];
+            joint->rotation.transforms[3] = node->rotation[3];
+            joint->rotation.frame_count = 1;
+        }
+
+        // load translation
+        if (joint->scale.frame_count == 0 && node->has_scale)
+        {
+            joint->scale.transforms = malloc(3 * sizeof(float));
+            joint->scale.transforms[0] = node->scale[0];
+            joint->scale.transforms[1] = node->scale[1];
+            joint->scale.transforms[2] = node->scale[2];
+            joint->scale.frame_count = 1;
         }
     }
+
 
     return IGNIS_SUCCESS;
 }
@@ -325,10 +303,114 @@ void destroyAnimation(Animation* animation)
 {
     for (size_t i = 0; i < animation->joint_count; ++i)
     {
-        free(animation->joints[i].times);
-        free(animation->joints[i].transforms);
+        destroyAnimationChannel(&animation->joints[i].translation);
+        destroyAnimationChannel(&animation->joints[i].rotation);
+        destroyAnimationChannel(&animation->joints[i].scale);
     }
     free(animation->joints);
+}
+
+int getChannelKeyFrame(AnimationChannel* channel, float time)
+{
+    if (!channel->times) return 0;
+    for (size_t i = 0; i < channel->frame_count - 1; ++i)
+    {
+        float start = channel->times[i];
+        float end = channel->times[i + 1];
+
+        if ((start <= time) && (time < end))
+            return i;
+    }
+    return 0;
+}
+
+int getChannelTransformVec3(AnimationChannel* channel, float time, vec3* out)
+{
+    if (!channel->transforms) return IGNIS_FAILURE;
+
+    size_t frame = getChannelKeyFrame(channel, time);
+
+    size_t offset = frame * 3;
+    vec3 v0 = { 
+        channel->transforms[offset + 0],
+        channel->transforms[offset + 1],
+        channel->transforms[offset + 2]
+    };
+
+    if (channel->frame_count <= 1)
+    {
+        *out = v0;
+        return IGNIS_SUCCESS;
+    }
+
+    offset += 3;
+    vec3 v1 = {
+        channel->transforms[offset + 0],
+        channel->transforms[offset + 1],
+        channel->transforms[offset + 2]
+    };
+
+
+    float t = (time - channel->times[frame]) / (channel->times[frame + 1] - channel->times[frame]);
+    *out = vec3_lerp(v0, v1, t);
+
+    return IGNIS_SUCCESS;
+}
+
+int getChannelTransformQuat(AnimationChannel* channel, float time, quat* out)
+{
+    if (!channel->transforms) return IGNIS_FAILURE;
+
+    size_t frame = getChannelKeyFrame(channel, time);
+
+    size_t offset = frame * 4;
+    quat q0 = {
+        channel->transforms[offset + 0],
+        channel->transforms[offset + 1],
+        channel->transforms[offset + 2],
+        channel->transforms[offset + 3]
+    };
+
+    if (channel->frame_count <= 1)
+    {
+        *out = q0;
+        return IGNIS_SUCCESS;
+    }
+
+    offset += 4;
+    quat q1 = {
+        channel->transforms[offset + 0],
+        channel->transforms[offset + 1],
+        channel->transforms[offset + 2],
+        channel->transforms[offset + 3]
+    };
+
+
+    float t = (time - channel->times[frame]) / (channel->times[frame + 1] - channel->times[frame]);
+    *out = quat_slerp(q0, q1, t);
+
+    return IGNIS_SUCCESS;
+}
+
+mat4 getJointTransformAtTime(JointAnimation* joint, float time)
+{
+    // translation
+    vec3 translation = { 0.0f };
+    getChannelTransformVec3(&joint->translation, time, &translation);
+
+    // rotation
+    quat rotation = quat_identity();
+    getChannelTransformQuat(&joint->rotation, time, &rotation);
+
+    // scale
+    vec3 scale = { 1.0f, 1.0f, 1.0f };
+    getChannelTransformVec3(&joint->scale, time, &scale);
+
+    // return T * R * S
+    mat4 T = mat4_translation(translation);
+    mat4 R = mat4_cast(rotation);
+    mat4 S = mat4_scale(scale);
+    return mat4_multiply(T, mat4_multiply(R, S));
 }
 
 void getAnimationPose(const Model* model, const Animation* animation, mat4* out)
@@ -336,8 +418,11 @@ void getAnimationPose(const Model* model, const Animation* animation, mat4* out)
     out[0] = mat4_identity();
     for (size_t i = 0; i < model->joint_count; ++i)
     {
+        mat4 in = model->joint_locals[i];
+
         JointAnimation* joint = &animation->joints[i];
-        mat4 in = joint->frame_count ? joint->transforms[animation->current_frame] : model->joint_locals[i];
+        if (joint->translation.frame_count || joint->rotation.frame_count || joint->scale.frame_count)
+            in = getJointTransformAtTime(joint, animation->time);
 
         uint32_t parent = model->joints[i];
         out[i] = mat4_multiply(out[parent], in);
