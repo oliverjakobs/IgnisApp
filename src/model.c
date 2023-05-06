@@ -315,102 +315,56 @@ int getChannelKeyFrame(AnimationChannel* channel, float time)
     if (!channel->times) return 0;
     for (size_t i = 0; i < channel->frame_count - 1; ++i)
     {
-        float start = channel->times[i];
-        float end = channel->times[i + 1];
-
-        if ((start <= time) && (time < end))
+        if ((channel->times[i] <= time) && (time < channel->times[i + 1]))
             return i;
     }
     return 0;
 }
 
-int getChannelTransformVec3(AnimationChannel* channel, float time, vec3* out)
+float getChannelTransform(AnimationChannel* channel, float time, uint8_t comps, float* t0, float* t1)
 {
-    if (!channel->transforms) return IGNIS_FAILURE;
+    if (!channel->transforms) return 0.0f;
 
     size_t frame = getChannelKeyFrame(channel, time);
 
-    size_t offset = frame * 3;
-    vec3 v0 = { 
-        channel->transforms[offset + 0],
-        channel->transforms[offset + 1],
-        channel->transforms[offset + 2]
-    };
+    size_t offset = frame * comps;
+    for (uint8_t i = 0; i < comps; ++i)
+        t0[i] = channel->transforms[offset + i];
 
-    if (channel->frame_count <= 1)
-    {
-        *out = v0;
-        return IGNIS_SUCCESS;
-    }
+    if (channel->frame_count <= 1) return 0.0f;
 
-    offset += 3;
-    vec3 v1 = {
-        channel->transforms[offset + 0],
-        channel->transforms[offset + 1],
-        channel->transforms[offset + 2]
-    };
+    offset += comps;
+    for (uint8_t i = 0; i < comps; ++i)
+        t1[i] = channel->transforms[offset + i];
 
-
-    float t = (time - channel->times[frame]) / (channel->times[frame + 1] - channel->times[frame]);
-    *out = vec3_lerp(v0, v1, t);
-
-    return IGNIS_SUCCESS;
+    return (time - channel->times[frame]) / (channel->times[frame + 1] - channel->times[frame]);
 }
 
-int getChannelTransformQuat(AnimationChannel* channel, float time, quat* out)
+void getJointTransformAtTime(JointAnimation* joint, float time, mat4* transform)
 {
-    if (!channel->transforms) return IGNIS_FAILURE;
+    if (!(joint->translation.frame_count || joint->rotation.frame_count || joint->scale.frame_count))
+        return;
 
-    size_t frame = getChannelKeyFrame(channel, time);
-
-    size_t offset = frame * 4;
-    quat q0 = {
-        channel->transforms[offset + 0],
-        channel->transforms[offset + 1],
-        channel->transforms[offset + 2],
-        channel->transforms[offset + 3]
-    };
-
-    if (channel->frame_count <= 1)
-    {
-        *out = q0;
-        return IGNIS_SUCCESS;
-    }
-
-    offset += 4;
-    quat q1 = {
-        channel->transforms[offset + 0],
-        channel->transforms[offset + 1],
-        channel->transforms[offset + 2],
-        channel->transforms[offset + 3]
-    };
-
-
-    float t = (time - channel->times[frame]) / (channel->times[frame + 1] - channel->times[frame]);
-    *out = quat_slerp(q0, q1, t);
-
-    return IGNIS_SUCCESS;
-}
-
-mat4 getJointTransformAtTime(JointAnimation* joint, float time)
-{
     // translation
-    vec3 translation = { 0.0f };
-    getChannelTransformVec3(&joint->translation, time, &translation);
+    vec3 t0 = { 0 }, t1 = { 0 };
+    float t = getChannelTransform(&joint->translation, time, 3, &t0.x, &t1.x);
+    vec3 translation = vec3_lerp(t0, t1, t);
 
     // rotation
-    quat rotation = quat_identity();
-    getChannelTransformQuat(&joint->rotation, time, &rotation);
+    quat q0 = quat_identity(), q1 = quat_identity();
+    t = getChannelTransform(&joint->rotation, time, 4, &q0.x, &q1.x);
+    quat rotation = quat_slerp(q0, q1, t);
 
     // scale
-    vec3 scale = { 1.0f, 1.0f, 1.0f };
-    getChannelTransformVec3(&joint->scale, time, &scale);
+    vec3 s0 = { 1.0f, 1.0f, 1.0f }, s1 = { 1.0f, 1.0f, 1.0f };
+    t = getChannelTransform(&joint->scale, time, 3, &s0.x, &s1.x);
+    vec3 scale = vec3_lerp(s0, s1, t);
 
     // return T * R * S
     mat4 T = mat4_translation(translation);
     mat4 R = mat4_cast(rotation);
     mat4 S = mat4_scale(scale);
-    return mat4_multiply(T, mat4_multiply(R, S));
+    *transform = mat4_multiply(T, mat4_multiply(R, S));
 }
 
 void getAnimationPose(const Model* model, const Animation* animation, mat4* out)
@@ -419,10 +373,7 @@ void getAnimationPose(const Model* model, const Animation* animation, mat4* out)
     for (size_t i = 0; i < model->joint_count; ++i)
     {
         mat4 in = model->joint_locals[i];
-
-        JointAnimation* joint = &animation->joints[i];
-        if (joint->translation.frame_count || joint->rotation.frame_count || joint->scale.frame_count)
-            in = getJointTransformAtTime(joint, animation->time);
+        getJointTransformAtTime(&animation->joints[i], animation->time, &in);
 
         uint32_t parent = model->joints[i];
         out[i] = mat4_multiply(out[parent], in);
