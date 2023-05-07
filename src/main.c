@@ -74,12 +74,12 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
     shader = ignisCreateShadervf("res/shaders/shader.vert", "res/shaders/shader.frag");
 
     /* gltf model */
-    //loadModel(&robot, "res/models/", "Box.gltf");
-    loadModel(&robot, &animation, "res/models/walking_robot", "scene.gltf");
-    //loadModel(&robot, &animation, "res/models/robot", "scene.gltf");
-    //loadModel(&robot, &animation, "res/models/", "RiggedSimple.gltf");
-    //loadModel(&robot, &animation, "res/models/", "RiggedFigure.gltf");
-    //loadModel(&robot, "res/models/", "BoxAnimated.gltf");
+    //loadModelGLTF(&robot, "res/models/", "Box.gltf");
+    loadModelGLTF(&robot, &animation, "res/models/walking_robot", "scene.gltf");
+    //loadModelGLTF(&robot, &animation, "res/models/robot", "scene.gltf");
+    //loadModelGLTF(&robot, &animation, "res/models/", "RiggedSimple.gltf");
+    //loadModelGLTF(&robot, &animation, "res/models/", "RiggedFigure.gltf");
+    //loadModelGLTF(&robot, "res/models/", "BoxAnimated.gltf");
 
     for (int i = 0; i < robot.mesh_count; i++) uploadMesh(&robot.meshes[i]);
 

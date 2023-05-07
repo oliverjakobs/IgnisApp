@@ -7,6 +7,13 @@
 
 #include "math/math.h"
 
+typedef struct Model Model;
+
+// ----------------------------------------------------------------
+// utility
+// ----------------------------------------------------------------
+size_t getJointIndex(const cgltf_node* target, const cgltf_skin* skin, size_t fallback);
+
 // ----------------------------------------------------------------
 // material
 // ----------------------------------------------------------------
@@ -45,11 +52,9 @@ typedef struct Mesh
     float* positions;   // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
     float* texcoords;   // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
     float* normals;     // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    uint8_t* colors;    // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-    float* tangents;    // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
 
     // joint data
-    uint16_t* joints;
+    uint32_t* joints;
     float*    weights;
 
     uint32_t* indices;  // Vertex indices (in case vertex data comes indexed)
@@ -57,30 +62,6 @@ typedef struct Mesh
 
 int  loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive);
 void destroyMesh(Mesh* mesh);
-
-// ----------------------------------------------------------------
-// model + skin
-// ----------------------------------------------------------------
-typedef struct Model
-{
-    Mesh* meshes;
-    uint32_t* mesh_materials;
-    size_t mesh_count;
-
-    Material* materials;
-    size_t material_count;
-
-    // skin
-    uint32_t* joints;
-    mat4* joint_locals;
-    mat4* joint_inv_transforms;
-    size_t joint_count;
-} Model;
-
-int  loadSkinGLTF(Model* model, cgltf_skin* skin);
-void destroySkin(Model* model);
-
-int loadModelGLTF(Model* model, const cgltf_data* data, const char* dir);
 
 // ----------------------------------------------------------------
 // animation
@@ -116,8 +97,32 @@ typedef struct Animation
 int  loadAnimationGLTF(Animation* animation, cgltf_animation* gltf_animation, cgltf_skin* skin);
 void destroyAnimation(Animation* animation);
 
+void getAnimationPose(const Model* model, const Animation* animation, mat4* out);
+void getBindPose(const Model* model, mat4* out);
 
-int loadModel(Model* model, Animation* animation, const char* dir, const char* filename);
+// ----------------------------------------------------------------
+// model + skin
+// ----------------------------------------------------------------
+struct Model
+{
+    Mesh* meshes;
+    uint32_t* mesh_materials;
+    size_t mesh_count;
+
+    Material* materials;
+    size_t material_count;
+
+    // skin
+    uint32_t* joints;
+    mat4* joint_locals;
+    mat4* joint_inv_transforms;
+    size_t joint_count;
+};
+
+int  loadSkinGLTF(Model* model, cgltf_skin* skin);
+void destroySkin(Model* model);
+
+int  loadModelGLTF(Model* model, Animation* animation, const char* dir, const char* filename);
 void destroyModel(Model* model);
 
 

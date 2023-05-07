@@ -10,7 +10,7 @@ int loadDefaultMaterial(Material* material)
     return IGNIS_SUCCESS;
 }
 
-int loadMaterialGLTF(Material* material, const cgltf_material* gltf_material,const char* dir)
+int loadMaterialGLTF(Material* material, const cgltf_material* gltf_material, const char* dir)
 {
     // set defaults
     loadDefaultMaterial(material);

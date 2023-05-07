@@ -1,14 +1,5 @@
 #include "model.h"
 
-#define LOAD_ATTRIBUTE(dst, accessor, components, type)             \
-size_t offset = accessor->buffer_view->offset + accessor->offset;   \
-int8_t* src = accessor->buffer_view->buffer->data;                  \
-for (size_t i = 0; i < accessor->count; ++i)                        \
-{                                                                   \
-    for (uint8_t c = 0; c < components; ++c)                        \
-        dst[components * i + c] = ((type*)(src + offset))[c];       \
-    offset += accessor->stride;                                     \
-}
 
 int loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive)
 {
@@ -22,7 +13,7 @@ int loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive)
             {
                 mesh->vertex_count = (uint32_t)accessor->count;
                 mesh->positions = malloc(accessor->count * 3 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->positions, accessor, 3, float)
+                cgltf_accessor_unpack_floats(accessor, mesh->positions, accessor->count * 3);
 
                 mesh->min = (vec3){ accessor->min[0], accessor->min[1], accessor->min[2] };
                 mesh->max = (vec3){ accessor->max[0], accessor->max[1], accessor->max[2] };
@@ -33,41 +24,24 @@ int loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive)
             if (accessor->type == cgltf_type_vec3 && accessor->component_type == cgltf_component_type_r_32f)
             {
                 mesh->normals = malloc(accessor->count * 3 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->normals, accessor, 3, float)
+                cgltf_accessor_unpack_floats(accessor, mesh->normals, accessor->count * 3);
             }
             else IGNIS_WARN("MODEL: Normal attribute data format not supported, use vec3 float");
-            break;
-        case cgltf_attribute_type_tangent:
-            if (accessor->type == cgltf_type_vec4 && accessor->component_type == cgltf_component_type_r_32f)
-            {
-                mesh->tangents = malloc(accessor->count * 4 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->tangents, accessor, 4, float)
-            }
-            else IGNIS_WARN("MODEL: Tangent attribute data format not supported, use vec4 float");
             break;
         case cgltf_attribute_type_texcoord:
             if (accessor->type == cgltf_type_vec2 && accessor->component_type == cgltf_component_type_r_32f)
             {
                 mesh->texcoords = malloc(accessor->count * 2 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->texcoords, accessor, 2, float)
+                cgltf_accessor_unpack_floats(accessor, mesh->texcoords, accessor->count * 2);
             }
             else IGNIS_WARN("MODEL: Texcoords attribute data format not supported, use vec2 float");
-            break;
-        case cgltf_attribute_type_color:
-            IGNIS_WARN("MODEL: Color attribute not supported");
             break;
         case cgltf_attribute_type_joints:
             if (accessor->type == cgltf_type_vec4)
             {
-                mesh->joints = malloc(accessor->count * 4 * sizeof(uint16_t));
-                if (accessor->component_type == cgltf_component_type_r_16u)
-                {
-                    LOAD_ATTRIBUTE(mesh->joints, accessor, 4, uint16_t)
-                }
-                else if (accessor->component_type == cgltf_component_type_r_8u)
-                {
-                    LOAD_ATTRIBUTE(mesh->joints, accessor, 4, uint8_t)
-                }
+                mesh->joints = malloc(accessor->count * 4 * sizeof(uint32_t));
+                for (size_t j = 0; j < accessor->count; ++j)
+                    cgltf_accessor_read_uint(accessor, j, &mesh->joints[j * 4], 4);
             }
             else IGNIS_WARN("MODEL: Joint attribute data format not supported, use vec4 u16");
             break;
@@ -75,7 +49,7 @@ int loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive)
             if (accessor->type == cgltf_type_vec4 && accessor->component_type == cgltf_component_type_r_32f)
             {
                 mesh->weights = malloc(accessor->count * 4 * sizeof(float));
-                LOAD_ATTRIBUTE(mesh->weights, accessor, 4, float)
+                cgltf_accessor_unpack_floats(accessor, mesh->weights, accessor->count * 4);
             }
             else IGNIS_WARN("MODEL: Joint weight attribute data format not supported, use vec4 float");
             break;
@@ -93,15 +67,8 @@ int loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive)
         mesh->element_count = (uint32_t)accessor->count;
         mesh->indices = malloc(accessor->count * sizeof(uint32_t));
 
-        if (accessor->component_type == cgltf_component_type_r_32u)
-        {
-            LOAD_ATTRIBUTE(mesh->indices, accessor, 1, uint32_t)
-        }
-        else if (accessor->component_type == cgltf_component_type_r_16u)
-        {
-            LOAD_ATTRIBUTE(mesh->indices, accessor, 1, uint16_t)
-        }
-        else IGNIS_WARN("MODEL: Indices data format not supported, use u32");
+        for (size_t i = 0; i < accessor->count; ++i)
+            mesh->indices[i] = cgltf_accessor_read_index(accessor, i);
     }
 
     return IGNIS_SUCCESS;
@@ -113,8 +80,6 @@ void destroyMesh(Mesh* mesh)
     if (mesh->positions) free(mesh->positions);
     if (mesh->texcoords) free(mesh->texcoords);
     if (mesh->normals)   free(mesh->normals);
-    if (mesh->colors)    free(mesh->colors);
-    if (mesh->tangents)  free(mesh->tangents);
     if (mesh->joints)    free(mesh->joints);
     if (mesh->weights)   free(mesh->weights);
     if (mesh->indices)   free(mesh->indices);
