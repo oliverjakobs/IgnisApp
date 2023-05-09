@@ -127,6 +127,7 @@ void destroyModel(Model* model);
 
 
 int uploadMesh(Mesh* mesh);
-void renderModel(const Model* model, const Animation* animation, IgnisShader shader);
+void renderModel(const Model* model, IgnisShader shader);
+void renderModelAnimated(const Model* model, const Animation* animation, IgnisShader shader);
 
 #endif // !MODEL_H

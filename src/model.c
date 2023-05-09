@@ -141,11 +141,11 @@ int loadModelGLTF(Model* model, Animation* animation, const char* dir, const cha
         return IGNIS_FAILURE;
     }
 
-    loadSkinGLTF(model, &data->skins[0]);
-
     // animation
     if (data->skins_count == 1 && animation)
     {
+
+        loadSkinGLTF(model, &data->skins[0]);
         cgltf_skin skin = data->skins[0];
         MINIMAL_INFO("MODEL: Skin has %i joints", skin.joints_count);
         for (size_t i = 0; i < data->animations_count; ++i)
@@ -248,8 +248,28 @@ int uploadMesh(Mesh* mesh)
     return 0;
 }
 
-void renderModel(const Model* model, const Animation* animation, IgnisShader shader)
+void bindMaterial(IgnisShader shader, const Material* material)
 {
+    ignisBindTexture2D(&material->base_texture, 0);
+
+    ignisSetUniformi(shader, "baseTexture", 0);
+    ignisSetUniform3f(shader, "baseColor", 1, &material->color.r);
+}
+
+void renderMesh(const Mesh* mesh)
+{
+    ignisBindVertexArray(&mesh->vao);
+
+    if (mesh->vao.element_buffer.name)
+        glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, NULL);
+    else
+        glDrawArrays(GL_TRIANGLES, 0, mesh->vertex_count);
+}
+
+void renderModel(const Model* model, IgnisShader shader)
+{
+    ignisUseShader(shader);
+
     mat4 transform = mat4_identity();
     ignisSetUniformMat4(shader, "model", 1, transform.v[0]);
 
@@ -259,22 +279,32 @@ void renderModel(const Model* model, const Animation* animation, IgnisShader sha
         uint32_t material = model->mesh_materials[i];
 
         // bind material
-        IgnisTexture2D* texture = &model->materials[material].base_texture;
-        ignisBindTexture2D(texture, 0);
+        bindMaterial(shader, &model->materials[material]);
 
-        ignisSetUniformi(shader, "baseTexture", 0);
-        ignisSetUniform3f(shader, "baseColor", 1, &model->materials[material].color.r);
+        renderMesh(mesh);
+    }
+}
+
+void renderModelAnimated(const Model* model, const Animation* animation, IgnisShader shader)
+{
+    ignisUseShader(shader);
+
+    mat4 transform = mat4_identity();
+    ignisSetUniformMat4(shader, "model", 1, transform.v[0]);
+
+    for (size_t i = 0; i < model->mesh_count; ++i)
+    {
+        Mesh* mesh = &model->meshes[i];
+        uint32_t material = model->mesh_materials[i];
+
+        // bind material
+        bindMaterial(shader, &model->materials[material]);
 
         mat4 transforms[32] = { 0 };
         //getBindPose(model, transforms);
         getAnimationPose(model, animation, transforms);
         ignisSetUniformMat4(shader, "jointTransforms", animation->joint_count, transforms[0].v[0]);
 
-        ignisBindVertexArray(&mesh->vao);
-
-        if (mesh->vao.element_buffer.name)
-            glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, NULL);
-        else
-            glDrawArrays(GL_TRIANGLES, 0, mesh->vertex_count);
+        renderMesh(mesh);
     }
 }

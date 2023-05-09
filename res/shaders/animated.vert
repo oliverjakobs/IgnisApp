@@ -1,6 +1,6 @@
 #version 330 core
 
-const int MAX_JOINTS = 50;
+const int MAX_JOINTS = 32;
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexCoords;
@@ -15,7 +15,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 
-uniform mat4 jointTransforms[32];
+uniform mat4 jointTransforms[MAX_JOINTS];
 
 void main()
 {
