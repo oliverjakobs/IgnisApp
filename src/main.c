@@ -23,7 +23,7 @@ float camera_zoom = 4.0f;
 
 IgnisShader shader_model;
 IgnisShader shader_animated;
-Model robot = { 0 };
+Model model = { 0 };
 Animation animation = { 0 };
 
 int paused = 0;
@@ -76,22 +76,22 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
     shader_animated = ignisCreateShadervf("res/shaders/animated.vert", "res/shaders/model.frag");
 
     /* gltf model */
-    //loadModelGLTF(&robot, &animation, "res/models/", "Box.gltf");
-    //loadModelGLTF(&robot, &animation, "res/models/walking_robot", "scene.gltf");
-    //loadModelGLTF(&robot, &animation, "res/models/robot", "scene.gltf");
-    //loadModelGLTF(&robot, &animation, "res/models/", "RiggedSimple.gltf");
-    //loadModelGLTF(&robot, &animation, "res/models/", "RiggedFigure.gltf");
-    //loadModelGLTF(&robot, "res/models/", "BoxAnimated.gltf");
-    loadModelGLTF(&robot, NULL, "res/models/", "CesiumMilkTruck.gltf");
+    //loadModelGLTF(&model, &animation, "res/models/", "Box.gltf");
+    //loadModelGLTF(&model, &animation, "res/models/walking_robot", "scene.gltf");
+    //loadModelGLTF(&model, &animation, "res/models/robot", "scene.gltf");
+    //loadModelGLTF(&model, &animation, "res/models/", "RiggedSimple.gltf");
+    //loadModelGLTF(&model, &animation, "res/models/", "RiggedFigure.gltf");
+    //loadModelGLTF(&model, "res/models/", "BoxAnimated.gltf");
+    loadModelGLTF(&model, NULL, "res/models/", "CesiumMilkTruck.glb");
 
-    for (int i = 0; i < robot.mesh_count; i++) uploadMesh(&robot.meshes[i]);
+    for (int i = 0; i < model.mesh_count; i++) uploadMesh(&model.meshes[i]);
 
     return MINIMAL_OK;
 }
 
 void onDestroy(MinimalApp *app)
 {
-    destroyModel(&robot);
+    destroyModel(&model);
     destroyAnimation(&animation);
 
     ignisDeleteShader(shader_model);
@@ -149,36 +149,38 @@ void onUpdate(MinimalApp *app, float deltatime)
 
     vec3 eye = {
         sinf(camera_rotation) * camera_radius,
-        cosf(camera_rotation) * camera_radius,
         0.0f,
+        cosf(camera_rotation) * camera_radius,
     };
     vec3 look_at = { 0.0f, 0.0f, 0.0f };
-    vec3 up = { 0.0f, 0.0f, 1.0f };
+    vec3 up = { 0.0f, 1.0f, 0.0f };
     mat4 view = mat4_look_at(eye, look_at, up);
 
     glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_LINE : GL_FILL);
 
-    if (animation.joint_count)
+    if (animation.channel_count)
     {
         ignisSetUniformMat4(shader_animated, "proj", 1, proj.v[0]);
         ignisSetUniformMat4(shader_animated, "view", 1, view.v[0]);
-        renderModelAnimated(&robot, &animation, shader_animated);
+        renderModelAnimated(&model, &animation, shader_animated);
     }
     else
     {
         ignisSetUniformMat4(shader_model, "proj", 1, proj.v[0]);
         ignisSetUniformMat4(shader_model, "view", 1, view.v[0]);
-        renderModel(&robot, shader_model);
+        renderModel(&model, shader_model);
     }
 
     mat4 view_proj = mat4_multiply(proj, view);
     ignisPrimitivesRendererSetViewProjection(view_proj.v[0]);
 
-    for (int i = 0; i < robot.mesh_count; ++i)
+    /*
+    for (int i = 0; i < model.mesh_count; ++i)
     {
-        Mesh* mesh = &robot.meshes[i];
+        Mesh* mesh = &model.meshes[i];
         ignisPrimitives3DRenderBox(&mesh->min.x, &mesh->max.x, IGNIS_WHITE);
     }
+    */
 
     ignisPrimitivesRendererFlush();
 

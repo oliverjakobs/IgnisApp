@@ -10,43 +10,75 @@ int loadDefaultMaterial(Material* material)
     return IGNIS_SUCCESS;
 }
 
+static int loadTextureBase64(IgnisTexture2D* texture, char* buffer, size_t len)
+{
+    if (len % 4 != 0)
+    {
+        IGNIS_WARN("IMAGE: data is not a multiple of 4");
+        return IGNIS_FAILURE;
+    }
+
+    size_t output_len = (len / 4) * 3;
+    output_len -= (buffer[len - 1] == '=');
+    output_len -= (buffer[len - 2] == '=');
+
+    void* data = NULL;
+    cgltf_options options = { 0 };
+    if (cgltf_load_buffer_base64(&options, output_len, buffer, &data) != cgltf_result_success)
+    {
+        IGNIS_WARN("IMAGE: Failed to load base64 buffer");
+        return IGNIS_FAILURE;
+    }
+
+    int result = ignisCreateTexture2DSrc(texture, data, output_len, NULL);
+    free(data);
+    return result;
+}
+
 int loadTextureGLTF(IgnisTexture2D* texture, cgltf_texture* gltf_texture, const char* dir)
 {
-    if (!gltf_texture->image->uri) return IGNIS_FAILURE; // dont allow images provided as data buffer for now
-
-    char* uri = gltf_texture->image->uri;
-    size_t uri_len = cgltf_decode_uri(uri);
-    // Check if image is provided as base64 text data
-    if ((uri_len > 5) && (uri[0] == 'd') && (uri[1] == 'a') && (uri[2] == 't') && (uri[3] == 'a') && (uri[4] == ':'))
+    cgltf_image* image = gltf_texture->image;
+    if (image->uri)
     {
-        // Data URI Format: data:<mediatype>;base64,<data>
-
-        // Find the comma
-        int i = 0;
-        while ((uri[i] != ',') && (uri[i] != 0)) i++;
-
-        if (uri[i] == 0) IGNIS_WARN("IMAGE: glTF data URI is not a valid image");
-        else
+        char* uri = image->uri;
+        size_t uri_len = cgltf_decode_uri(uri);
+        // Check if image is provided as base64 text data
+        if ((uri_len > 5) && (uri[0] == 'd') && (uri[1] == 'a') && (uri[2] == 't') && (uri[3] == 'a') && (uri[4] == ':'))
         {
-            int base64Size = (int)strlen(uri + i + 1);
-            int outSize = 3 * (base64Size / 4) - 2;         // TODO: Consider padding (-numberOfPaddingCharacters)
-            void* data = NULL;
+            // Data URI Format: data:<mediatype>;base64,<data>
 
-            cgltf_options options = { 0 };
-            if (cgltf_load_buffer_base64(&options, outSize, uri + i + 1, &data) != cgltf_result_success)
+            // Find the comma
+            int i = 5;
+            while ((uri[i] != ',') && (uri[i] != '\0')) i++;
+
+            if (uri[i++] == '\0')
             {
-                IGNIS_WARN("IMAGE: Failed to load base64 buffer");
+                IGNIS_WARN("IMAGE: glTF data URI is not a valid image");
                 return IGNIS_FAILURE;
             }
-
-            int result = ignisCreateTexture2DSrc(texture, data, outSize, NULL);
-            free(data);
-            return result;
+            return loadTextureBase64(texture, uri + i, uri_len - i);
+        }
+        else     // Check if image is provided as image path
+        {
+            return ignisCreateTexture2D(texture, ignisTextFormat("%s/%s", dir, uri), NULL);
         }
     }
-    else     // Check if image is provided as image path
+    else if (image->buffer_view->buffer->data != NULL)
     {
-        return ignisCreateTexture2D(texture, ignisTextFormat("%s/%s", dir, uri), NULL);
+        uint8_t* data = malloc(image->buffer_view->size);
+        size_t offset = image->buffer_view->offset;
+        size_t stride = image->buffer_view->stride ? image->buffer_view->stride : 1;
+
+        // Copy buffer data to memory for loading
+        for (size_t i = 0; i < image->buffer_view->size; i++)
+        {
+            data[i] = ((uint8_t*)image->buffer_view->buffer->data)[offset];
+            offset += stride;
+        }
+
+        int result = ignisCreateTexture2DSrc(texture, data, image->buffer_view->size, NULL);
+        free(data);
+        return result;
     }
     return IGNIS_SUCCESS;
 }

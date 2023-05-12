@@ -48,6 +48,9 @@ typedef struct Mesh
     vec3 min;
     vec3 max;
 
+    uint32_t material;
+    mat4 transform;
+
     // Vertex attributes data
     float* positions;   // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
     float* texcoords;   // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
@@ -72,23 +75,17 @@ typedef struct AnimationChannel
     float* transforms;
 
     size_t frame_count;
-    size_t last_frame;
 } AnimationChannel;
 
 int  loadAnimationChannelGLTF(AnimationChannel* channel, cgltf_animation_sampler* sampler);
 void destroyAnimationChannel(AnimationChannel* channel);
 
-typedef struct JointAnimation
-{
-    AnimationChannel translation;
-    AnimationChannel rotation;
-    AnimationChannel scale;
-} JointAnimation;
-
 typedef struct Animation
 {
-    JointAnimation* joints;
-    size_t joint_count;
+    AnimationChannel* translations;
+    AnimationChannel* rotations;
+    AnimationChannel* scales;
+    size_t channel_count;
 
     float time;
     float duration;
@@ -106,11 +103,15 @@ void getBindPose(const Model* model, mat4* out);
 struct Model
 {
     Mesh* meshes;
-    uint32_t* mesh_materials;
     size_t mesh_count;
 
     Material* materials;
     size_t material_count;
+
+    // instances
+    uint32_t* instances;
+    mat4* transforms;
+    size_t instance_count;
 
     // skin
     uint32_t* joints;

@@ -17,6 +17,17 @@ static size_t getMaterialIndex(const cgltf_material* materials, size_t count, co
     return 0;
 }
 
+static size_t getMeshIndex(const cgltf_mesh* meshes, size_t count, const cgltf_mesh* mesh)
+{
+    size_t mesh_index = 0;
+    for (size_t i = 0; i < count; ++i)
+    {
+        if (&meshes[i] == mesh) return mesh_index;
+        mesh_index += meshes[i].primitives_count;
+    }
+    return 0;
+}
+
 size_t getJointIndex(const cgltf_node* target, const cgltf_skin* skin, size_t fallback)
 {
     for (size_t i = 0; i < skin->joints_count; ++i)
@@ -95,11 +106,17 @@ int loadModelGLTF(Model* model, Animation* animation, const char* dir, const cha
         return IGNIS_FAILURE;
     }
 
-    size_t primitivesCount = 0;
-    for (size_t i = 0; i < data->meshes_count; ++i) primitivesCount += data->meshes[i].primitives_count;
+    // count primitives
+    model->mesh_count = 0;
+    for (size_t i = 0; i < data->meshes_count; ++i)
+        model->mesh_count += data->meshes[i].primitives_count;
 
-    // Load our model data: meshes and materials
-    model->mesh_count = primitivesCount;
+    // count mesh instances
+    model->instance_count = 0;
+    for (size_t i = 0; i < data->nodes_count; ++i)
+        if (data->nodes[i].mesh) model->instance_count += data->nodes[i].mesh->primitives_count;
+
+    // allocate memory
     model->meshes = calloc(model->mesh_count, sizeof(Mesh));
 
     if (!model->meshes) return IGNIS_FAILURE;
@@ -109,48 +126,64 @@ int loadModelGLTF(Model* model, Animation* animation, const char* dir, const cha
 
     if (!model->materials) return IGNIS_FAILURE;
 
-    model->mesh_materials = calloc(model->mesh_count, sizeof(uint32_t));
+    model->instances = malloc(model->instance_count * sizeof(uint32_t));
+    model->transforms = malloc(model->instance_count * sizeof(mat4));
 
-    if (!model->mesh_materials) return IGNIS_FAILURE;
+    if (!model->instances || !model->transforms) return IGNIS_FAILURE;
 
-    // Load materials data
+    // Load materials
     for (size_t i = 0; i < data->materials_count; ++i)
     {
         loadMaterialGLTF(&model->materials[i], &data->materials[i], dir);
     }
 
-    // Load meshes data
-    for (size_t i = 0, meshIndex = 0; i < data->meshes_count; ++i)
+    // Load meshes
+    size_t mesh_index = 0;
+    for (size_t i = 0; i < data->meshes_count; ++i)
     {
         for (size_t p = 0; p < data->meshes[i].primitives_count; ++p)
         {
             cgltf_primitive* primitive = &data->meshes[i].primitives[p];
             if (primitive->type != cgltf_primitive_type_triangles) continue;
 
-            loadMeshGLTF(&model->meshes[meshIndex], primitive);
-            model->mesh_materials[meshIndex] = getMaterialIndex(data->materials, data->materials_count, primitive);
+            loadMeshGLTF(&model->meshes[mesh_index], primitive);
+            model->meshes[mesh_index].material = getMaterialIndex(data->materials, data->materials_count, primitive);
 
-            meshIndex++;
+            mesh_index++;
+        }
+    }
+
+    size_t instance_index = 0;
+    for (size_t i = 0; i < data->nodes_count; ++i)
+    {
+        cgltf_mesh* mesh = data->nodes[i].mesh;
+        if (!mesh) continue;
+
+        mat4 transform = mat4_identity();
+        cgltf_node_transform_world(&data->nodes[i], transform.v[0]);
+
+        size_t mesh_index = getMeshIndex(data->meshes, data->meshes_count, mesh);
+        for (size_t p = 0; p < mesh->primitives_count; ++p)
+        {
+            model->instances[instance_index] = mesh_index + p;
+            model->transforms[instance_index] = transform;
+            instance_index++;
         }
     }
 
     // Load skin
-    if (data->skins_count > 1)
+    if (data->skins_count == 1)
     {
-        IGNIS_ERROR("MODEL: can only load one skin (armature) per model, but gltf skins_count == %i", data->skins_count);
-        return IGNIS_FAILURE;
+        loadSkinGLTF(model, &data->skins[0]);
     }
 
     // animation
-    if (data->skins_count == 1 && animation)
+    if (animation)
     {
-
-        loadSkinGLTF(model, &data->skins[0]);
-        cgltf_skin skin = data->skins[0];
-        MINIMAL_INFO("MODEL: Skin has %i joints", skin.joints_count);
+        cgltf_skin* skin = &data->skins[0];
         for (size_t i = 0; i < data->animations_count; ++i)
         {
-            loadAnimationGLTF(animation, &data->animations[i], &skin);
+            loadAnimationGLTF(animation, &data->animations[i], skin);
         }
     }
 
@@ -167,7 +200,9 @@ void destroyModel(Model* model)
         destroyMesh(&model->meshes[i]);
 
     free(model->meshes);
-    free(model->mesh_materials);
+
+    free(model->instances);
+    free(model->transforms);
 
     destroySkin(model);
 
@@ -225,7 +260,7 @@ int uploadMesh(Mesh* mesh)
     }
     else
     {
-        GLushort value[4] = { 0 };
+        GLuint value[4] = { 0 };
         glVertexAttribI4uiv(3, value);
         glDisableVertexAttribArray(3);
     }
@@ -270,16 +305,15 @@ void renderModel(const Model* model, IgnisShader shader)
 {
     ignisUseShader(shader);
 
-    mat4 transform = mat4_identity();
-    ignisSetUniformMat4(shader, "model", 1, transform.v[0]);
-
-    for (size_t i = 0; i < model->mesh_count; ++i)
+    for (size_t i = 0; i < model->instance_count; ++i)
     {
-        Mesh* mesh = &model->meshes[i];
-        uint32_t material = model->mesh_materials[i];
+        Mesh* mesh = &model->meshes[model->instances[i]];
+
+        mat4 transform = model->transforms[i];
+        ignisSetUniformMat4(shader, "model", 1, transform.v[0]);
 
         // bind material
-        bindMaterial(shader, &model->materials[material]);
+        bindMaterial(shader, &model->materials[mesh->material]);
 
         renderMesh(mesh);
     }
@@ -289,21 +323,20 @@ void renderModelAnimated(const Model* model, const Animation* animation, IgnisSh
 {
     ignisUseShader(shader);
 
-    mat4 transform = mat4_identity();
-    ignisSetUniformMat4(shader, "model", 1, transform.v[0]);
-
-    for (size_t i = 0; i < model->mesh_count; ++i)
+    for (size_t i = 0; i < model->instance_count; ++i)
     {
-        Mesh* mesh = &model->meshes[i];
-        uint32_t material = model->mesh_materials[i];
+        Mesh* mesh = &model->meshes[model->instances[i]];
+
+        mat4 transform = model->transforms[i];
+        ignisSetUniformMat4(shader, "model", 1, transform.v[0]);
 
         // bind material
-        bindMaterial(shader, &model->materials[material]);
+        bindMaterial(shader, &model->materials[mesh->material]);
 
         mat4 transforms[32] = { 0 };
         //getBindPose(model, transforms);
         getAnimationPose(model, animation, transforms);
-        ignisSetUniformMat4(shader, "jointTransforms", animation->joint_count, transforms[0].v[0]);
+        ignisSetUniformMat4(shader, "jointTransforms", model->joint_count, transforms[0].v[0]);
 
         renderMesh(mesh);
     }
