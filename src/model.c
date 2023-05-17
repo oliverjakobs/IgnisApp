@@ -8,32 +8,30 @@
 // ----------------------------------------------------------------
 // utility
 // ----------------------------------------------------------------
-static size_t getMaterialIndex(const cgltf_material* materials, size_t count, const cgltf_primitive* primitive)
+static uint32_t getMaterialIndex(const cgltf_material* target, const cgltf_material* materials, size_t count)
 {
-    for (size_t i = 0; i < count; ++i)
-    {
-        if (primitive->material == &materials[i]) return i;
-    }
+    for (uint32_t i = 0; i < count; ++i)
+        if (target == &materials[i]) return i;
+
     return 0;
 }
 
-static size_t getMeshIndex(const cgltf_mesh* meshes, size_t count, const cgltf_mesh* mesh)
+size_t getMeshIndex(const cgltf_mesh* target, const cgltf_mesh* meshes, size_t count)
 {
     size_t mesh_index = 0;
     for (size_t i = 0; i < count; ++i)
     {
-        if (&meshes[i] == mesh) return mesh_index;
+        if (target == &meshes[i]) return mesh_index;
         mesh_index += meshes[i].primitives_count;
     }
     return 0;
 }
 
-size_t getJointIndex(const cgltf_node* target, const cgltf_skin* skin, size_t fallback)
+uint32_t getJointIndex(const cgltf_node* target, const cgltf_skin* skin, uint32_t fallback)
 {
-    for (size_t i = 0; i < skin->joints_count; ++i)
-    {
+    for (uint32_t i = 0; i < skin->joints_count; ++i)
         if (target == skin->joints[i]) return i;
-    }
+
     return fallback;
 }
 
@@ -55,8 +53,6 @@ int loadSkinGLTF(Model* model, cgltf_skin* skin)
         model->joints[i] = getJointIndex(node->parent, skin, 0);
         cgltf_node_transform_local(node, model->joint_locals[i].v[0]);
         cgltf_accessor_read_float(skin->inverse_bind_matrices, i, model->joint_inv_transforms[i].v[0], 16);
-
-        MINIMAL_INFO("MODEL: Joint (%i) %s; parent: %i", i, node->name, model->joints[i]);
     }
 
     return IGNIS_SUCCESS;
@@ -144,10 +140,8 @@ int loadModelGLTF(Model* model, Animation* animation, const char* dir, const cha
         for (size_t p = 0; p < data->meshes[i].primitives_count; ++p)
         {
             cgltf_primitive* primitive = &data->meshes[i].primitives[p];
-            if (primitive->type != cgltf_primitive_type_triangles) continue;
-
-            loadMeshGLTF(&model->meshes[mesh_index], primitive);
-            model->meshes[mesh_index].material = getMaterialIndex(data->materials, data->materials_count, primitive);
+            uint32_t material = getMaterialIndex(primitive->material, data->materials, data->materials_count);
+            loadMeshGLTF(&model->meshes[mesh_index], primitive, (uint32_t)i, material);
 
             mesh_index++;
         }
@@ -156,14 +150,14 @@ int loadModelGLTF(Model* model, Animation* animation, const char* dir, const cha
     size_t instance_index = 0;
     for (size_t i = 0; i < data->nodes_count; ++i)
     {
-        cgltf_mesh* mesh = data->nodes[i].mesh;
-        if (!mesh) continue;
+        cgltf_mesh* mesh_data = data->nodes[i].mesh;
+        if (!mesh_data) continue;
 
         mat4 transform = mat4_identity();
         cgltf_node_transform_world(&data->nodes[i], transform.v[0]);
 
-        size_t mesh_index = getMeshIndex(data->meshes, data->meshes_count, mesh);
-        for (size_t p = 0; p < mesh->primitives_count; ++p)
+        size_t mesh_index = getMeshIndex(mesh_data, data->meshes, data->meshes_count);
+        for (size_t p = 0; p < mesh_data->primitives_count; ++p)
         {
             model->instances[instance_index] = mesh_index + p;
             model->transforms[instance_index] = transform;
@@ -180,10 +174,9 @@ int loadModelGLTF(Model* model, Animation* animation, const char* dir, const cha
     // animation
     if (animation)
     {
-        cgltf_skin* skin = &data->skins[0];
         for (size_t i = 0; i < data->animations_count; ++i)
         {
-            loadAnimationGLTF(animation, &data->animations[i], skin);
+            loadAnimationGLTF(animation, &data->animations[i], data);
         }
     }
 
@@ -218,21 +211,21 @@ void destroyModel(Model* model)
 // ----------------------------------------------------------------
 int uploadMesh(Mesh* mesh)
 {
-    ignisGenerateVertexArray(&mesh->vao, 5);
+    ignisGenerateVertexArray(&mesh->vao, 6);
 
-    GLsizeiptr size2f = (GLsizeiptr)ignisGetOpenGLTypeSize(GL_FLOAT) * 2;
-    GLsizeiptr size3f = (GLsizeiptr)ignisGetOpenGLTypeSize(GL_FLOAT) * 3;
-    GLsizeiptr size4f = (GLsizeiptr)ignisGetOpenGLTypeSize(GL_FLOAT) * 4;
-    GLsizeiptr size4u = (GLsizeiptr)ignisGetOpenGLTypeSize(GL_UNSIGNED_INT) * 4;
+    size_t size2f = ignisGetTypeSize(IGNIS_FLOAT) * 2;
+    size_t size3f = ignisGetTypeSize(IGNIS_FLOAT) * 3;
+    size_t size4f = ignisGetTypeSize(IGNIS_FLOAT) * 4;
+    size_t size4u = ignisGetTypeSize(IGNIS_UINT32) * 4;
 
     // positions
-    ignisLoadArrayBuffer(&mesh->vao, 0, mesh->vertex_count * size3f, mesh->positions, GL_STATIC_DRAW);
-    ignisVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    ignisLoadArrayBuffer(&mesh->vao, 0, mesh->vertex_count * size3f, mesh->positions, IGNIS_STATIC_DRAW);
+    ignisVertexAttribPointer(0, 3, IGNIS_FLOAT, GL_FALSE, 0, 0);
 
     if (mesh->texcoords) // texcoords
     {
-        ignisLoadArrayBuffer(&mesh->vao, 1, mesh->vertex_count * size2f, mesh->texcoords, GL_STATIC_DRAW);
-        ignisVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        ignisLoadArrayBuffer(&mesh->vao, 1, mesh->vertex_count * size2f, mesh->texcoords, IGNIS_STATIC_DRAW);
+        ignisVertexAttribPointer(1, 2, IGNIS_FLOAT, GL_FALSE, 0, 0);
     }
     else
     {
@@ -243,8 +236,8 @@ int uploadMesh(Mesh* mesh)
 
     if (mesh->normals) // normals
     {
-        ignisLoadArrayBuffer(&mesh->vao, 2, mesh->vertex_count * size3f, mesh->normals, GL_STATIC_DRAW);
-        ignisVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        ignisLoadArrayBuffer(&mesh->vao, 2, mesh->vertex_count * size3f, mesh->normals, IGNIS_STATIC_DRAW);
+        ignisVertexAttribPointer(2, 3, IGNIS_FLOAT, GL_FALSE, 0, 0);
     }
     else
     {
@@ -255,8 +248,8 @@ int uploadMesh(Mesh* mesh)
 
     if (mesh->joints) // joints
     {
-        ignisLoadArrayBuffer(&mesh->vao, 3, mesh->vertex_count * size4u, mesh->joints, GL_STATIC_DRAW);
-        ignisVertexAttribIPointer(3, 4, GL_UNSIGNED_INT, 0, 0);
+        ignisLoadArrayBuffer(&mesh->vao, 3, mesh->vertex_count * size4u, mesh->joints, IGNIS_STATIC_DRAW);
+        ignisVertexAttribIPointer(3, 4, IGNIS_UINT32, 0, 0);
     }
     else
     {
@@ -267,8 +260,8 @@ int uploadMesh(Mesh* mesh)
 
     if (mesh->weights) // weights
     {
-        ignisLoadArrayBuffer(&mesh->vao, 4, mesh->vertex_count * size4f, mesh->weights, GL_STATIC_DRAW);
-        ignisVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        ignisLoadArrayBuffer(&mesh->vao, 4, mesh->vertex_count * size4f, mesh->weights, IGNIS_STATIC_DRAW);
+        ignisVertexAttribPointer(4, 4, IGNIS_FLOAT, GL_FALSE, 0, 0);
     }
     else
     {
@@ -278,7 +271,7 @@ int uploadMesh(Mesh* mesh)
     }
 
     if (mesh->indices)
-        ignisLoadElementBuffer(&mesh->vao, mesh->indices, mesh->element_count, GL_STATIC_DRAW);
+        ignisLoadElementBuffer(&mesh->vao, 5, mesh->indices, mesh->element_count, IGNIS_STATIC_DRAW);
 
     return 0;
 }
@@ -295,13 +288,13 @@ void renderMesh(const Mesh* mesh)
 {
     ignisBindVertexArray(&mesh->vao);
 
-    if (mesh->vao.element_buffer.name)
-        glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, NULL);
+    if (mesh->element_count)
+        glDrawElements(mesh->type, mesh->element_count, GL_UNSIGNED_INT, NULL);
     else
-        glDrawArrays(GL_TRIANGLES, 0, mesh->vertex_count);
+        glDrawArrays(mesh->type, 0, mesh->vertex_count);
 }
 
-void renderModel(const Model* model, IgnisShader shader)
+void renderModel(const Model* model, const Animation* animation, IgnisShader shader)
 {
     ignisUseShader(shader);
 
@@ -310,6 +303,8 @@ void renderModel(const Model* model, IgnisShader shader)
         Mesh* mesh = &model->meshes[model->instances[i]];
 
         mat4 transform = model->transforms[i];
+        if (getAnimationTransform(animation, mesh->group, &transform))
+            transform = mat4_multiply(model->transforms[i], transform);
         ignisSetUniformMat4(shader, "model", 1, transform.v[0]);
 
         // bind material
@@ -319,7 +314,7 @@ void renderModel(const Model* model, IgnisShader shader)
     }
 }
 
-void renderModelAnimated(const Model* model, const Animation* animation, IgnisShader shader)
+void renderModelSkinned(const Model* model, const Animation* animation, IgnisShader shader)
 {
     ignisUseShader(shader);
 
@@ -335,7 +330,7 @@ void renderModelAnimated(const Model* model, const Animation* animation, IgnisSh
 
         mat4 transforms[32] = { 0 };
         //getBindPose(model, transforms);
-        getAnimationPose(model, animation, transforms);
+        getAnimationJointTransforms(model, animation, transforms);
         ignisSetUniformMat4(shader, "jointTransforms", model->joint_count, transforms[0].v[0]);
 
         renderMesh(mesh);

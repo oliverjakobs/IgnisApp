@@ -10,7 +10,7 @@ int loadDefaultMaterial(Material* material)
     return IGNIS_SUCCESS;
 }
 
-static int loadTextureBase64(IgnisTexture2D* texture, char* buffer, size_t len)
+static int loadTextureBase64(IgnisTexture2D* texture, char* buffer, size_t len, IgnisTextureConfig* config)
 {
     if (len % 4 != 0)
     {
@@ -30,13 +30,23 @@ static int loadTextureBase64(IgnisTexture2D* texture, char* buffer, size_t len)
         return IGNIS_FAILURE;
     }
 
-    int result = ignisCreateTexture2DSrc(texture, data, output_len, NULL);
+    int result = ignisCreateTexture2DSrc(texture, data, output_len, config);
     free(data);
     return result;
 }
 
 int loadTextureGLTF(IgnisTexture2D* texture, cgltf_texture* gltf_texture, const char* dir)
 {
+    // load texture config
+    IgnisTextureConfig config = IGNIS_DEFAULT_CONFIG;
+    if (gltf_texture->sampler)
+    {
+        config.min_filter = gltf_texture->sampler->min_filter;
+        config.mag_filter = gltf_texture->sampler->mag_filter;
+        config.wrap_s = gltf_texture->sampler->wrap_s;
+        config.wrap_t = gltf_texture->sampler->wrap_t;
+    }
+
     cgltf_image* image = gltf_texture->image;
     if (image->uri)
     {
@@ -56,11 +66,11 @@ int loadTextureGLTF(IgnisTexture2D* texture, cgltf_texture* gltf_texture, const 
                 IGNIS_WARN("IMAGE: glTF data URI is not a valid image");
                 return IGNIS_FAILURE;
             }
-            return loadTextureBase64(texture, uri + i, uri_len - i);
+            return loadTextureBase64(texture, uri + i, uri_len - i, &config);
         }
         else     // Check if image is provided as image path
         {
-            return ignisCreateTexture2D(texture, ignisTextFormat("%s/%s", dir, uri), NULL);
+            return ignisCreateTexture2D(texture, ignisTextFormat("%s/%s", dir, uri), &config);
         }
     }
     else if (image->buffer_view->buffer->data != NULL)
@@ -76,7 +86,7 @@ int loadTextureGLTF(IgnisTexture2D* texture, cgltf_texture* gltf_texture, const 
             offset += stride;
         }
 
-        int result = ignisCreateTexture2DSrc(texture, data, image->buffer_view->size, NULL);
+        int result = ignisCreateTexture2DSrc(texture, data, image->buffer_view->size, &config);
         free(data);
         return result;
     }

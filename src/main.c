@@ -22,7 +22,7 @@ float camera_speed = 1.0f;
 float camera_zoom = 4.0f;
 
 IgnisShader shader_model;
-IgnisShader shader_animated;
+IgnisShader shader_skinned;
 Model model = { 0 };
 Animation animation = { 0 };
 
@@ -73,16 +73,16 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 
     /* shader */
     shader_model = ignisCreateShadervf("res/shaders/model.vert", "res/shaders/model.frag");
-    shader_animated = ignisCreateShadervf("res/shaders/animated.vert", "res/shaders/model.frag");
+    shader_skinned = ignisCreateShadervf("res/shaders/skinned.vert", "res/shaders/model.frag");
 
     /* gltf model */
     //loadModelGLTF(&model, &animation, "res/models/", "Box.gltf");
-    //loadModelGLTF(&model, &animation, "res/models/walking_robot", "scene.gltf");
+    loadModelGLTF(&model, &animation, "res/models/walking_robot", "scene.gltf");
     //loadModelGLTF(&model, &animation, "res/models/robot", "scene.gltf");
     //loadModelGLTF(&model, &animation, "res/models/", "RiggedSimple.gltf");
     //loadModelGLTF(&model, &animation, "res/models/", "RiggedFigure.gltf");
-    //loadModelGLTF(&model, "res/models/", "BoxAnimated.gltf");
-    loadModelGLTF(&model, NULL, "res/models/", "CesiumMilkTruck.glb");
+    //loadModelGLTF(&model, &animation, "res/models/", "BoxAnimated.gltf");
+    //loadModelGLTF(&model, &animation, "res/models/", "CesiumMilkTruck.gltf");
 
     for (int i = 0; i < model.mesh_count; i++) uploadMesh(&model.meshes[i]);
 
@@ -95,7 +95,7 @@ void onDestroy(MinimalApp *app)
     destroyAnimation(&animation);
 
     ignisDeleteShader(shader_model);
-    ignisDeleteShader(shader_animated);
+    ignisDeleteShader(shader_skinned);
     
     ignisDeleteFont(&font);
 
@@ -105,7 +105,7 @@ void onDestroy(MinimalApp *app)
     ignisDestroy();
 }
 
-int onEvent(MinimalApp *app, const MinimalEvent* e)
+int onEvent(MinimalApp *app, const MinimalEvent *e)
 {
     float w, h;
     if (minimalEventWindowSize(e, &w, &h))
@@ -158,17 +158,17 @@ void onUpdate(MinimalApp *app, float deltatime)
 
     glPolygonMode(GL_FRONT_AND_BACK, poly_mode ? GL_LINE : GL_FILL);
 
-    if (animation.channel_count)
+    if (model.joint_count)
     {
-        ignisSetUniformMat4(shader_animated, "proj", 1, proj.v[0]);
-        ignisSetUniformMat4(shader_animated, "view", 1, view.v[0]);
-        renderModelAnimated(&model, &animation, shader_animated);
+        ignisSetUniformMat4(shader_skinned, "proj", 1, proj.v[0]);
+        ignisSetUniformMat4(shader_skinned, "view", 1, view.v[0]);
+        renderModelSkinned(&model, &animation, shader_skinned);
     }
     else
     {
         ignisSetUniformMat4(shader_model, "proj", 1, proj.v[0]);
         ignisSetUniformMat4(shader_model, "view", 1, view.v[0]);
-        renderModel(&model, shader_model);
+        renderModel(&model, &animation, shader_model);
     }
 
     mat4 view_proj = mat4_multiply(proj, view);

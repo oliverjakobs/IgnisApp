@@ -12,7 +12,8 @@ typedef struct Model Model;
 // ----------------------------------------------------------------
 // utility
 // ----------------------------------------------------------------
-size_t getJointIndex(const cgltf_node* target, const cgltf_skin* skin, size_t fallback);
+size_t getMeshIndex(const cgltf_mesh* target, const cgltf_mesh* meshes, size_t count);
+uint32_t getJointIndex(const cgltf_node* target, const cgltf_skin* skin, uint32_t fallback);
 
 // ----------------------------------------------------------------
 // material
@@ -48,8 +49,9 @@ typedef struct Mesh
     vec3 min;
     vec3 max;
 
+    IgnisPrimitiveType type;
     uint32_t material;
-    mat4 transform;
+    uint32_t group;
 
     // Vertex attributes data
     float* positions;   // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
@@ -63,7 +65,7 @@ typedef struct Mesh
     uint32_t* indices;  // Vertex indices (in case vertex data comes indexed)
 } Mesh;
 
-int  loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive);
+int  loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive, uint32_t group, uint32_t material);
 void destroyMesh(Mesh* mesh);
 
 // ----------------------------------------------------------------
@@ -91,10 +93,11 @@ typedef struct Animation
     float duration;
 } Animation;
 
-int  loadAnimationGLTF(Animation* animation, cgltf_animation* gltf_animation, cgltf_skin* skin);
+int  loadAnimationGLTF(Animation* animation, cgltf_animation* gltf_animation, const cgltf_data* data);
 void destroyAnimation(Animation* animation);
 
-void getAnimationPose(const Model* model, const Animation* animation, mat4* out);
+int  getAnimationTransform(const Animation* animation, size_t index, mat4* transform);
+void getAnimationJointTransforms(const Model* model, const Animation* animation, mat4* transforms);
 void getBindPose(const Model* model, mat4* out);
 
 // ----------------------------------------------------------------
@@ -128,7 +131,7 @@ void destroyModel(Model* model);
 
 
 int uploadMesh(Mesh* mesh);
-void renderModel(const Model* model, IgnisShader shader);
-void renderModelAnimated(const Model* model, const Animation* animation, IgnisShader shader);
+void renderModel(const Model* model, const Animation* animation, IgnisShader shader);
+void renderModelSkinned(const Model* model, const Animation* animation, IgnisShader shader);
 
 #endif // !MODEL_H

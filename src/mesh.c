@@ -1,8 +1,14 @@
 #include "model.h"
 
-
-int loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive)
+int  loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive, uint32_t group, uint32_t material)
 {
+    mesh->type = (IgnisPrimitiveType)primitive->type;
+    mesh->material = material;
+    mesh->group = group;
+
+    mesh->vertex_count = 0;
+    mesh->element_count = 0;
+
     for (size_t i = 0; i < primitive->attributes_count; ++i)
     {
         cgltf_accessor* accessor = primitive->attributes[i].data;
@@ -64,7 +70,7 @@ int loadMeshGLTF(Mesh* mesh, const cgltf_primitive* primitive)
     {
         cgltf_accessor* accessor = primitive->indices;
 
-        mesh->element_count = (uint32_t)accessor->count;
+        mesh->element_count = accessor->count;
         mesh->indices = malloc(accessor->count * sizeof(uint32_t));
 
         for (size_t i = 0; i < accessor->count; ++i)
