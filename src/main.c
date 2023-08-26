@@ -6,7 +6,7 @@
 
 #include "model.h"
 
-static void ignisErrorCallback(ignisErrorLevel level, const char *desc);
+static void ignisLogCallback(ignisLogLevel level, const char *desc);
 static void printVersionInfo();
 
 IgnisFont font;
@@ -23,10 +23,53 @@ float camera_zoom = 4.0f;
 
 IgnisShader shader_model;
 IgnisShader shader_skinned;
+
 Model model = { 0 };
-Animation animation = { 0 };
+Animation* animations = NULL;
+size_t animation_count = 0;
+size_t animation_index = 0;
 
 int paused = 0;
+
+void loadGLTF(const char* dir, const char* filename)
+{
+    size_t size = 0;
+    const char* path = ignisTextFormat("%s/%s", dir, filename);
+    char* filedata = ignisReadFile(path, &size);
+
+    if (!filedata) return;
+
+    cgltf_options options = { 0 };
+    cgltf_data* data = NULL;
+    cgltf_result result = cgltf_parse(&options, filedata, size, &data);
+    if (result != cgltf_result_success)
+    {
+        IGNIS_ERROR("MODEL: [%s] Failed to load glTF data", path);
+        free(filedata);
+        return;
+    }
+
+    MINIMAL_INFO("    > Meshes count: %i", data->meshes_count);
+    MINIMAL_INFO("    > Materials count: %i", data->materials_count);
+    MINIMAL_INFO("    > Buffers count: %i", data->buffers_count);
+    MINIMAL_INFO("    > Images count: %i", data->images_count);
+    MINIMAL_INFO("    > Textures count: %i", data->textures_count);
+
+    result = cgltf_load_buffers(&options, data, path);
+    if (result != cgltf_result_success)
+    {
+        IGNIS_ERROR("MODEL: [%s] Failed to load mesh/material buffers", path);
+        cgltf_free(data);
+        free(filedata);
+        return IGNIS_FAILURE;
+    }
+
+    loadModelGLTF(&model, data, dir);
+    animations = loadAnimationsGLTF(data, &animation_count);
+
+    cgltf_free(data);
+    free(filedata);
+}
 
 static void setViewport(float w, float h)
 {
@@ -40,7 +83,7 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 {
     /* ingis initialization */
     // ignisSetAllocator(FrostMemoryGetAllocator(), tb_mem_malloc, tb_mem_realloc, tb_mem_free);
-    ignisSetErrorCallback(ignisErrorCallback);
+    ignisSetLogCallback(ignisLogCallback);
 
 #ifdef _DEBUG
     int debug = 1;
@@ -57,7 +100,7 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 
     printVersionInfo();
 
-    ignisEnableBlend(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    ignisEnableBlend(IGNIS_SRC_ALPHA, IGNIS_ONE_MINUS_SRC_ALPHA);
     ignisSetClearColor(IGNIS_DARK_GREY);
 
     glEnable(GL_DEPTH_TEST);
@@ -77,12 +120,13 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 
     /* gltf model */
     //loadModelGLTF(&model, &animation, "res/models/", "Box.gltf");
-    loadModelGLTF(&model, &animation, "res/models/walking_robot", "scene.gltf");
+    //loadModelGLTF(&model, &animation, "res/models/walking_robot", "scene.gltf");
     //loadModelGLTF(&model, &animation, "res/models/robot", "scene.gltf");
     //loadModelGLTF(&model, &animation, "res/models/", "RiggedSimple.gltf");
     //loadModelGLTF(&model, &animation, "res/models/", "RiggedFigure.gltf");
     //loadModelGLTF(&model, &animation, "res/models/", "BoxAnimated.gltf");
     //loadModelGLTF(&model, &animation, "res/models/", "CesiumMilkTruck.gltf");
+    loadGLTF("res/models/", "Fox.glb");
 
     for (int i = 0; i < model.mesh_count; i++) uploadMesh(&model.meshes[i]);
 
@@ -92,7 +136,8 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 void onDestroy(MinimalApp *app)
 {
     destroyModel(&model);
-    destroyAnimation(&animation);
+    for (size_t i = 0; i < animation_count; ++i)
+        destroyAnimation(&animations[i]);
 
     ignisDeleteShader(shader_model);
     ignisDeleteShader(shader_skinned);
@@ -122,6 +167,11 @@ int onEvent(MinimalApp *app, const MinimalEvent *e)
     case GLFW_KEY_F9:       view_mode = !view_mode; break;
     case GLFW_KEY_F10:      poly_mode = !poly_mode; break;
     case GLFW_KEY_SPACE:    paused = !paused; break;
+
+    case GLFW_KEY_1: if (animation_count >= 0) animation_index = 0; break;
+    case GLFW_KEY_2: if (animation_count >= 1) animation_index = 1; break;
+    case GLFW_KEY_3: if (animation_count >= 2) animation_index = 2; break;
+    case GLFW_KEY_4: if (animation_count >= 3) animation_index = 3; break;
     }
 
     return MINIMAL_OK;
@@ -139,8 +189,7 @@ void onUpdate(MinimalApp *app, float deltatime)
 
     if (!paused)
     {
-        animation.time += deltatime;
-        animation.time = fmodf(animation.time, animation.duration);
+        tickAnimation(&animations[animation_index], deltatime);
     }
 
     //mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
@@ -162,13 +211,13 @@ void onUpdate(MinimalApp *app, float deltatime)
     {
         ignisSetUniformMat4(shader_skinned, "proj", 1, proj.v[0]);
         ignisSetUniformMat4(shader_skinned, "view", 1, view.v[0]);
-        renderModelSkinned(&model, &animation, shader_skinned);
+        renderModelSkinned(&model, &animations[animation_index], shader_skinned);
     }
     else
     {
         ignisSetUniformMat4(shader_model, "proj", 1, proj.v[0]);
         ignisSetUniformMat4(shader_model, "view", 1, view.v[0]);
-        renderModel(&model, &animation, shader_model);
+        renderModel(&model, &animations[animation_index], shader_model);
     }
 
     mat4 view_proj = mat4_multiply(proj, view);
@@ -205,8 +254,9 @@ void onUpdate(MinimalApp *app, float deltatime)
 
     ignisFontRendererTextFieldBegin(8.0f, 30.0f, 6.0f);
 
-    ignisFontRendererTextFieldLine("Animation Duration: %4.2f", animation.duration);
-    ignisFontRendererTextFieldLine("Animation Time:     %4.2f", animation.time);
+    ignisFontRendererTextFieldLine("Current animation   %d",    animation_index);
+    ignisFontRendererTextFieldLine("Animation Duration: %4.2f", animations[animation_index].duration);
+    ignisFontRendererTextFieldLine("Animation Time:     %4.2f", animations[animation_index].time);
 
     ignisFontRendererFlush();
 }
@@ -228,13 +278,15 @@ int main()
     return 0;
 }
 
-void ignisErrorCallback(ignisErrorLevel level, const char *desc)
+void ignisLogCallback(ignisLogLevel level, const char *desc)
 {
     switch (level)
     {
-    case IGNIS_LVL_WARN:     MINIMAL_WARN("%s", desc); break;
-    case IGNIS_LVL_ERROR:    MINIMAL_ERROR("%s", desc); break;
-    case IGNIS_LVL_CRITICAL: MINIMAL_CRITICAL("%s", desc); break;
+    case IGNIS_LOG_TRACE:    MINIMAL_TRACE("%s", desc); break;
+    case IGNIS_LOC_INFO:     MINIMAL_INFO("%s", desc); break;
+    case IGNIS_LOG_WARN:     MINIMAL_WARN("%s", desc); break;
+    case IGNIS_LOG_ERROR:    MINIMAL_ERROR("%s", desc); break;
+    case IGNIS_LOG_CRITICAL: MINIMAL_CRITICAL("%s", desc); break;
     }
 }
 

@@ -42,6 +42,7 @@ void destroyMaterial(Material* material);
 typedef struct Mesh
 {
     IgnisVertexArray vao;
+    IgnisPrimitiveType type;
 
     size_t vertex_count;
     size_t element_count;
@@ -49,7 +50,6 @@ typedef struct Mesh
     vec3 min;
     vec3 max;
 
-    IgnisPrimitiveType type;
     uint32_t material;
     uint32_t group;
 
@@ -96,9 +96,14 @@ typedef struct Animation
 int  loadAnimationGLTF(Animation* animation, cgltf_animation* gltf_animation, const cgltf_data* data);
 void destroyAnimation(Animation* animation);
 
+Animation* loadAnimationsGLTF(cgltf_data* data, size_t* count);
+
 int  getAnimationTransform(const Animation* animation, size_t index, mat4* transform);
 void getAnimationJointTransforms(const Model* model, const Animation* animation, mat4* transforms);
 void getBindPose(const Model* model, mat4* out);
+
+void resetAnimation(Animation* animation);
+void tickAnimation(Animation* animation, float deltatime);
 
 // ----------------------------------------------------------------
 // model + skin
@@ -126,7 +131,7 @@ struct Model
 int  loadSkinGLTF(Model* model, cgltf_skin* skin);
 void destroySkin(Model* model);
 
-int  loadModelGLTF(Model* model, Animation* animation, const char* dir, const char* filename);
+int  loadModelGLTF(Model* model, cgltf_data* data, const char* dir);
 void destroyModel(Model* model);
 
 

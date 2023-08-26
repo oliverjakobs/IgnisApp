@@ -118,9 +118,13 @@ void destroyAnimation(Animation* animation)
     free(animation->scales);
 }
 
-size_t getChannelKeyFrame(AnimationChannel* channel, float time)
+int getChannelKeyFrame(AnimationChannel* channel, float time)
 {
     if (!channel->times) return 0;
+
+    if (channel->times[0] > time) return -1;
+    if (channel->times[channel->frame_count - 1] < time) return channel->frame_count - 1;
+
     for (size_t i = 0; i < channel->frame_count - 1; ++i)
     {
         if ((channel->times[i] <= time) && (time < channel->times[i + 1]))
@@ -133,13 +137,14 @@ float getChannelTransform(AnimationChannel* channel, float time, uint8_t comps, 
 {
     if (!channel->transforms) return 0.0f;
 
-    size_t frame = getChannelKeyFrame(channel, time);
+    int frame = getChannelKeyFrame(channel, time);
 
-    size_t offset = frame * comps;
+    size_t offset = frame < 0 ? 0 : frame * comps;
     for (uint8_t i = 0; i < comps; ++i)
         t0[i] = channel->transforms[offset + i];
 
-    if (channel->frame_count <= 1 || !channel->times) return 0.0f;
+    if (channel->frame_count <= 1 || !channel->times || frame < 0 || frame >= channel->frame_count - 1)
+        return 0.0f;
 
     offset += comps;
     for (uint8_t i = 0; i < comps; ++i)
@@ -209,4 +214,15 @@ void getBindPose(const Model* model, mat4* out)
     {
         out[i] = mat4_multiply(out[i], model->joint_inv_transforms[i]);
     }
+}
+
+void resetAnimation(Animation* animation)
+{
+    animation->time = 0.0f;
+}
+
+void tickAnimation(Animation* animation, float deltatime)
+{
+    animation->time += deltatime;
+    animation->time = fmodf(animation->time, animation->duration);
 }

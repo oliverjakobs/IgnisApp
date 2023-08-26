@@ -68,39 +68,8 @@ void destroySkin(Model* model)
 // ----------------------------------------------------------------
 // model
 // ----------------------------------------------------------------
-int loadModelGLTF(Model* model, Animation* animation, const char* dir, const char* filename)
+int loadModelGLTF(Model* model, cgltf_data* data, const char* dir)
 {
-    size_t size = 0;
-    const char* path = ignisTextFormat("%s/%s", dir, filename);
-    char* filedata = ignisReadFile(path, &size);
-
-    if (!filedata) return IGNIS_FAILURE;
-
-    cgltf_options options = { 0 };
-    cgltf_data* data = NULL;
-    cgltf_result result = cgltf_parse(&options, filedata, size, &data);
-    if (result != cgltf_result_success)
-    {
-        IGNIS_ERROR("MODEL: [%s] Failed to load glTF data", path);
-        return IGNIS_FAILURE;
-    }
-
-    if (data->file_type == cgltf_file_type_glb)       MINIMAL_INFO("MODEL: [%s] Model basic data (glb) loaded successfully", filename);
-    else if (data->file_type == cgltf_file_type_gltf) MINIMAL_INFO("MODEL: [%s] Model basic data (glTF) loaded successfully", filename);
-    else IGNIS_WARN("MODEL: [%s] Model format not recognized", path);
-
-    MINIMAL_INFO("    > Meshes count: %i", data->meshes_count);
-    MINIMAL_INFO("    > Materials count: %i", data->materials_count);
-    MINIMAL_INFO("    > Buffers count: %i", data->buffers_count);
-    MINIMAL_INFO("    > Images count: %i", data->images_count);
-    MINIMAL_INFO("    > Textures count: %i", data->textures_count);
-
-    result = cgltf_load_buffers(&options, data, path);
-    if (result != cgltf_result_success)
-    {
-        IGNIS_ERROR("MODEL: [%s] Failed to load mesh/material buffers", path);
-        return IGNIS_FAILURE;
-    }
 
     // count primitives
     model->mesh_count = 0;
@@ -171,19 +140,7 @@ int loadModelGLTF(Model* model, Animation* animation, const char* dir, const cha
         loadSkinGLTF(model, &data->skins[0]);
     }
 
-    // animation
-    if (animation)
-    {
-        for (size_t i = 0; i < data->animations_count; ++i)
-        {
-            loadAnimationGLTF(animation, &data->animations[i], data);
-        }
-    }
-
     MINIMAL_INFO("Model loaded");
-    cgltf_free(data);
-    free(filedata);
-
     return IGNIS_SUCCESS;
 }
 
@@ -205,6 +162,23 @@ void destroyModel(Model* model)
     free(model->materials);
 }
 
+Animation* loadAnimationsGLTF(cgltf_data* data, size_t* count)
+{
+    if (!data->animations_count) return NULL;
+
+    Animation* animations = malloc(data->animations_count * sizeof(Animation));
+
+    if (!animations) return NULL;
+
+    *count = data->animations_count;
+
+    for (size_t i = 0; i < data->animations_count; ++i)
+    {
+        loadAnimationGLTF(&animations[i], &data->animations[i], data);
+    }
+
+    return animations;
+}
 
 // ----------------------------------------------------------------
 // openGL stuff
@@ -325,13 +299,13 @@ void renderModelSkinned(const Model* model, const Animation* animation, IgnisSha
         mat4 transform = model->transforms[i];
         ignisSetUniformMat4(shader, "model", 1, transform.v[0]);
 
-        // bind material
-        bindMaterial(shader, &model->materials[mesh->material]);
-
         mat4 transforms[32] = { 0 };
         //getBindPose(model, transforms);
         getAnimationJointTransforms(model, animation, transforms);
         ignisSetUniformMat4(shader, "jointTransforms", model->joint_count, transforms[0].v[0]);
+
+        // bind material
+        bindMaterial(shader, &model->materials[mesh->material]);
 
         renderMesh(mesh);
     }
