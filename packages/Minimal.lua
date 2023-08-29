@@ -14,7 +14,6 @@ project "Minimal"
     includedirs
     {
         "Minimal/src",
-        "glfw/include",
     }
 
     filter "system:windows"

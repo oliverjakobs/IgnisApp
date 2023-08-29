@@ -47,3 +47,14 @@ vec3 vec3_negate(vec3 v)
 {
     return (vec3) { -v.x, -v.y, -v.z };
 }
+
+vec3 vec3_lerp(vec3 v0, vec3 v1, float value)
+{
+    vec3 result = { 0 };
+
+    result.x = v0.x + value * (v1.x - v0.x);
+    result.y = v0.y + value * (v1.y - v0.y);
+    result.z = v0.z + value * (v1.z - v0.z);
+
+    return result;
+}

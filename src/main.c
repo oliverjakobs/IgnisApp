@@ -4,7 +4,7 @@
 
 #include "math/math.h"
 
-static void ignisErrorCallback(ignisErrorLevel level, const char *desc);
+static void ignisLogCallback(IgnisLogLevel level, const char *desc);
 static void printVersionInfo();
 
 IgnisFont font;
@@ -31,6 +31,7 @@ const GLuint indices[] = {
     0, 1, 5, 5, 4, 0,
     3, 2, 6, 6, 7, 3
 };
+size_t element_count = 36;
 
 IgnisShader shader;
 IgnisVertexArray vao;
@@ -46,7 +47,7 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 {
     /* ingis initialization */
     // ignisSetAllocator(FrostMemoryGetAllocator(), tb_mem_malloc, tb_mem_realloc, tb_mem_free);
-    ignisSetErrorCallback(ignisErrorCallback);
+    ignisSetLogCallback(ignisLogCallback);
 
 #ifdef _DEBUG
     int debug = 1;
@@ -74,17 +75,19 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
     setViewport((float)w, (float)h);
 
     /* cube */
-    ignisGenerateVertexArray(&vao);
+    ignisGenerateVertexArray(&vao, 2);
+
+    ignisLoadArrayBuffer(&vao, 0, sizeof(vertices), vertices, IGNIS_STATIC_DRAW);
+    ignisLoadElementBuffer(&vao, 1, indices, element_count, IGNIS_STATIC_DRAW);
 
     IgnisBufferElement layout[] = {
         { GL_FLOAT, 3, GL_FALSE }
     };
-    ignisAddArrayBufferLayout(&vao, sizeof(vertices), vertices, GL_STATIC_DRAW, 0, layout, 1);
-    ignisLoadElementBuffer(&vao, indices, 36, GL_STATIC_DRAW);
+    ignisSetVertexLayout(&vao, 0, layout, 1);
 
 
     /* shader */
-    ignisCreateShadervf(&shader, "res/shaders/shader.vert", "res/shaders/shader.frag");
+    shader = ignisCreateShadervf("res/shaders/shader.vert", "res/shaders/shader.frag");
 
     printVersionInfo();
 
@@ -94,8 +97,8 @@ int onLoad(MinimalApp *app, uint32_t w, uint32_t h)
 void onDestroy(MinimalApp *app)
 {
     ignisDeleteVertexArray(&vao);
-    ignisDeleteShader(&shader);
-    
+    ignisDeleteShader(shader);
+
     ignisDeleteFont(&font);
 
     ignisFontRendererDestroy();
@@ -112,9 +115,9 @@ int onEvent(MinimalApp *app, const MinimalEvent* e)
 
     switch (minimalEventKeyPressed(e))
     {
-    case GLFW_KEY_ESCAPE:    minimalClose(app); break;
-    case GLFW_KEY_F6:        minimalToggleVsync(app); break;
-    case GLFW_KEY_F7:        minimalToggleDebug(app); break;
+    case MINIMAL_KEY_ESCAPE:    minimalClose(app); break;
+    case MINIMAL_KEY_F6:        minimalToggleVsync(app); break;
+    case MINIMAL_KEY_F7:        minimalToggleDebug(app); break;
     }
 
     return MINIMAL_OK;
@@ -128,20 +131,20 @@ void onUpdate(MinimalApp *app, float deltatime)
     vec3 camera_pos = (vec3){ 0.0f, 0.0f, 3.0f };
 
     // create transformations
-    mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)glfwGetTime());
+    mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)app->timer.lastframe);
     mat4 view = mat4_translation(vec3_negate(camera_pos));
     mat4 proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 
-    ignisSetUniform3f(&shader, "lightPos", &camera_pos.x);
+    ignisSetUniform3f(shader, "lightPos", 1, &camera_pos.x);
 
-    ignisSetUniformMat4(&shader, "proj", proj.v[0]);
-    ignisSetUniformMat4(&shader, "view", view.v[0]);
-    ignisSetUniformMat4(&shader, "model", model.v[0]);
+    ignisSetUniformMat4(shader, "proj", 1, proj.v[0]);
+    ignisSetUniformMat4(shader, "view", 1, view.v[0]);
+    ignisSetUniformMat4(shader, "model", 1, model.v[0]);
 
-    ignisUseShader(&shader);
+    ignisUseShader(shader);
 
     ignisBindVertexArray(&vao);
-    glDrawElements(GL_TRIANGLES, vao.element_count, GL_UNSIGNED_INT, NULL);
+    glDrawElements(GL_TRIANGLES, (GLsizei)element_count, GL_UNSIGNED_INT, NULL);
 
     // render debug info
     ignisFontRendererSetProjection(screen_projection.v[0]);
@@ -178,22 +181,24 @@ int main()
     return 0;
 }
 
-void ignisErrorCallback(ignisErrorLevel level, const char *desc)
+void ignisLogCallback(IgnisLogLevel level, const char* desc)
 {
     switch (level)
     {
-    case IGNIS_LVL_WARN:     MINIMAL_WARN("%s", desc); break;
-    case IGNIS_LVL_ERROR:    MINIMAL_ERROR("%s", desc); break;
-    case IGNIS_LVL_CRITICAL: MINIMAL_CRITICAL("%s", desc); break;
+    case IGNIS_LOG_TRACE:    MINIMAL_TRACE("%s", desc); break;
+    case IGNIS_LOC_INFO:     MINIMAL_INFO("%s", desc); break;
+    case IGNIS_LOG_WARN:     MINIMAL_WARN("%s", desc); break;
+    case IGNIS_LOG_ERROR:    MINIMAL_ERROR("%s", desc); break;
+    case IGNIS_LOG_CRITICAL: MINIMAL_CRITICAL("%s", desc); break;
     }
 }
 
 void printVersionInfo()
 {
-    MINIMAL_INFO("[GLFW]   Version:      %s", glfwGetVersionString());
-    MINIMAL_INFO("[OpenGL] Version:      %s", ignisGetGLVersion());
-    MINIMAL_INFO("[OpenGL] Vendor:       %s", ignisGetGLVendor());
-    MINIMAL_INFO("[OpenGL] Renderer:     %s", ignisGetGLRenderer());
-    MINIMAL_INFO("[OpenGL] GLSL Version: %s", ignisGetGLSLVersion());
-    MINIMAL_INFO("[Ignis]  Version:      %s", ignisGetVersionString());
+    MINIMAL_INFO("[OpenGL]  Version:      %s", ignisGetGLVersion());
+    MINIMAL_INFO("[OpenGL]  Vendor:       %s", ignisGetGLVendor());
+    MINIMAL_INFO("[OpenGL]  Renderer:     %s", ignisGetGLRenderer());
+    MINIMAL_INFO("[OpenGL]  GLSL Version: %s", ignisGetGLSLVersion());
+    MINIMAL_INFO("[Ignis]   Version:      %s", ignisGetVersionString());
+    MINIMAL_INFO("[Minimal] Version:      %s", minimalGetVersionString());
 }

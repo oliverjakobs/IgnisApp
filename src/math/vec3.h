@@ -19,4 +19,6 @@ float vec3_dot(vec3 left, vec3 right);
 
 vec3 vec3_negate(vec3 v);
 
+vec3 vec3_lerp(vec3 v0, vec3 v1, float value);
+
 #endif /* !VEC3_H */
