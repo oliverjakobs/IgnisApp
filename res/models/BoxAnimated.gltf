@@ -78,7 +78,7 @@
                 {
                     "sampler": 1,
                     "target": {
-                        "node": 0,
+                        "node": 2,
                         "path": "translation"
                     }
                 }

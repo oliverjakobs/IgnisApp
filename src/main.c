@@ -61,7 +61,7 @@ void loadGLTF(const char* dir, const char* filename)
         IGNIS_ERROR("MODEL: [%s] Failed to load mesh/material buffers", path);
         cgltf_free(data);
         free(filedata);
-        return IGNIS_FAILURE;
+        return;
     }
 
     loadModelGLTF(&model, data, dir);
@@ -161,17 +161,17 @@ int onEvent(MinimalApp *app, const MinimalEvent *e)
 
     switch (minimalEventKeyPressed(e))
     {
-    case GLFW_KEY_ESCAPE:   minimalClose(app); break;
-    case GLFW_KEY_F6:       minimalToggleVsync(app); break;
-    case GLFW_KEY_F7:       minimalToggleDebug(app); break;
-    case GLFW_KEY_F9:       view_mode = !view_mode; break;
-    case GLFW_KEY_F10:      poly_mode = !poly_mode; break;
-    case GLFW_KEY_SPACE:    paused = !paused; break;
+    case MINIMAL_KEY_ESCAPE:   minimalClose(app); break;
+    case MINIMAL_KEY_F6:       minimalToggleVsync(app); break;
+    case MINIMAL_KEY_F7:       minimalToggleDebug(app); break;
+    case MINIMAL_KEY_F9:       view_mode = !view_mode; break;
+    case MINIMAL_KEY_F10:      poly_mode = !poly_mode; break;
+    case MINIMAL_KEY_SPACE:    paused = !paused; break;
 
-    case GLFW_KEY_1: if (animation_count >= 0) animation_index = 0; break;
-    case GLFW_KEY_2: if (animation_count >= 1) animation_index = 1; break;
-    case GLFW_KEY_3: if (animation_count >= 2) animation_index = 2; break;
-    case GLFW_KEY_4: if (animation_count >= 3) animation_index = 3; break;
+    case MINIMAL_KEY_1: if (animation_count >= 0) animation_index = 0; break;
+    case MINIMAL_KEY_2: if (animation_count >= 1) animation_index = 1; break;
+    case MINIMAL_KEY_3: if (animation_count >= 2) animation_index = 2; break;
+    case MINIMAL_KEY_4: if (animation_count >= 3) animation_index = 3; break;
     }
 
     return MINIMAL_OK;
@@ -182,10 +182,10 @@ void onUpdate(MinimalApp *app, float deltatime)
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (minimalKeyDown(GLFW_KEY_LEFT))  camera_rotation -= camera_speed * deltatime;
-    if (minimalKeyDown(GLFW_KEY_RIGHT)) camera_rotation += camera_speed * deltatime;
-    if (minimalKeyDown(GLFW_KEY_DOWN))  camera_radius += camera_zoom * deltatime;
-    if (minimalKeyDown(GLFW_KEY_UP))    camera_radius -= camera_zoom * deltatime;
+    if (minimalKeyDown(MINIMAL_KEY_LEFT))  camera_rotation -= camera_speed * deltatime;
+    if (minimalKeyDown(MINIMAL_KEY_RIGHT)) camera_rotation += camera_speed * deltatime;
+    if (minimalKeyDown(MINIMAL_KEY_DOWN))  camera_radius += camera_zoom * deltatime;
+    if (minimalKeyDown(MINIMAL_KEY_UP))    camera_radius -= camera_zoom * deltatime;
 
     if (!paused)
     {
@@ -292,10 +292,10 @@ void ignisLogCallback(ignisLogLevel level, const char *desc)
 
 void printVersionInfo()
 {
-    MINIMAL_INFO("[GLFW]   Version:      %s", glfwGetVersionString());
-    MINIMAL_INFO("[OpenGL] Version:      %s", ignisGetGLVersion());
-    MINIMAL_INFO("[OpenGL] Vendor:       %s", ignisGetGLVendor());
-    MINIMAL_INFO("[OpenGL] Renderer:     %s", ignisGetGLRenderer());
-    MINIMAL_INFO("[OpenGL] GLSL Version: %s", ignisGetGLSLVersion());
-    MINIMAL_INFO("[Ignis]  Version:      %s", ignisGetVersionString());
+    MINIMAL_INFO("[OpenGL]  Version:      %s", ignisGetGLVersion());
+    MINIMAL_INFO("[OpenGL]  Vendor:       %s", ignisGetGLVendor());
+    MINIMAL_INFO("[OpenGL]  Renderer:     %s", ignisGetGLRenderer());
+    MINIMAL_INFO("[OpenGL]  GLSL Version: %s", ignisGetGLSLVersion());
+    MINIMAL_INFO("[Ignis]   Version:      %s", ignisGetVersionString());
+    MINIMAL_INFO("[Minimal] Version:      %s", minimalGetVersionString());
 }
