@@ -133,7 +133,7 @@ void onUpdate(MinimalApp *app, float deltatime)
     // create transformations
     mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)app->timer.lastframe);
     mat4 view = mat4_translation(vec3_negate(camera_pos));
-    mat4 proj = mat4_perspective(degToRad(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+    mat4 proj = mat4_perspective(degToRad(45.0f), width / height, 0.1f, 100.0f);
 
     ignisSetUniform3f(shader, "lightPos", 1, &camera_pos.x);
 

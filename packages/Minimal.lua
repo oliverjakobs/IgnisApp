@@ -1,7 +1,8 @@
 project "Minimal"
     kind "StaticLib"
     language "C"
-    
+    location "Minimal"
+
     targetdir ("build/bin/" .. output_dir .. "/%{prj.name}")
     objdir ("build/bin-int/" .. output_dir .. "/%{prj.name}")
 
