@@ -1,6 +1,6 @@
 #include <ignis/ignis.h>
 
-#include <minimal/application.h>
+#include <minimal/minimal.h>
 
 #include "math/math.h"
 
@@ -123,7 +123,7 @@ int onEvent(MinimalApp *app, const MinimalEvent* e)
     return MINIMAL_OK;
 }
 
-void onUpdate(MinimalApp *app, float deltatime)
+void onTick(MinimalApp *app, float deltatime)
 {
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -131,7 +131,7 @@ void onUpdate(MinimalApp *app, float deltatime)
     vec3 camera_pos = (vec3){ 0.0f, 0.0f, 3.0f };
 
     // create transformations
-    mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)app->timer.lastframe);
+    mat4 model = mat4_rotation((vec3) { 0.5f, 1.0f, 0.0f }, (float)minimalGetTime());
     mat4 view = mat4_translation(vec3_negate(camera_pos));
     mat4 proj = mat4_perspective(degToRad(45.0f), width / height, 0.1f, 100.0f);
 
@@ -150,7 +150,7 @@ void onUpdate(MinimalApp *app, float deltatime)
     ignisFontRendererSetProjection(screen_projection.v[0]);
 
     /* fps */
-    ignisFontRendererRenderTextFormat(8.0f, 8.0f, "FPS: %d", minimalGetFps(app));
+    ignisFontRendererRenderTextFormat(8.0f, 8.0f, "FPS: %d", app->fps);
 
     if (app->debug)
     {
@@ -170,7 +170,7 @@ int main()
         .on_load =    onLoad,
         .on_destroy = onDestroy,
         .on_event =   onEvent,
-        .on_update =  onUpdate
+        .on_tick =    onTick
     };
 
     if (minimalLoad(&app, "IgnisApp", 1024, 800, "4.4"))
