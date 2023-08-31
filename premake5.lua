@@ -28,6 +28,7 @@ output_dir = "%{cfg.buildcfg}"
 
 group "Packages"
 
+include "packages/glfw.lua"
 include "packages/Ignis.lua"
 include "packages/Minimal.lua"
 
@@ -54,6 +55,7 @@ project "IgnisApp"
 
     links
     {
+        "GLFW",
         "Ignis",
         "Minimal",
         "opengl32"
