@@ -3,7 +3,7 @@
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
 
-#include "minimal/utils.h"
+#include "minimal/common.h"
 
 // ----------------------------------------------------------------
 // utility

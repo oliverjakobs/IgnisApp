@@ -1,12 +1,12 @@
 #include <ignis/ignis.h>
 
-#include <minimal/application.h>
+#include <minimal/minimal.h>
 
 #include "math/math.h"
 
 #include "model.h"
 
-static void ignisLogCallback(ignisLogLevel level, const char *desc);
+static void ignisLogCallback(IgnisLogLevel level, const char *desc);
 static void printVersionInfo();
 
 IgnisFont font;
@@ -177,7 +177,7 @@ int onEvent(MinimalApp *app, const MinimalEvent *e)
     return MINIMAL_OK;
 }
 
-void onUpdate(MinimalApp *app, float deltatime)
+void onTick(MinimalApp *app, float deltatime)
 {
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -239,7 +239,7 @@ void onUpdate(MinimalApp *app, float deltatime)
     ignisFontRendererSetProjection(screen_projection.v[0]);
 
     /* fps */
-    ignisFontRendererRenderTextFormat(8.0f, 8.0f, "FPS: %d", minimalGetFps(app));
+    ignisFontRendererRenderTextFormat(8.0f, 8.0f, "FPS: %d", app->fps);
 
     if (app->debug)
     {
@@ -267,7 +267,7 @@ int main()
         .on_load =    onLoad,
         .on_destroy = onDestroy,
         .on_event =   onEvent,
-        .on_update =  onUpdate
+        .on_tick =  onTick
     };
 
     if (minimalLoad(&app, "IgnisApp", 1024, 800, "4.4"))
@@ -278,7 +278,7 @@ int main()
     return 0;
 }
 
-void ignisLogCallback(ignisLogLevel level, const char *desc)
+void ignisLogCallback(IgnisLogLevel level, const char *desc)
 {
     switch (level)
     {

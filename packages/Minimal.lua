@@ -16,6 +16,11 @@ project "Minimal"
         "Minimal/src"
     }
 
+    defines
+    {
+        "MINIMAL_PLATFORM_WINDOWS"
+    }
+
     filter "system:windows"
         systemversion "latest"
         staticruntime "On"
