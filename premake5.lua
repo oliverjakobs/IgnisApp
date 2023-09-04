@@ -36,8 +36,8 @@ group ""
 
 project "IgnisApp"
     kind "ConsoleApp"
-	language "C"
-	cdialect "C99"
+    language "C"
+    cdialect "C99"
     staticruntime "On"
     
     targetdir ("build/bin/" .. output_dir .. "/%{prj.name}")
@@ -65,7 +65,8 @@ project "IgnisApp"
     {
         "src",
         "packages/Ignis/src",
-        "packages/Minimal/src"
+        "packages/Minimal/src",
+        "packages/glfw/include"
     }
 
     filter "system:linux"

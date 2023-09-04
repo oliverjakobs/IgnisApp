@@ -17,6 +17,11 @@ project "Minimal"
         "glfw/include",
     }
 
+    defines
+    {
+        "MINIMAL_PLATFORM_GLFW"
+    }
+
     filter "system:windows"
         systemversion "latest"
         staticruntime "On"
