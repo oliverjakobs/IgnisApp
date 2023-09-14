@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdint.h>
 
+/* based on https://github.com/felselva/mathc */
 #include "vec2.h"
 #include "vec3.h"
 
@@ -14,5 +15,17 @@
 #define MPI_4 0.7853981634f
 
 inline float degToRad(float angle) { return MPI * angle / 180.f; }
+
+typedef struct
+{
+    vec2 min;
+    vec2 max;
+} rect;
+
+typedef struct
+{
+    vec2 start;
+    vec2 end;
+} line;
 
 #endif /* !MATH_H */

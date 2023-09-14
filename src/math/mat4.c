@@ -1,109 +1,161 @@
 #include "mat4.h"
 
-#include <math.h>
+#include <math.h> 
+
+float mat4_determinant(mat4 mat)
+{
+    float m11 = mat.v[0];
+    float m21 = mat.v[1];
+    float m31 = mat.v[2];
+    float m41 = mat.v[3];
+    float m12 = mat.v[4];
+    float m22 = mat.v[5];
+    float m32 = mat.v[6];
+    float m42 = mat.v[7];
+    float m13 = mat.v[8];
+    float m23 = mat.v[9];
+    float m33 = mat.v[10];
+    float m43 = mat.v[11];
+    float m14 = mat.v[12];
+    float m24 = mat.v[13];
+    float m34 = mat.v[14];
+    float m44 = mat.v[15];
+    float determinant = m14 * m23 * m32 * m41 - m13 * m24 * m32 * m41
+        - m14 * m22 * m33 * m41 + m12 * m24 * m33 * m41
+        + m13 * m22 * m34 * m41 - m12 * m23 * m34 * m41
+        - m14 * m23 * m31 * m42 + m13 * m24 * m31 * m42
+        + m14 * m21 * m33 * m42 - m11 * m24 * m33 * m42
+        - m13 * m21 * m34 * m42 + m11 * m23 * m34 * m42
+        + m14 * m22 * m31 * m43 - m12 * m24 * m31 * m43
+        - m14 * m21 * m32 * m43 + m11 * m24 * m32 * m43
+        + m12 * m21 * m34 * m43 - m11 * m22 * m34 * m43
+        - m13 * m22 * m31 * m44 + m12 * m23 * m31 * m44
+        + m13 * m21 * m32 * m44 - m11 * m23 * m32 * m44
+        - m12 * m21 * m33 * m44 + m11 * m22 * m33 * m44;
+    return determinant;
+}
 
 mat4 mat4_identity()
 {
-    mat4 result = {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-    return result;
-}
-
-mat4 mat4_cast(quat q)
-{
-    float a = q.w;
-    float b = q.x;
-    float c = q.y;
-    float d = q.z;
-    float a2 = a * a;
-    float b2 = b * b;
-    float c2 = c * c;
-    float d2 = d * d;
-
-    mat4 result = { 0.0f };
-    result.v[0][0] = a2 + b2 - c2 - d2;
-    result.v[0][1] = 2.f * (b * c + a * d);
-    result.v[0][2] = 2.f * (b * d - a * c);
-
-    result.v[1][0] = 2 * (b * c - a * d);
-    result.v[1][1] = a2 - b2 + c2 - d2;
-    result.v[1][2] = 2.f * (c * d + a * b);
-
-    result.v[2][0] = 2.f * (b * d + a * c);
-    result.v[2][1] = 2.f * (c * d - a * b);
-    result.v[2][2] = a2 - b2 - c2 + d2;
-
-    result.v[3][3] = 1.f;
-
-    return result;
-}
-
-mat4 mat4_perspective(float fov_y, float aspect, float near, float far)
-{
-    float tan_half_fov_y = 1.0f / tanf(fov_y * 0.5f);
-
-    mat4 result = { 0.0f };
-    result.v[0][0] = tan_half_fov_y / aspect;
-    result.v[1][1] = tan_half_fov_y;
-    result.v[2][2] = -((far + near) / (far - near));
-    result.v[2][3] = -1.f;
-    result.v[3][2] = -((2.f * far * near) / (far - near));
-
-    return result;
-}
-
-mat4 mat4_ortho(float left, float right, float bottom, float top, float near, float far)
-{
-    float rl = 1.0f / (right - left);
-    float tb = 1.0f / (top - bottom);
-    float fn = -1.0f / (far - near);
-
-    mat4 result = { 0.0f };
-    result.v[0][0] = 2.0f * rl;
-    result.v[1][1] = 2.0f * tb;
-    result.v[2][2] = 2.0f * fn;
-    result.v[3][0] = -(left + right) * rl;
-    result.v[3][1] = -(top + bottom) * tb;
-    result.v[3][2] = (far + near) * fn;
-    result.v[3][3] = 1.f;
-
-    return result;
-}
-
-
-mat4 mat4_look_at(vec3 eye, vec3 look_at, vec3 up)
-{
-    vec3 forward = vec3_normalize(vec3_sub(look_at, eye));
-    vec3 side = vec3_normalize(vec3_cross(forward, up));
-    vec3 upward = vec3_cross(side, forward);
-
     mat4 result;
-    result.v[0][0] = side.x;
-    result.v[0][1] = upward.x;
-    result.v[0][2] = -forward.x;
-    result.v[0][3] = 0.0f;
-    result.v[1][0] = side.y;
-    result.v[1][1] = upward.y;
-    result.v[1][2] = -forward.y;
-    result.v[1][3] = 0.0f;
-    result.v[2][0] = side.z;
-    result.v[2][1] = upward.z;
-    result.v[2][2] = -forward.z;
-    result.v[2][3] = 0.0f;
-    result.v[3][0] = -vec3_dot(side, eye);
-    result.v[3][1] = -vec3_dot(upward, eye);
-    result.v[3][2] =  vec3_dot(forward, eye);
-    result.v[3][3] = 1.0f;
+    result.v[0] = 1.0f; result.v[4] = 0.0f; result.v[8] = 0.0f; result.v[12] = 0.0f;
+    result.v[1] = 0.0f; result.v[5] = 1.0f; result.v[9] = 0.0f; result.v[13] = 0.0f;
+    result.v[2] = 0.0f; result.v[6] = 0.0f; result.v[10] = 1.0f;result.v[14] = 0.0f;
+    result.v[3] = 0.0f; result.v[7] = 0.0f; result.v[11] = 0.0f;result.v[15] = 1.0f;
 
     return result;
 }
 
-mat4 mat4_rotation(vec3 axis, float angle)
+mat4 mat4_transpose(mat4 mat)
 {
+    mat4 result;
+
+    result.v[0] = mat.v[0];
+    result.v[1] = mat.v[4];
+    result.v[2] = mat.v[8];
+    result.v[3] = mat.v[12];
+    result.v[4] = mat.v[1];
+    result.v[5] = mat.v[5];
+    result.v[6] = mat.v[9];
+    result.v[7] = mat.v[13];
+    result.v[8] = mat.v[2];
+    result.v[9] = mat.v[6];
+    result.v[10] = mat.v[10];
+    result.v[11] = mat.v[14];
+    result.v[12] = mat.v[3];
+    result.v[13] = mat.v[7];
+    result.v[14] = mat.v[11];
+    result.v[15] = mat.v[15];
+
+    return result;
+}
+
+mat4 mat4_inverse(mat4 mat)
+{
+    mat4 inverse;
+    float inverted_determinant;
+    float m11 = mat.v[0];
+    float m21 = mat.v[1];
+    float m31 = mat.v[2];
+    float m41 = mat.v[3];
+    float m12 = mat.v[4];
+    float m22 = mat.v[5];
+    float m32 = mat.v[6];
+    float m42 = mat.v[7];
+    float m13 = mat.v[8];
+    float m23 = mat.v[9];
+    float m33 = mat.v[10];
+    float m43 = mat.v[11];
+    float m14 = mat.v[12];
+    float m24 = mat.v[13];
+    float m34 = mat.v[14];
+    float m44 = mat.v[15];
+    inverse.v[0] = m22 * m33 * m44 - m22 * m43 * m34 - m23 * m32 * m44 + m23 * m42 * m34 + m24 * m32 * m43 - m24 * m42 * m33;
+    inverse.v[4] = -m12 * m33 * m44 + m12 * m43 * m34 + m13 * m32 * m44 - m13 * m42 * m34 - m14 * m32 * m43 + m14 * m42 * m33;
+    inverse.v[8] = m12 * m23 * m44 - m12 * m43 * m24 - m13 * m22 * m44 + m13 * m42 * m24 + m14 * m22 * m43 - m14 * m42 * m23;
+    inverse.v[12] = -m12 * m23 * m34 + m12 * m33 * m24 + m13 * m22 * m34 - m13 * m32 * m24 - m14 * m22 * m33 + m14 * m32 * m23;
+    inverse.v[1] = -m21 * m33 * m44 + m21 * m43 * m34 + m23 * m31 * m44 - m23 * m41 * m34 - m24 * m31 * m43 + m24 * m41 * m33;
+    inverse.v[5] = m11 * m33 * m44 - m11 * m43 * m34 - m13 * m31 * m44 + m13 * m41 * m34 + m14 * m31 * m43 - m14 * m41 * m33;
+    inverse.v[9] = -m11 * m23 * m44 + m11 * m43 * m24 + m13 * m21 * m44 - m13 * m41 * m24 - m14 * m21 * m43 + m14 * m41 * m23;
+    inverse.v[13] = m11 * m23 * m34 - m11 * m33 * m24 - m13 * m21 * m34 + m13 * m31 * m24 + m14 * m21 * m33 - m14 * m31 * m23;
+    inverse.v[2] = m21 * m32 * m44 - m21 * m42 * m34 - m22 * m31 * m44 + m22 * m41 * m34 + m24 * m31 * m42 - m24 * m41 * m32;
+    inverse.v[6] = -m11 * m32 * m44 + m11 * m42 * m34 + m12 * m31 * m44 - m12 * m41 * m34 - m14 * m31 * m42 + m14 * m41 * m32;
+    inverse.v[10] = m11 * m22 * m44 - m11 * m42 * m24 - m12 * m21 * m44 + m12 * m41 * m24 + m14 * m21 * m42 - m14 * m41 * m22;
+    inverse.v[14] = -m11 * m22 * m34 + m11 * m32 * m24 + m12 * m21 * m34 - m12 * m31 * m24 - m14 * m21 * m32 + m14 * m31 * m22;
+    inverse.v[3] = -m21 * m32 * m43 + m21 * m42 * m33 + m22 * m31 * m43 - m22 * m41 * m33 - m23 * m31 * m42 + m23 * m41 * m32;
+    inverse.v[7] = m11 * m32 * m43 - m11 * m42 * m33 - m12 * m31 * m43 + m12 * m41 * m33 + m13 * m31 * m42 - m13 * m41 * m32;
+    inverse.v[11] = -m11 * m22 * m43 + m11 * m42 * m23 + m12 * m21 * m43 - m12 * m41 * m23 - m13 * m21 * m42 + m13 * m41 * m22;
+    inverse.v[15] = m11 * m22 * m33 - m11 * m32 * m23 - m12 * m21 * m33 + m12 * m31 * m23 + m13 * m21 * m32 - m13 * m31 * m22;
+
+    inverted_determinant = 1.0f / (m11 * inverse.v[0] + m21 * inverse.v[4] + m31 * inverse.v[8] + m41 * inverse.v[12]);
+
+    inverse.v[0] = inverse.v[0] * inverted_determinant;
+    inverse.v[1] = inverse.v[1] * inverted_determinant;
+    inverse.v[2] = inverse.v[2] * inverted_determinant;
+    inverse.v[3] = inverse.v[3] * inverted_determinant;
+    inverse.v[4] = inverse.v[4] * inverted_determinant;
+    inverse.v[5] = inverse.v[5] * inverted_determinant;
+    inverse.v[6] = inverse.v[6] * inverted_determinant;
+    inverse.v[7] = inverse.v[7] * inverted_determinant;
+    inverse.v[8] = inverse.v[8] * inverted_determinant;
+    inverse.v[9] = inverse.v[9] * inverted_determinant;
+    inverse.v[10] = inverse.v[10] * inverted_determinant;
+    inverse.v[11] = inverse.v[11] * inverted_determinant;
+    inverse.v[12] = inverse.v[12] * inverted_determinant;
+    inverse.v[13] = inverse.v[13] * inverted_determinant;
+    inverse.v[14] = inverse.v[14] * inverted_determinant;
+    inverse.v[15] = inverse.v[15] * inverted_determinant;
+    return inverse;
+}
+
+mat4 mat4_translate(mat4 mat, vec3 v)
+{
+    mat4 result;
+
+    result.v[0] = mat.v[0];
+    result.v[1] = mat.v[1];
+    result.v[2] = mat.v[2];
+    result.v[3] = mat.v[3];
+    result.v[4] = mat.v[4];
+    result.v[5] = mat.v[5];
+    result.v[6] = mat.v[6];
+    result.v[7] = mat.v[7];
+    result.v[8] = mat.v[8];
+    result.v[9] = mat.v[9];
+    result.v[10] = mat.v[10];
+    result.v[11] = mat.v[11];
+    result.v[12] = mat.v[12] + v.x;
+    result.v[13] = mat.v[13] + v.y;
+    result.v[14] = mat.v[14] + v.z;
+    result.v[15] = mat.v[15];
+
+    return result;
+}
+
+mat4 mat4_rotate(mat4 mat, vec3 axis, float angle)
+{
+    mat4 result;
+
     float c = cosf(angle);
     float s = sinf(angle);
     float one_c = 1.0f - c;
@@ -119,35 +171,23 @@ mat4 mat4_rotation(vec3 axis, float angle)
     float l = xx + yy + zz;
     float sqrt_l = sqrtf(l);
 
-    mat4 result = { 0.0f };
-    result.v[0][0] = (xx + (yy + zz) * c) / l;
-    result.v[0][1] = (xy * one_c + z * sqrt_l * s) / l;
-    result.v[0][2] = (xz * one_c - y * sqrt_l * s) / l;
-    result.v[1][0] = (xy * one_c - z * sqrt_l * s) / l;
-    result.v[1][1] = (yy + (xx + zz) * c) / l;
-    result.v[1][2] = (yz * one_c + x * sqrt_l * s) / l;
-    result.v[2][0] = (xz * one_c + y * sqrt_l * s) / l;
-    result.v[2][1] = (yz * one_c - x * sqrt_l * s) / l;
-    result.v[2][2] = (zz + (xx + yy) * c) / l;
-    result.v[3][3] = 1.0f;
-    return result;
-}
+    result.v[0] = (xx + (yy + zz) * c) / l;
+    result.v[1] = (xy * one_c + z * sqrt_l * s) / l;
+    result.v[2] = (xz * one_c - y * sqrt_l * s) / l;
+    result.v[3] = 0.0f;
+    result.v[4] = (xy * one_c - z * sqrt_l * s) / l;
+    result.v[5] = (yy + (xx + zz) * c) / l;
+    result.v[6] = (yz * one_c + x * sqrt_l * s) / l;
+    result.v[7] = 0.0f;
+    result.v[8] = (xz * one_c + y * sqrt_l * s) / l;
+    result.v[9] = (yz * one_c - x * sqrt_l * s) / l;
+    result.v[10] = (zz + (xx + yy) * c) / l;
+    result.v[11] = 0.0f;
+    result.v[12] = 0.0f;
+    result.v[13] = 0.0f;
+    result.v[14] = 0.0f;
+    result.v[15] = 1.0f;
 
-mat4 mat4_translation(vec3 v)
-{
-    mat4 result = mat4_identity();
-    result.v[3][0] = v.x;
-    result.v[3][1] = v.y;
-    result.v[3][2] = v.z;
-    return result;
-}
-
-mat4 mat4_scale(vec3 v)
-{
-    mat4 result = mat4_identity();
-    result.v[0][0] = v.x;
-    result.v[1][1] = v.y;
-    result.v[2][2] = v.z;
     return result;
 }
 
@@ -157,10 +197,10 @@ mat4 mat4_rotate_x(mat4 mat, float f)
     float s = sinf(f);
 
     mat4 result = mat4_identity();
-    result.v[1][1] = c;
-    result.v[1][2] = s;
-    result.v[2][1] = -s;
-    result.v[2][2] = c;
+    result.v[5] = c;
+    result.v[6] = s;
+    result.v[9] = -s;
+    result.v[10] = c;
     return mat4_multiply(mat, result);
 }
 
@@ -170,10 +210,10 @@ mat4 mat4_rotate_y(mat4 mat, float f)
     float s = sinf(f);
 
     mat4 result = mat4_identity();
-    result.v[0][0] = c;
-    result.v[0][2] = -s;
-    result.v[2][0] = s;
-    result.v[2][2] = c;
+    result.v[0] = c;
+    result.v[2] = -s;
+    result.v[8] = s;
+    result.v[10] = c;
     return mat4_multiply(mat, result);
 }
 
@@ -183,191 +223,164 @@ mat4 mat4_rotate_z(mat4 mat, float f)
     float s = sinf(f);
 
     mat4 result = mat4_identity();
-    result.v[0][0] = c;
-    result.v[0][1] = s;
-    result.v[1][0] = -s;
-    result.v[1][1] = c;
+    result.v[0] = c;
+    result.v[1] = s;
+    result.v[4] = -s;
+    result.v[5] = c;
     return mat4_multiply(mat, result);
 }
 
-mat4 mat4_multiply(mat4 l, mat4 r)
+mat4 mat4_scale(mat4 mat, vec3 v)
 {
     mat4 result;
-    result.v[0][0] = l.v[0][0] * r.v[0][0] + l.v[1][0] * r.v[0][1] + l.v[2][0] * r.v[0][2] + l.v[3][0] * r.v[0][3];
-    result.v[0][1] = l.v[0][1] * r.v[0][0] + l.v[1][1] * r.v[0][1] + l.v[2][1] * r.v[0][2] + l.v[3][1] * r.v[0][3];
-    result.v[0][2] = l.v[0][2] * r.v[0][0] + l.v[1][2] * r.v[0][1] + l.v[2][2] * r.v[0][2] + l.v[3][2] * r.v[0][3];
-    result.v[0][3] = l.v[0][3] * r.v[0][0] + l.v[1][3] * r.v[0][1] + l.v[2][3] * r.v[0][2] + l.v[3][3] * r.v[0][3];
-    result.v[1][0] = l.v[0][0] * r.v[1][0] + l.v[1][0] * r.v[1][1] + l.v[2][0] * r.v[1][2] + l.v[3][0] * r.v[1][3];
-    result.v[1][1] = l.v[0][1] * r.v[1][0] + l.v[1][1] * r.v[1][1] + l.v[2][1] * r.v[1][2] + l.v[3][1] * r.v[1][3];
-    result.v[1][2] = l.v[0][2] * r.v[1][0] + l.v[1][2] * r.v[1][1] + l.v[2][2] * r.v[1][2] + l.v[3][2] * r.v[1][3];
-    result.v[1][3] = l.v[0][3] * r.v[1][0] + l.v[1][3] * r.v[1][1] + l.v[2][3] * r.v[1][2] + l.v[3][3] * r.v[1][3];
-    result.v[2][0] = l.v[0][0] * r.v[2][0] + l.v[1][0] * r.v[2][1] + l.v[2][0] * r.v[2][2] + l.v[3][0] * r.v[2][3];
-    result.v[2][1] = l.v[0][1] * r.v[2][0] + l.v[1][1] * r.v[2][1] + l.v[2][1] * r.v[2][2] + l.v[3][1] * r.v[2][3];
-    result.v[2][2] = l.v[0][2] * r.v[2][0] + l.v[1][2] * r.v[2][1] + l.v[2][2] * r.v[2][2] + l.v[3][2] * r.v[2][3];
-    result.v[2][3] = l.v[0][3] * r.v[2][0] + l.v[1][3] * r.v[2][1] + l.v[2][3] * r.v[2][2] + l.v[3][3] * r.v[2][3];
-    result.v[3][0] = l.v[0][0] * r.v[3][0] + l.v[1][0] * r.v[3][1] + l.v[2][0] * r.v[3][2] + l.v[3][0] * r.v[3][3];
-    result.v[3][1] = l.v[0][1] * r.v[3][0] + l.v[1][1] * r.v[3][1] + l.v[2][1] * r.v[3][2] + l.v[3][1] * r.v[3][3];
-    result.v[3][2] = l.v[0][2] * r.v[3][0] + l.v[1][2] * r.v[3][1] + l.v[2][2] * r.v[3][2] + l.v[3][2] * r.v[3][3];
-    result.v[3][3] = l.v[0][3] * r.v[3][0] + l.v[1][3] * r.v[3][1] + l.v[2][3] * r.v[3][2] + l.v[3][3] * r.v[3][3];
+
+    result.v[0] = mat.v[0] * v.x;
+    result.v[1] = mat.v[1];
+    result.v[2] = mat.v[2];
+    result.v[3] = mat.v[3];
+    result.v[4] = mat.v[4];
+    result.v[5] = mat.v[5] * v.y;
+    result.v[6] = mat.v[6];
+    result.v[7] = mat.v[7];
+    result.v[8] = mat.v[8];
+    result.v[9] = mat.v[9];
+    result.v[10] = mat.v[10] * v.z;
+    result.v[11] = mat.v[11];
+    result.v[12] = mat.v[12];
+    result.v[13] = mat.v[13];
+    result.v[14] = mat.v[14];
+    result.v[15] = mat.v[15];
     return result;
 }
 
-mat4 mat4_invert(mat4 m)
+mat4 mat4_multiply(mat4 left, mat4 right)
 {
-    float s[6];
-    float c[6];
-    s[0] = m.v[0][0] * m.v[1][1] - m.v[1][0] * m.v[0][1];
-    s[1] = m.v[0][0] * m.v[1][2] - m.v[1][0] * m.v[0][2];
-    s[2] = m.v[0][0] * m.v[1][3] - m.v[1][0] * m.v[0][3];
-    s[3] = m.v[0][1] * m.v[1][2] - m.v[1][1] * m.v[0][2];
-    s[4] = m.v[0][1] * m.v[1][3] - m.v[1][1] * m.v[0][3];
-    s[5] = m.v[0][2] * m.v[1][3] - m.v[1][2] * m.v[0][3];
-
-    c[0] = m.v[2][0] * m.v[3][1] - m.v[3][0] * m.v[2][1];
-    c[1] = m.v[2][0] * m.v[3][2] - m.v[3][0] * m.v[2][2];
-    c[2] = m.v[2][0] * m.v[3][3] - m.v[3][0] * m.v[2][3];
-    c[3] = m.v[2][1] * m.v[3][2] - m.v[3][1] * m.v[2][2];
-    c[4] = m.v[2][1] * m.v[3][3] - m.v[3][1] * m.v[2][3];
-    c[5] = m.v[2][2] * m.v[3][3] - m.v[3][2] * m.v[2][3];
-
-    /* Assumes it is invertible */
-    float idet = 1.0f / (s[0] * c[5] - s[1] * c[4] + s[2] * c[3] + s[3] * c[2] - s[4] * c[1] + s[5] * c[0]);
-
-    mat4 result = { 0 };
-    result.v[0][0] = (m.v[1][1] * c[5] - m.v[1][2] * c[4] + m.v[1][3] * c[3]) * idet;
-    result.v[0][1] = (-m.v[0][1] * c[5] + m.v[0][2] * c[4] - m.v[0][3] * c[3]) * idet;
-    result.v[0][2] = (m.v[3][1] * s[5] - m.v[3][2] * s[4] + m.v[3][3] * s[3]) * idet;
-    result.v[0][3] = (-m.v[2][1] * s[5] + m.v[2][2] * s[4] - m.v[2][3] * s[3]) * idet;
-
-    result.v[1][0] = (-m.v[1][0] * c[5] + m.v[1][2] * c[2] - m.v[1][3] * c[1]) * idet;
-    result.v[1][1] = (m.v[0][0] * c[5] - m.v[0][2] * c[2] + m.v[0][3] * c[1]) * idet;
-    result.v[1][2] = (-m.v[3][0] * s[5] + m.v[3][2] * s[2] - m.v[3][3] * s[1]) * idet;
-    result.v[1][3] = (m.v[2][0] * s[5] - m.v[2][2] * s[2] + m.v[2][3] * s[1]) * idet;
-
-    result.v[2][0] = (m.v[1][0] * c[4] - m.v[1][1] * c[2] + m.v[1][3] * c[0]) * idet;
-    result.v[2][1] = (-m.v[0][0] * c[4] + m.v[0][1] * c[2] - m.v[0][3] * c[0]) * idet;
-    result.v[2][2] = (m.v[3][0] * s[4] - m.v[3][1] * s[2] + m.v[3][3] * s[0]) * idet;
-    result.v[2][3] = (-m.v[2][0] * s[4] + m.v[2][1] * s[2] - m.v[2][3] * s[0]) * idet;
-
-    result.v[3][0] = (-m.v[1][0] * c[3] + m.v[1][1] * c[1] - m.v[1][2] * c[0]) * idet;
-    result.v[3][1] = (m.v[0][0] * c[3] - m.v[0][1] * c[1] + m.v[0][2] * c[0]) * idet;
-    result.v[3][2] = (-m.v[3][0] * s[3] + m.v[3][1] * s[1] - m.v[3][2] * s[0]) * idet;
-    result.v[3][3] = (m.v[2][0] * s[3] - m.v[2][1] * s[1] + m.v[2][2] * s[0]) * idet;
+    mat4 result;
+    result.v[0] = left.v[0] * right.v[0] + left.v[4] * right.v[1] + left.v[8] * right.v[2] + left.v[12] * right.v[3];
+    result.v[1] = left.v[1] * right.v[0] + left.v[5] * right.v[1] + left.v[9] * right.v[2] + left.v[13] * right.v[3];
+    result.v[2] = left.v[2] * right.v[0] + left.v[6] * right.v[1] + left.v[10] * right.v[2] + left.v[14] * right.v[3];
+    result.v[3] = left.v[3] * right.v[0] + left.v[7] * right.v[1] + left.v[11] * right.v[2] + left.v[15] * right.v[3];
+    result.v[4] = left.v[0] * right.v[4] + left.v[4] * right.v[5] + left.v[8] * right.v[6] + left.v[12] * right.v[7];
+    result.v[5] = left.v[1] * right.v[4] + left.v[5] * right.v[5] + left.v[9] * right.v[6] + left.v[13] * right.v[7];
+    result.v[6] = left.v[2] * right.v[4] + left.v[6] * right.v[5] + left.v[10] * right.v[6] + left.v[14] * right.v[7];
+    result.v[7] = left.v[3] * right.v[4] + left.v[7] * right.v[5] + left.v[11] * right.v[6] + left.v[15] * right.v[7];
+    result.v[8] = left.v[0] * right.v[8] + left.v[4] * right.v[9] + left.v[8] * right.v[10] + left.v[12] * right.v[11];
+    result.v[9] = left.v[1] * right.v[8] + left.v[5] * right.v[9] + left.v[9] * right.v[10] + left.v[13] * right.v[11];
+    result.v[10] = left.v[2] * right.v[8] + left.v[6] * right.v[9] + left.v[10] * right.v[10] + left.v[14] * right.v[11];
+    result.v[11] = left.v[3] * right.v[8] + left.v[7] * right.v[9] + left.v[11] * right.v[10] + left.v[15] * right.v[11];
+    result.v[12] = left.v[0] * right.v[12] + left.v[4] * right.v[13] + left.v[8] * right.v[14] + left.v[12] * right.v[15];
+    result.v[13] = left.v[1] * right.v[12] + left.v[5] * right.v[13] + left.v[9] * right.v[14] + left.v[13] * right.v[15];
+    result.v[14] = left.v[2] * right.v[12] + left.v[6] * right.v[13] + left.v[10] * right.v[14] + left.v[14] * right.v[15];
+    result.v[15] = left.v[3] * right.v[12] + left.v[7] * right.v[13] + left.v[11] * right.v[14] + left.v[15] * right.v[15];
     return result;
 }
 
-mat4 mat4_interpolate(mat4 mat0, mat4 mat1, float time)
+mat4 mat4_frustum(float left, float right, float bottom, float top, float near, float far)
 {
-    quat rot0 = quat_cast(mat0);
-    quat rot1 = quat_cast(mat1);
+    mat4 result;
 
-    quat final_rot = quat_slerp(rot0, rot1, time);
+    float rl = (float)(right - left);
+    float tb = (float)(top - bottom);
+    float fn = (float)(far - near);
 
-    mat4 final_mat = mat4_cast(final_rot);
-
-    final_mat.v[3][0] = mat0.v[3][0] * (1 - time) + mat1.v[3][0] * time;
-    final_mat.v[3][1] = mat0.v[3][1] * (1 - time) + mat1.v[3][1] * time;
-    final_mat.v[3][2] = mat0.v[3][2] * (1 - time) + mat1.v[3][2] * time;
-
-    return final_mat;
-}
-
-quat quat_identity()
-{
-    return (quat) { 0.0f, 0.0f, 0.0f, 1.0f };
-}
-
-// Calculate slerp-optimized interpolation between two quaternions
-quat quat_nlerp(quat q0, quat q1, float value)
-{
-    quat result = { 0 };
-
-    // QuaternionLerp(q1, q2, amount)
-    result.x = q0.x + value * (q1.x - q0.x);
-    result.y = q0.y + value * (q1.y - q0.y);
-    result.z = q0.z + value * (q1.z - q0.z);
-    result.w = q0.w + value * (q1.w - q0.w);
-
-    // QuaternionNormalize(q);
-    quat q = result;
-    float length = sqrtf(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
-    if (length == 0.0f) length = 1.0f;
-    float ilength = 1.0f / length;
-
-    result.x = q.x * ilength;
-    result.y = q.y * ilength;
-    result.z = q.z * ilength;
-    result.w = q.w * ilength;
+    result.v[0] = ((float)near * 2.0f) / rl;
+    result.v[1] = 0.0f;
+    result.v[2] = 0.0f;
+    result.v[3] = 0.0f;
+    result.v[4] = 0.0f;
+    result.v[5] = ((float)near * 2.0f) / tb;
+    result.v[6] = 0.0f;
+    result.v[7] = 0.0f;
+    result.v[8] = ((float)right + (float)left) / rl;
+    result.v[9] = ((float)top + (float)bottom) / tb;
+    result.v[10] = -((float)far + (float)near) / fn;
+    result.v[11] = -1.0f;
+    result.v[12] = 0.0f;
+    result.v[13] = 0.0f;
+    result.v[14] = -((float)far * (float)near * 2.0f) / fn;
+    result.v[15] = 0.0f;
 
     return result;
 }
 
-quat quat_slerp(quat q0, quat q1, float value)
+mat4 mat4_perspective(float fov_y, float aspect, float near, float far)
 {
-    quat result = { 0 };
+    mat4 result;
 
-    float cosHalfTheta = q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w;
+    float tan_half_fov_y = 1.0f / tanf(fov_y * 0.5f);
+    result.v[0] = 1.0f / aspect * tan_half_fov_y;
+    result.v[1] = 0.0f;
+    result.v[2] = 0.0f;
+    result.v[3] = 0.0f;
+    result.v[4] = 0.0f;
+    result.v[5] = 1.0f / tan_half_fov_y;
+    result.v[6] = 0.0f;
+    result.v[7] = 0.0f;
+    result.v[8] = 0.0f;
+    result.v[9] = 0.0f;
+    result.v[10] = far / (near - far);
+    result.v[11] = -1.0f;
+    result.v[12] = 0.0f;
+    result.v[13] = 0.0f;
+    result.v[14] = -(far * near) / (far - near);
+    result.v[15] = 0.0f;
+    return result;
 
-    if (cosHalfTheta < 0)
-    {
-        q1.x = -q1.x; q1.y = -q1.y; q1.z = -q1.z; q1.w = -q1.w;
-        cosHalfTheta = -cosHalfTheta;
-    }
+}
 
-    if (fabsf(cosHalfTheta) >= 1.0f) return q0;
+mat4 mat4_ortho(float left, float right, float bottom, float top, float near, float far)
+{
+    mat4 result;
 
-    if (cosHalfTheta > 0.95f) return quat_nlerp(q0, q1, value);
+    float rl = 1.0f / (right - left);
+    float tb = 1.0f / (top - bottom);
+    float fn = -1.0f / (far - near);
 
-
-    float halfTheta = acosf(cosHalfTheta);
-    float sinHalfTheta = sqrtf(1.0f - cosHalfTheta * cosHalfTheta);
-
-    if (fabsf(sinHalfTheta) < 0.001f)
-    {
-        result.x = (q0.x * 0.5f + q1.x * 0.5f);
-        result.y = (q0.y * 0.5f + q1.y * 0.5f);
-        result.z = (q0.z * 0.5f + q1.z * 0.5f);
-        result.w = (q0.w * 0.5f + q1.w * 0.5f);
-    }
-    else
-    {
-        float ratioA = sinf((1 - value) * halfTheta) / sinHalfTheta;
-        float ratioB = sinf(value * halfTheta) / sinHalfTheta;
-
-        result.x = (q0.x * ratioA + q1.x * ratioB);
-        result.y = (q0.y * ratioA + q1.y * ratioB);
-        result.z = (q0.z * ratioA + q1.z * ratioB);
-        result.w = (q0.w * ratioA + q1.w * ratioB);
-    }
+    result.v[0] = 2.0f * rl;
+    result.v[1] = 0.0f;
+    result.v[2] = 0.0f;
+    result.v[3] = 0.0f;
+    result.v[4] = 0.0f;
+    result.v[5] = 2.0f * tb;
+    result.v[6] = 0.0f;
+    result.v[7] = 0.0f;
+    result.v[8] = 0.0f;
+    result.v[9] = 0.0f;
+    result.v[10] = 2.0f * fn;
+    result.v[11] = 0.0f;
+    result.v[12] = -(left + right) * rl;
+    result.v[13] = -(top + bottom) * tb;
+    result.v[14] = (far + near) * fn;
+    result.v[15] = 1.0f;
 
     return result;
 }
 
-quat quat_cast(mat4 mat)
+mat4 mat4_look_at(vec3 position, vec3 target, vec3 up)
 {
-    float r = 0.f;
-    int i;
+    mat4 result;
 
-    int perm[] = { 0, 1, 2, 0, 1 };
-    int* p = perm;
+    vec3 forward = vec3_sub(target, position);
+    forward = vec3_normalize(forward);
+    vec3 side = vec3_cross(forward, up);
+    side = vec3_normalize(side);
+    vec3 upward = vec3_cross(side, forward);
+    result.v[0] = side.x;
+    result.v[1] = upward.x;
+    result.v[2] = -forward.x;
+    result.v[3] = 0.0f;
+    result.v[4] = side.y;
+    result.v[5] = upward.y;
+    result.v[6] = -forward.y;
+    result.v[7] = 0.0f;
+    result.v[8] = side.z;
+    result.v[9] = upward.z;
+    result.v[10] = -forward.z;
+    result.v[11] = 0.0f;
+    result.v[12] = -vec3_dot(side, position);
+    result.v[13] = -vec3_dot(upward, position);
+    result.v[14] = vec3_dot(forward, position);
+    result.v[15] = 1.0f;
 
-    for (i = 0; i < 3; i++)
-    {
-        float m = mat.v[i][i];
-        if (m < r) continue;
-        m = r;
-        p = &perm[i];
-    }
-
-    r = sqrtf(1.f + mat.v[p[0]][p[0]] - mat.v[p[1]][p[1]] - mat.v[p[2]][p[2]]);
-
-    if (r < 1e-6) return (quat) { 1.0f, 0.0f, 0.0f, 0.0f };
-
-    quat q = {
-        r / 2.f,
-        (mat.v[p[0]][p[1]] - mat.v[p[1]][p[0]]) / (2.f * r),
-        (mat.v[p[2]][p[0]] - mat.v[p[0]][p[2]]) / (2.f * r),
-        (mat.v[p[2]][p[1]] - mat.v[p[1]][p[2]]) / (2.f * r)
-    };
-    return q;
+    return result;
 }
