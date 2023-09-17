@@ -12,6 +12,25 @@ void ignisLogCallback(IgnisLogLevel level, const char* desc)
     }
 }
 
+uint8_t initIgnis()
+{
+    // ignisSetAllocator(FrostMemoryGetAllocator(), tb_mem_malloc, tb_mem_realloc, tb_mem_free);
+    ignisSetLogCallback(ignisLogCallback);
+
+#ifdef _DEBUG
+    int debug = 1;
+#else
+    int debug = 0;
+#endif
+
+    if (!ignisInit(minimalGetGLProcAddress, debug))
+    {
+        MINIMAL_ERROR("[IGNIS] Failed to initialize Ignis");
+        return MINIMAL_FAIL;
+    }
+    return MINIMAL_OK;
+}
+
 void printVersionInfo()
 {
     MINIMAL_INFO("[OpenGL]  Version:      %s", ignisGetGLVersion());

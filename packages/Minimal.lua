@@ -19,7 +19,7 @@ project "Minimal"
 
     defines
     {
-        "MINIMAL_PLATFORM_GLFW"
+        "MINIMAL_PLATFORM_WINDOWS"
     }
 
     filter "system:windows"

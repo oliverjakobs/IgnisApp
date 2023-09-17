@@ -94,18 +94,9 @@ void RenderPoly(gjk_shape* shape, IgnisColorRGBA color)
 int onLoadGJK(MinimalApp* app, uint32_t w, uint32_t h)
 {
     /* ingis initialization */
-    ignisSetLogCallback(ignisLogCallback);
+    initIgnis();
 
-    int debug = 0;
-#ifdef _DEBUG
-    debug = 1;
-#endif
-
-    if (!ignisInit(debug))
-    {
-        MINIMAL_ERROR("[Ignis] Failed to initialize Ignis");
-        return 0;
-    }
+    minimalEnableDebug(app, 1);
 
     ignisEnableBlend(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     ignisSetClearColor(IGNIS_DARK_GREY);

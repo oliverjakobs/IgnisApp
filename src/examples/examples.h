@@ -6,7 +6,7 @@
 
 #include "math/math.h"
 
-void ignisLogCallback(IgnisLogLevel level, const char* desc);
+uint8_t initIgnis();
 void printVersionInfo();
 
 int onEventDefault(MinimalApp* app, const MinimalEvent* e);

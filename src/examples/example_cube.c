@@ -39,21 +39,9 @@ static void setViewport(float w, float h)
 int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 {
     /* ingis initialization */
-    // ignisSetAllocator(FrostMemoryGetAllocator(), tb_mem_malloc, tb_mem_realloc, tb_mem_free);
-    ignisSetLogCallback(ignisLogCallback);
+    initIgnis();
 
-#ifdef _DEBUG
-    int debug = 1;
-    minimalEnableDebug(app, debug);
-#else
-    int debug = 0;
-#endif
-
-    if (!ignisInit(debug))
-    {
-        MINIMAL_ERROR("[IGNIS] Failed to initialize Ignis");
-        return MINIMAL_FAIL;
-    }
+    minimalEnableDebug(app, 1);
 
     ignisEnableBlend(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     ignisSetClearColor(IGNIS_DARK_GREY);
