@@ -22,7 +22,6 @@ static BOOL watcherReadDirChanges(Watcher* watcher)
         NULL, &watcher->overlapped, NULL);
 }
 
-
 Watcher* watcherCreate(const char* path)
 {
     Watcher* watcher = malloc(sizeof(Watcher));
@@ -65,23 +64,23 @@ static uint32_t watcher_actions_map[] = {
 
 void watcherPollEvents(MinimalApp* app, Watcher* watcher)
 {
-    DWORD result = WaitForSingleObject(watcher->overlapped.hEvent, 0);
-
-    if (result == WAIT_OBJECT_0) {
+    if (WaitForSingleObject(watcher->overlapped.hEvent, 0) == WAIT_OBJECT_0)
+    {
         DWORD bytes_transferred;
         GetOverlappedResult(watcher->handle, &watcher->overlapped, &bytes_transferred, FALSE);
 
         FILE_NOTIFY_INFORMATION* notify = (FILE_NOTIFY_INFORMATION*)watcher->change_buffer;
 
-        for (;;) {
-
+        for (;;)
+        {
             WatcherEvent e = {
                 .action = watcher_actions_map[notify->Action],
                 .name_len = notify->FileNameLength / sizeof(wchar_t)
             };
-            wcstombs(e.filename, notify->FileName, WATCHER_BUFFER_SIZE);
+            wcstombs_s(NULL, e.filename, WATCHER_BUFFER_SIZE, notify->FileName, e.name_len);
 
-            minimalDispatchExternalEvent(app, WATCHER_EVENT_ID, &e);
+            if (e.action != WATCHER_ACTION_UNKOWN)
+                minimalDispatchExternalEvent(app, WATCHER_EVENT, &e);
 
             // Are there more events to handle?
             if (!notify->NextEntryOffset) break;

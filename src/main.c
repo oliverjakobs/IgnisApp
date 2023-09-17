@@ -18,15 +18,10 @@ static void ignisLogCallback(IgnisLogLevel level, const char* desc)
     }
 }
 
-
 IgnisFont font;
 
 float width, height;
 mat4 screen_projection;
-
-
-IgnisShader shader;
-IgnisVertexArray vao;
 
 Watcher* watcher;
 
@@ -36,7 +31,6 @@ static void setViewport(float w, float h)
     height = h;
     screen_projection = mat4_ortho(0.0f, w, h, 0.0f, -1.0f, 1.0f);
 }
-
 
 int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 {
@@ -51,7 +45,7 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 #endif
     minimalEnableDebug(app, debug);
 
-    if (!ignisInit(debug))
+    if (!ignisInit(minimalGetGLProcAddress, debug))
     {
         MINIMAL_ERROR("[IGNIS] Failed to initialize Ignis");
         return MINIMAL_FAIL;
@@ -92,9 +86,9 @@ void onDestroy(MinimalApp* app)
 
 int onEvent(MinimalApp* app, const MinimalEvent* e)
 {
-    if (minimalEventExternal(e) == WATCHER_EVENT_ID)
+    if (minimalEventIsType(e, WATCHER_EVENT))
     {
-        WatcherEvent* watcher_event = minimalExternalEventData(e);
+        WatcherEvent* watcher_event = minimalExternalEvent(e);
         switch (watcher_event->action)
         {
         case WATCHER_ACTION_ADDED:

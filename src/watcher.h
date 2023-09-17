@@ -3,12 +3,11 @@
 
 #include "minimal/minimal.h"
 
-#define WATCHER_EVENT_ID    1
+#define WATCHER_EVENT          32
 
-#define WATCHER_BUFFER_SIZE 1024
+#define WATCHER_BUFFER_SIZE  1024
 
 #define WATCHER_ACTION_UNKOWN   0
-
 #define WATCHER_ACTION_ADDED    1
 #define WATCHER_ACTION_REMOVED  2
 #define WATCHER_ACTION_MODIFIED 3
