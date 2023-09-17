@@ -2,8 +2,9 @@
 
 #include <minimal/minimal.h>
 
-#include "iso.h"
-#include "camera.h"
+#include "math/mat4.h"
+
+#include "watcher.h"
 
 static void ignisLogCallback(IgnisLogLevel level, const char* desc)
 {
@@ -17,38 +18,25 @@ static void ignisLogCallback(IgnisLogLevel level, const char* desc)
     }
 }
 
-int show_info = 1;
-int show_word_view = 0;
-
-Camera camera;
-float cameraspeed = 120.0f;
 
 IgnisFont font;
 
-typedef struct
-{
-    vec2 position;
-    float speed;
-} Player;
+float width, height;
+mat4 screen_projection;
 
-void renderPlayer(const IsoMap* map, const Player* player)
-{
-    vec2 pos = worldToScreen(player->position);
-    ignisPrimitives2DRenderCircle(pos.x, pos.y, 16, IGNIS_BLACK);
-}
+
+IgnisShader shader;
+IgnisVertexArray vao;
+
+Watcher* watcher;
 
 static void setViewport(float w, float h)
 {
-    cameraSetProjectionOrtho(&camera, w, h);
-    ignisFontRendererSetProjection(cameraGetProjectionPtr(&camera));
+    width = w;
+    height = h;
+    screen_projection = mat4_ortho(0.0f, w, h, 0.0f, -1.0f, 1.0f);
 }
 
-IsoMap map;
-IgnisTextureAtlas2D tile_texture_atlas;
-
-Player player;
-
-uint32_t tile = UINT32_MAX;
 
 int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 {
@@ -61,6 +49,7 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 #else
     int debug = 0;
 #endif
+    minimalEnableDebug(app, debug);
 
     if (!ignisInit(debug))
     {
@@ -68,15 +57,12 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
         return MINIMAL_FAIL;
     }
 
-    ignisEnableBlend(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    ignisEnableBlend(IGNIS_SRC_ALPHA, IGNIS_ONE_MINUS_SRC_ALPHA);
     ignisSetClearColor(IGNIS_DARK_GREY);
 
     /* renderer */
-    ignisPrimitivesRendererInit();
-    ignisFontRendererInit();
     ignisRenderer2DInit();
-    ignisBatch2DInit("res/shaders/batch.vert", "res/shaders/batch.frag");
-
+    ignisFontRendererInit();
     ignisCreateFont(&font, "res/fonts/ProggyTiny.ttf", 24.0);
     ignisFontRendererBindFontColor(&font, IGNIS_WHITE);
 
@@ -87,47 +73,45 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
     MINIMAL_INFO("[Ignis]   Version:      %s", ignisGetVersionString());
     MINIMAL_INFO("[Minimal] Version:      %s", minimalGetVersionString());
 
-    ignisCreateTexture2D((IgnisTexture2D*)&tile_texture_atlas, "res/tiles.png", NULL);
-    tile_texture_atlas.rows = 1;
-    tile_texture_atlas.cols = 4;
-
-    uint32_t grid[] = {
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 2, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 2, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 2, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3
-    };
-    isoMapInit(&map, grid, 10, 10, 50, 8.0f);
-
-    player.position = isoMapGetCenter(&map);
-    player.speed = 60.0f;
-
-    cameraCreateOrtho(&camera, 0.0f, 0.0f, (float)w, (float)h);
-    cameraSetCenterOrtho(&camera, worldToScreen(isoMapGetCenter(&map)));
-
     setViewport((float)w, (float)h);
+
+    watcher = watcherCreate("./res");
 
     return MINIMAL_OK;
 }
 
 void onDestroy(MinimalApp* app)
 {
+    watcherDestroy(watcher);
+
     ignisDeleteFont(&font);
 
-    ignisBatch2DDestroy();
     ignisFontRendererDestroy();
-    ignisPrimitivesRendererDestroy();
     ignisRenderer2DDestroy();
 }
 
 int onEvent(MinimalApp* app, const MinimalEvent* e)
 {
+    if (minimalEventExternal(e) == WATCHER_EVENT_ID)
+    {
+        WatcherEvent* watcher_event = minimalExternalEventData(e);
+        switch (watcher_event->action)
+        {
+        case WATCHER_ACTION_ADDED:
+            printf("       Added: %.*s\n", watcher_event->name_len, watcher_event->filename);
+            break;
+        case WATCHER_ACTION_REMOVED:
+            printf("     Removed: %.*s\n", watcher_event->name_len, watcher_event->filename);
+            break;
+        case WATCHER_ACTION_MODIFIED:
+            printf("    Modified: %.*s\n", watcher_event->name_len, watcher_event->filename);
+            break;
+        default:
+            printf("Unknown action!\n");
+            break;
+        }
+    }
+
     float w, h;
     if (minimalEventWindowSize(e, &w, &h))
     {
@@ -140,14 +124,6 @@ int onEvent(MinimalApp* app, const MinimalEvent* e)
     case MINIMAL_KEY_ESCAPE:    minimalClose(app); break;
     case MINIMAL_KEY_F6:        minimalToggleVsync(app); break;
     case MINIMAL_KEY_F7:        minimalToggleDebug(app); break;
-    case MINIMAL_KEY_F9:        show_info = !show_info; break;
-    case MINIMAL_KEY_F10:       show_word_view = !show_word_view; break;
-    }
-
-    vec2 mouse = { 0 };
-    if (minimalEventMouseMoved(e, &mouse.x, &mouse.y))
-    {
-        tile = getTileIndexAt(&map, screenToWorld(cameraGetMousePos(&camera, mouse)));
     }
 
     return MINIMAL_OK;
@@ -155,73 +131,27 @@ int onEvent(MinimalApp* app, const MinimalEvent* e)
 
 void onTick(MinimalApp* app, float deltatime)
 {
-    // move camera
-    vec2 position = camera.position;
-
-    if (minimalKeyDown(MINIMAL_KEY_LEFT))  position.x -= cameraspeed * deltatime;
-    if (minimalKeyDown(MINIMAL_KEY_RIGHT)) position.x += cameraspeed * deltatime;
-    if (minimalKeyDown(MINIMAL_KEY_DOWN))  position.y += cameraspeed * deltatime;
-    if (minimalKeyDown(MINIMAL_KEY_UP))    position.y -= cameraspeed * deltatime;
-
-    cameraSetPositionOrtho(&camera, position);
-
-    // move player
-    vec2 velocity;
-    velocity.x = (-minimalKeyDown(MINIMAL_KEY_A) + minimalKeyDown(MINIMAL_KEY_D));
-    velocity.y = (-minimalKeyDown(MINIMAL_KEY_W) + minimalKeyDown(MINIMAL_KEY_S));
-
-    velocity = vec2_normalize(screenToWorld(velocity));
-
-    player.position = vec2_add(player.position, vec2_mult(velocity, deltatime * player.speed));
+    watcherPollEvents(app, watcher);
 
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT);
 
     // render debug info
+    ignisFontRendererSetProjection(screen_projection.v[0]);
+
     /* fps */
     ignisFontRendererRenderTextFormat(8.0f, 8.0f, "FPS: %d", app->fps);
 
-    if (show_info)
+    if (app->debug)
     {
         /* Settings */
-        ignisFontRendererTextFieldBegin(camera.size.x - 220.0f, 8.0f, 8.0f);
+        ignisFontRendererTextFieldBegin(width - 220.0f, 8.0f, 8.0f);
 
         ignisFontRendererTextFieldLine("F6:  Toggle Vsync");
         ignisFontRendererTextFieldLine("F7:  Toggle debug mode");
-
-        ignisFontRendererTextFieldLine("F9:  Toggle overlay");
-        ignisFontRendererTextFieldLine("F10: Toggle view mode");
     }
 
     ignisFontRendererFlush();
-
-    ignisBatch2DSetViewProjection(cameraGetViewProjectionPtr(&camera));
-
-    renderMap(&map, &tile_texture_atlas);
-
-    ignisBatch2DFlush();
-
-    ignisPrimitivesRendererSetViewProjection(cameraGetViewProjectionPtr(&camera));
-
-    renderPlayer(&map, &player);
-    highlightTile(&map, tile);
-
-    if (show_word_view)
-    {
-        ignisPrimitivesRendererFlush();
-        ignisPrimitivesRendererSetViewProjection(cameraGetProjectionPtr(&camera));
-
-        vec2 mouse = { 0 };
-        minimalCursorPos(&mouse.x, &mouse.y);
-
-        vec2 mouse_world = screenToWorld(cameraGetMousePos(&camera, mouse));
-
-        ignisPrimitives2DFillCircle(mouse_world.x, mouse_world.y, 3, IGNIS_BLUE);
-
-        highlightTileWorld(&map, tile);
-    }
-
-    ignisPrimitivesRendererFlush();
 }
 
 int main()
