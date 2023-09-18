@@ -88,7 +88,7 @@ int onEvent(MinimalApp* app, const MinimalEvent* e)
 {
     if (minimalEventIsType(e, WATCHER_EVENT))
     {
-        WatcherEvent* watcher_event = minimalExternalEvent(e);
+        const WatcherEvent* watcher_event = minimalExternalEvent(e);
         switch (watcher_event->action)
         {
         case WATCHER_ACTION_ADDED:
