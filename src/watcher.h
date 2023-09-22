@@ -21,7 +21,7 @@ typedef struct
     uint32_t name_len;
 } WatcherEvent;
 
-Watcher* watcherCreate(const char* path);
+Watcher* watcherCreate(const char* target_dir);
 void watcherDestroy(Watcher* watcher);
 
 void watcherPollEvents(MinimalApp* app, Watcher* watcher);

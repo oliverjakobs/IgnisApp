@@ -1,16 +1,16 @@
 #include "watcher.h"
 
 #include <Windows.h>
-#include <stdint.h>
-#include <wchar.h>
 #include <stdlib.h>
+
+#include <string.h>
 
 struct Watcher
 {
     HANDLE handle;
     OVERLAPPED overlapped;
 
-    uint8_t change_buffer[WATCHER_BUFFER_SIZE];
+    BYTE change_buffer[WATCHER_BUFFER_SIZE];
 };
 
 static BOOL watcherReadDirChanges(Watcher* watcher)
@@ -22,12 +22,12 @@ static BOOL watcherReadDirChanges(Watcher* watcher)
         NULL, &watcher->overlapped, NULL);
 }
 
-Watcher* watcherCreate(const char* path)
+Watcher* watcherCreate(const char* target_dir)
 {
     Watcher* watcher = malloc(sizeof(Watcher));
     if (!watcher) return NULL;
 
-    watcher->handle = CreateFileA(path, FILE_LIST_DIRECTORY,
+    watcher->handle = CreateFileA(target_dir, FILE_LIST_DIRECTORY,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         NULL,
         OPEN_EXISTING,
@@ -37,9 +37,9 @@ Watcher* watcherCreate(const char* path)
     if (watcher->handle == INVALID_HANDLE_VALUE)
     {
         if (GetLastError() == ERROR_FILE_NOT_FOUND)
-            MINIMAL_ERROR("[Watcher] File %s not found", path);
+            MINIMAL_ERROR("[Watcher] Target %s not found", target_dir);
         else
-            MINIMAL_ERROR("[Watcher] Failed to open file %s", path);
+            MINIMAL_ERROR("[Watcher] Failed to open %s", target_dir);
     }
 
     watcher->overlapped.hEvent = CreateEvent(NULL, FALSE, 0, NULL);
@@ -75,9 +75,10 @@ void watcherPollEvents(MinimalApp* app, Watcher* watcher)
         {
             WatcherEvent e = {
                 .action = watcher_actions_map[notify->Action],
-                .name_len = notify->FileNameLength / sizeof(wchar_t)
+                .name_len = notify->FileNameLength / sizeof(wchar_t),
+                .filename = {0}
             };
-            wcstombs_s(NULL, e.filename, WATCHER_BUFFER_SIZE, notify->FileName, e.name_len);
+            wcstombs_s(NULL, e.filename, WATCHER_BUFFER_SIZE - 1, notify->FileName, e.name_len);
 
             if (e.action != WATCHER_ACTION_UNKOWN)
                 minimalDispatchExternalEvent(app, WATCHER_EVENT, &e);

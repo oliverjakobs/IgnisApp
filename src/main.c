@@ -5,6 +5,9 @@
 #include "math/mat4.h"
 
 #include "watcher.h"
+#include "resources.h"
+
+#include "toolbox/tb_file.h"
 
 static void ignisLogCallback(IgnisLogLevel level, const char* desc)
 {
@@ -23,7 +26,11 @@ IgnisFont font;
 float width, height;
 mat4 screen_projection;
 
+Resources res;
+
 Watcher* watcher;
+
+const IgnisTexture2D* texture;
 
 static void setViewport(float w, float h)
 {
@@ -35,15 +42,13 @@ static void setViewport(float w, float h)
 int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 {
     /* ingis initialization */
-    // ignisSetAllocator(FrostMemoryGetAllocator(), tb_mem_malloc, tb_mem_realloc, tb_mem_free);
     ignisSetLogCallback(ignisLogCallback);
 
-#ifdef _DEBUG
-    int debug = 1;
-#else
     int debug = 0;
-#endif
+#ifdef _DEBUG
+    debug = 1;
     minimalEnableDebug(app, debug);
+#endif
 
     if (!ignisInit(minimalGetGLProcAddress, debug))
     {
@@ -69,7 +74,10 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 
     setViewport((float)w, (float)h);
 
+    ResourcesInit(&res);
     watcher = watcherCreate("./res");
+
+    texture = ResourcesLoadTexture2D(&res, "./res/texture.png");
 
     return MINIMAL_OK;
 }
@@ -77,6 +85,7 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 void onDestroy(MinimalApp* app)
 {
     watcherDestroy(watcher);
+    ResourcesDestroy(&res);
 
     ignisDeleteFont(&font);
 
@@ -89,16 +98,22 @@ int onEvent(MinimalApp* app, const MinimalEvent* e)
     if (minimalEventIsType(e, WATCHER_EVENT))
     {
         const WatcherEvent* watcher_event = minimalExternalEvent(e);
+
+        const char* dir = "./res";
+        char name_buffer[WATCHER_BUFFER_SIZE] = {0};
+        size_t size = tb_path_join(name_buffer, WATCHER_BUFFER_SIZE, dir, watcher_event->filename);
+
         switch (watcher_event->action)
         {
         case WATCHER_ACTION_ADDED:
-            printf("       Added: %.*s\n", watcher_event->name_len, watcher_event->filename);
+            printf("       Added: %.*s\n", (uint32_t)size, name_buffer);
             break;
         case WATCHER_ACTION_REMOVED:
-            printf("     Removed: %.*s\n", watcher_event->name_len, watcher_event->filename);
+            printf("     Removed: %.*s\n", (uint32_t)size, name_buffer);
             break;
         case WATCHER_ACTION_MODIFIED:
-            printf("    Modified: %.*s\n", watcher_event->name_len, watcher_event->filename);
+            printf("    Modified: %.*s\n", (uint32_t)size, name_buffer);
+            texture = ResourcesReloadTexture2D(&res, texture, name_buffer);
             break;
         default:
             printf("Unknown action!\n");
@@ -130,6 +145,10 @@ void onTick(MinimalApp* app, float deltatime)
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT);
 
+    ignisRenderer2DSetViewProjection(screen_projection.v[0]);
+    
+    ignisRenderer2DRenderTexture(texture, (width - texture->width) * .5f, (height - texture->height) * .5f);
+
     // render debug info
     ignisFontRendererSetProjection(screen_projection.v[0]);
 
@@ -154,7 +173,7 @@ int main()
         .on_load =    onLoad,
         .on_destroy = onDestroy,
         .on_event =   onEvent,
-        .on_tick =  onTick
+        .on_tick =    onTick
     };
 
     if (minimalLoad(&app, "IgnisApp", 1200, 800, "4.4"))
