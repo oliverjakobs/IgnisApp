@@ -16,7 +16,7 @@
 #include "nuklear/nuklear.h"
 
 #include <ignis/ignis.h>
-#include <GLFW/glfw3.h>
+#include <minimal/minimal.h>
 
 #ifndef NK_GLFW_TEXT_MAX
 #define NK_GLFW_TEXT_MAX 256
@@ -38,13 +38,12 @@ struct nk_glfw_device {
 };
 
 struct nk_glfw {
-    GLFWwindow *win;
-    int width, height;
-    int display_width, display_height;
+    MinimalWindow *win;
+
     struct nk_glfw_device ogl;
     struct nk_context ctx;
     struct nk_font_atlas atlas;
-    struct nk_vec2 fb_scale;
+
     unsigned int text[NK_GLFW_TEXT_MAX];
     int text_len;
     struct nk_vec2 scroll;
@@ -53,7 +52,7 @@ struct nk_glfw {
     struct nk_vec2 double_click_pos;
 };
 
-NK_API struct nk_context*   nk_glfw3_init(struct nk_glfw* glfw, GLFWwindow *win);
+NK_API struct nk_context*   nk_glfw3_init(struct nk_glfw* glfw, MinimalWindow* win);
 NK_API void                 nk_glfw3_shutdown(struct nk_glfw* glfw);
 NK_API void                 nk_glfw3_font_stash_begin(struct nk_glfw* glfw);
 NK_API void                 nk_glfw3_font_stash_end(struct nk_glfw* glfw);
