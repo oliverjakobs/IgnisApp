@@ -247,23 +247,6 @@ nk_build(struct nk_context *ctx)
     struct nk_command *cmd = 0;
     nk_byte *buffer = 0;
 
-    /* draw cursor overlay */
-    if (!ctx->style.cursor_active)
-        ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_ARROW];
-    if (ctx->style.cursor_active && !ctx->input.mouse.grabbed && ctx->style.cursor_visible) {
-        struct nk_rect mouse_bounds;
-        const struct nk_cursor *cursor = ctx->style.cursor_active;
-        nk_command_buffer_init(&ctx->overlay, &ctx->memory, NK_CLIPPING_OFF);
-        nk_start_buffer(ctx, &ctx->overlay);
-
-        mouse_bounds.x = ctx->input.mouse.pos.x - cursor->offset.x;
-        mouse_bounds.y = ctx->input.mouse.pos.y - cursor->offset.y;
-        mouse_bounds.w = cursor->size.x;
-        mouse_bounds.h = cursor->size.y;
-
-        nk_draw_image(&ctx->overlay, mouse_bounds, &cursor->img, nk_white);
-        nk_finish_buffer(ctx, &ctx->overlay);
-    }
     /* build one big draw command list out of all window buffers */
     it = ctx->begin;
     buffer = (nk_byte*)ctx->memory.memory.ptr;

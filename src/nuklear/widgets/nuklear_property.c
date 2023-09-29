@@ -1,5 +1,5 @@
-#include "nuklear.h"
-#include "nuklear_internal.h"
+#include "../nuklear.h"
+#include "../nuklear_internal.h"
 
 /* ===============================================================
  *
@@ -399,18 +399,9 @@ nk_property(struct nk_context *ctx, const char *name, struct nk_property_variant
         win->property.name = hash;
         win->property.select_start = *select_begin;
         win->property.select_end = *select_end;
-        if (*state == NK_PROPERTY_DRAG) {
-            ctx->input.mouse.grab = nk_true;
-            ctx->input.mouse.grabbed = nk_true;
-        }
     }
     /* check if previously active property is now inactive */
     if (*state == NK_PROPERTY_DEFAULT && old_state != NK_PROPERTY_DEFAULT) {
-        if (old_state == NK_PROPERTY_DRAG) {
-            ctx->input.mouse.grab = nk_false;
-            ctx->input.mouse.grabbed = nk_false;
-            ctx->input.mouse.ungrab = nk_true;
-        }
         win->property.select_start = 0;
         win->property.select_end = 0;
         win->property.active = 0;

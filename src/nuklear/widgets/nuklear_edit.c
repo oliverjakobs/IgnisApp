@@ -1,5 +1,5 @@
-#include "nuklear.h"
-#include "nuklear_internal.h"
+#include "../nuklear.h"
+#include "../nuklear_internal.h"
 
 /* ===============================================================
  *
@@ -218,7 +218,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
     /* handle user input */
     if (edit->active && in)
     {
-        int shift_mod = in->keyboard.keys[NK_KEY_SHIFT].down;
+        int shift_mod = 0;// in->keyboard.keys[NK_KEY_SHIFT].down;
         const float mouse_x = (in->mouse.pos.x - area.x) + edit->scrollbar.x;
         const float mouse_y = (in->mouse.pos.y - area.y) + edit->scrollbar.y;
 

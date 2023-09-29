@@ -70,14 +70,10 @@ nk_button_behavior(nk_flags *state, struct nk_rect r,
         *state = NK_WIDGET_STATE_HOVERED;
         if (nk_input_is_mouse_down(i, NK_BUTTON_LEFT))
             *state = NK_WIDGET_STATE_ACTIVE;
-        if (nk_input_has_mouse_click_in_button_rect(i, NK_BUTTON_LEFT, r)) {
+        if (nk_input_has_mouse_click_in_rect(i, NK_BUTTON_LEFT, r)) {
             ret = (behavior != NK_BUTTON_DEFAULT) ?
                 nk_input_is_mouse_down(i, NK_BUTTON_LEFT):
-#ifdef NK_BUTTON_TRIGGER_ON_RELEASE
                 nk_input_is_mouse_released(i, NK_BUTTON_LEFT);
-#else
-                nk_input_is_mouse_pressed(i, NK_BUTTON_LEFT);
-#endif
         }
     }
     if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(i, r))

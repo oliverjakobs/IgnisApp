@@ -6,6 +6,8 @@
 
 #include "nuklear_glfw_gl3.h"
 
+#include "overview.c"
+
 static void ignisLogCallback(IgnisLogLevel level, const char* desc)
 {
     switch (level)
@@ -65,9 +67,7 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 
     nk_glfw3_init(&glfw, app->window);
 
-    /* Load Fonts: if none of these are loaded a default font will be used  */
-    nk_glfw3_font_stash_begin(&glfw);
-    nk_glfw3_font_stash_end(&glfw);
+    nk_glfw3_load_font_atlas(&glfw);
 
     return MINIMAL_OK;
 }
@@ -101,22 +101,6 @@ int onEvent(MinimalApp* app, const MinimalEvent* e)
         glfw.scroll.y += y;
     }
 
-    if (minimalEventMouseButtonPressed(e, MINIMAL_MOUSE_BUTTON_LEFT, &x, &y))
-    {
-        double dt = minimalGetTime() - glfw.last_button_click;
-        if (dt > NK_GLFW_DOUBLE_CLICK_LO && dt < NK_GLFW_DOUBLE_CLICK_HI)
-        {
-            glfw.is_double_click_down = nk_true;
-            glfw.double_click_pos = nk_vec2((float)x, (float)y);
-        }
-        glfw.last_button_click = minimalGetTime();
-    }
-
-    if (minimalEventMouseButtonReleased(e, MINIMAL_MOUSE_BUTTON_LEFT, NULL, NULL))
-    {
-        glfw.is_double_click_down = nk_false;
-    }
-
     switch (minimalEventKeyPressed(e))
     {
     case MINIMAL_KEY_ESCAPE:    minimalClose(app); break;
@@ -143,6 +127,8 @@ void onTick(MinimalApp* app, float deltatime)
         enum { EASY, HARD };
         static int op = EASY;
         static int property = 20;
+        static char text[64];
+        static int text_len = 0;
         nk_layout_row_static(ctx, 30, 80, 1);
         if (nk_button_label(ctx, "button"))
             fprintf(stdout, "button pressed\n");
@@ -153,6 +139,10 @@ void onTick(MinimalApp* app, float deltatime)
 
         nk_layout_row_dynamic(ctx, 25, 1);
         nk_property_int(ctx, "Compression:", 0, &property, 100, 10, 1);
+
+        nk_layout_row_dynamic(ctx, 25, 2);
+        nk_label(ctx, "Text:", NK_TEXT_LEFT);
+        nk_edit_string(ctx, NK_EDIT_SIMPLE, text, &text_len, 64, nk_filter_default);
 
         nk_layout_row_dynamic(ctx, 20, 1);
         nk_label(ctx, "background:", NK_TEXT_LEFT);
@@ -169,6 +159,8 @@ void onTick(MinimalApp* app, float deltatime)
         }
     }
     nk_end(ctx);
+
+    overview(ctx);
 
     nk_glfw3_render(&glfw, NK_ANTI_ALIASING_ON);
 }

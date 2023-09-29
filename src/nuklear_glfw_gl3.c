@@ -11,8 +11,9 @@ struct nk_glfw_vertex {
 NK_API void
 nk_glfw3_device_create(struct nk_glfw_device* dev)
 {
-    GLint status;
-    static const GLchar* vertex_shader =
+    nk_buffer_init_default(&dev->cmds);
+
+    static const char* vertex_shader =
         NK_SHADER_VERSION
         "layout (location = 0) in vec2 Position;\n"
         "layout (location = 1) in vec2 TexCoord;\n"
@@ -25,7 +26,7 @@ nk_glfw3_device_create(struct nk_glfw_device* dev)
         "   Frag_Color = Color;\n"
         "   gl_Position = ProjMtx * vec4(Position.xy, 0, 1);\n"
         "}\n";
-    static const GLchar* fragment_shader =
+    static const char* fragment_shader =
         NK_SHADER_VERSION
         "precision mediump float;\n"
         "uniform sampler2D Texture;\n"
@@ -35,8 +36,6 @@ nk_glfw3_device_create(struct nk_glfw_device* dev)
         "void main(){\n"
         "   Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
         "}\n";
-
-    nk_buffer_init_default(&dev->cmds);
 
     dev->prog = ignisCreateShaderSrcvf(vertex_shader, fragment_shader);
 
@@ -56,18 +55,13 @@ nk_glfw3_device_create(struct nk_glfw_device* dev)
     ignisSetVertexLayout(&dev->vao, 0, layout, 3);
 
     ignisLoadElementBuffer(&dev->vao, 1, NULL, MAX_ELEMENT_BUFFER, IGNIS_STREAM_DRAW);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 }
 
 NK_API void
 nk_glfw3_device_destroy(struct nk_glfw_device* dev)
 {
     ignisDeleteShader(dev->prog);
-    glDeleteTextures(1, &dev->font_tex);
+    ignisDeleteTexture2D(&dev->font_tex);
     ignisDeleteVertexArray(&dev->vao);
     nk_buffer_free(&dev->cmds);
 }
@@ -78,11 +72,7 @@ nk_glfw3_init(struct nk_glfw* glfw, MinimalWindow* win)
     glfw->win = win;
 
     nk_init_default(&glfw->ctx, 0);
-    glfw->last_button_click = 0;
     nk_glfw3_device_create(&glfw->ogl);
-
-    glfw->is_double_click_down = nk_false;
-    glfw->double_click_pos = nk_vec2(0, 0);
 
     return &glfw->ctx;
 }
@@ -90,35 +80,32 @@ nk_glfw3_init(struct nk_glfw* glfw, MinimalWindow* win)
 NK_API
 void nk_glfw3_shutdown(struct nk_glfw* glfw)
 {
-    nk_font_atlas_clear(&glfw->atlas);
+    font_atlas_clear(&glfw->atlas);
     nk_free(&glfw->ctx);
     nk_glfw3_device_destroy(&glfw->ogl);
 }
 
 NK_API void
-nk_glfw3_font_stash_begin(struct nk_glfw* glfw)
+nk_glfw3_load_font_atlas(struct nk_glfw* glfw)
 {
-    nk_font_atlas_init_default(&glfw->atlas);
-    nk_font_atlas_begin(&glfw->atlas);
-}
+    font_atlas_init(&glfw->atlas);
+    font_atlas_begin(&glfw->atlas, 3);
 
-NK_API void
-nk_glfw3_font_stash_end(struct nk_glfw* glfw)
-{
-    const void* image; int w, h;
-    image = nk_font_atlas_bake(&glfw->atlas, &w, &h, NK_FONT_ATLAS_RGBA32);
+    font_atlas_add_default(&glfw->atlas, 13.0f, NULL);
+    font_atlas_add_from_file(&glfw->atlas, "res/fonts/OpenSans.ttf", 13, NULL);
+    font_atlas_add_from_file(&glfw->atlas, "res/fonts/ProggyTiny.ttf", 14, NULL);
+
+    int w = 0, h = 0;
+    const void* pixels = font_atlas_bake(&glfw->atlas, &w, &h, NK_FONT_ATLAS_RGBA32);
 
     // upload atlas
     struct nk_glfw_device* dev = &glfw->ogl;
-    glGenTextures(1, &dev->font_tex);
-    glBindTexture(GL_TEXTURE_2D, dev->font_tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)w, (GLsizei)h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
-    nk_font_atlas_end(&glfw->atlas, nk_handle_id((int)glfw->ogl.font_tex), &glfw->ogl.tex_null);
-    if (glfw->atlas.default_font)
-        nk_style_set_font(&glfw->ctx, &glfw->atlas.default_font->handle);
+    ignisGenerateTexture2D(&dev->font_tex, w, h, pixels, NULL);
+
+    font_atlas_end(&glfw->atlas, nk_handle_id((int)glfw->ogl.font_tex.name), &glfw->ogl.tex_null);
+
+    nk_style_set_font(&glfw->ctx, &glfw->atlas.fonts[0].handle);
 }
 
 NK_API void
@@ -131,43 +118,6 @@ nk_glfw3_new_frame(struct nk_glfw* glfw)
     for (int i = 0; i < glfw->text_len; ++i)
         nk_input_unicode(ctx, glfw->text[i]);
 
-    nk_input_key(ctx, NK_KEY_DEL,           minimalGetKeyState(win, MINIMAL_KEY_DELETE));
-    nk_input_key(ctx, NK_KEY_ENTER,         minimalGetKeyState(win, MINIMAL_KEY_ENTER));
-    nk_input_key(ctx, NK_KEY_TAB,           minimalGetKeyState(win, MINIMAL_KEY_TAB));
-    nk_input_key(ctx, NK_KEY_BACKSPACE,     minimalGetKeyState(win, MINIMAL_KEY_BACKSPACE));
-    nk_input_key(ctx, NK_KEY_UP,            minimalGetKeyState(win, MINIMAL_KEY_UP));
-    nk_input_key(ctx, NK_KEY_DOWN,          minimalGetKeyState(win, MINIMAL_KEY_DOWN));
-    nk_input_key(ctx, NK_KEY_TEXT_START,    minimalGetKeyState(win, MINIMAL_KEY_HOME));
-    nk_input_key(ctx, NK_KEY_TEXT_END,      minimalGetKeyState(win, MINIMAL_KEY_END));
-    nk_input_key(ctx, NK_KEY_SCROLL_START,  minimalGetKeyState(win, MINIMAL_KEY_HOME));
-    nk_input_key(ctx, NK_KEY_SCROLL_END,    minimalGetKeyState(win, MINIMAL_KEY_END));
-    nk_input_key(ctx, NK_KEY_SCROLL_DOWN,   minimalGetKeyState(win, MINIMAL_KEY_PAGE_DOWN));
-    nk_input_key(ctx, NK_KEY_SCROLL_UP,     minimalGetKeyState(win, MINIMAL_KEY_PAGE_UP));
-    nk_input_key(ctx, NK_KEY_SHIFT,         minimalGetKeyState(win, MINIMAL_KEY_LEFT_SHIFT) ||
-                                            minimalGetKeyState(win, MINIMAL_KEY_RIGHT_SHIFT));
-
-    if (minimalGetKeyState(win, MINIMAL_KEY_LEFT_CONTROL) || minimalGetKeyState(win, MINIMAL_KEY_RIGHT_CONTROL))
-    {
-        nk_input_key(ctx, NK_KEY_COPY,            minimalGetKeyState(win, MINIMAL_KEY_C));
-        nk_input_key(ctx, NK_KEY_PASTE,           minimalGetKeyState(win, MINIMAL_KEY_V));
-        nk_input_key(ctx, NK_KEY_CUT,             minimalGetKeyState(win, MINIMAL_KEY_X));
-        nk_input_key(ctx, NK_KEY_TEXT_UNDO,       minimalGetKeyState(win, MINIMAL_KEY_Z));
-        nk_input_key(ctx, NK_KEY_TEXT_REDO,       minimalGetKeyState(win, MINIMAL_KEY_R));
-        nk_input_key(ctx, NK_KEY_TEXT_WORD_LEFT,  minimalGetKeyState(win, MINIMAL_KEY_LEFT));
-        nk_input_key(ctx, NK_KEY_TEXT_WORD_RIGHT, minimalGetKeyState(win, MINIMAL_KEY_RIGHT));
-        nk_input_key(ctx, NK_KEY_TEXT_LINE_START, minimalGetKeyState(win, MINIMAL_KEY_B));
-        nk_input_key(ctx, NK_KEY_TEXT_LINE_END,   minimalGetKeyState(win, MINIMAL_KEY_E));
-    }
-    else
-    {
-        nk_input_key(ctx, NK_KEY_LEFT,  minimalGetKeyState(win, MINIMAL_KEY_LEFT));
-        nk_input_key(ctx, NK_KEY_RIGHT, minimalGetKeyState(win, MINIMAL_KEY_RIGHT));
-        nk_input_key(ctx, NK_KEY_COPY, 0);
-        nk_input_key(ctx, NK_KEY_PASTE, 0);
-        nk_input_key(ctx, NK_KEY_CUT, 0);
-        nk_input_key(ctx, NK_KEY_SHIFT, 0);
-    }
-
     float x, y;
     minimalGetCursorPos(win, &x, &y);
     nk_input_motion(ctx, (int)x, (int)y);
@@ -175,7 +125,7 @@ nk_glfw3_new_frame(struct nk_glfw* glfw)
     nk_input_button(ctx, NK_BUTTON_LEFT,   (int)x, (int)y, minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_LEFT));
     nk_input_button(ctx, NK_BUTTON_MIDDLE, (int)x, (int)y, minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_MIDDLE));
     nk_input_button(ctx, NK_BUTTON_RIGHT,  (int)x, (int)y, minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_RIGHT));
-    nk_input_button(ctx, NK_BUTTON_DOUBLE, (int)glfw->double_click_pos.x, (int)glfw->double_click_pos.y, glfw->is_double_click_down);
+    
     nk_input_scroll(ctx, glfw->scroll);
     nk_input_end(&glfw->ctx);
     glfw->text_len = 0;
@@ -232,8 +182,8 @@ nk_glfw3_render(struct nk_glfw* glfw, enum nk_anti_aliasing AA)
             /* fill convert configuration */
             static const struct nk_draw_vertex_layout_element vertex_layout[] = {
                 {NK_VERTEX_POSITION, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_glfw_vertex, position)},
-                {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_glfw_vertex, uv)},
                 {NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, NK_OFFSETOF(struct nk_glfw_vertex, col)},
+                {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_glfw_vertex, uv)},
                 {NK_VERTEX_LAYOUT_END}
             };
 
