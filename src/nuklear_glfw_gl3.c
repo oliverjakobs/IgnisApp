@@ -74,6 +74,9 @@ nk_glfw3_init(struct nk_glfw* glfw, MinimalWindow* win)
     nk_init_default(&glfw->ctx, 0);
     nk_glfw3_device_create(&glfw->ogl);
 
+    glfw->ogl.tex_null.texture = nk_handle_id(IGNIS_DEFAULT_TEXTURE2D.name);
+    glfw->ogl.tex_null.uv = nk_vec2(0.f, 0.f);
+
     return &glfw->ctx;
 }
 
@@ -85,27 +88,30 @@ void nk_glfw3_shutdown(struct nk_glfw* glfw)
     nk_glfw3_device_destroy(&glfw->ogl);
 }
 
+static struct nk_user_font user_font;
+
+void set_font(struct nk_context* ctx, struct font* font)
+{
+    user_font.userdata.ptr = font;
+    user_font.height = font->size;
+    user_font.width = font_text_width;
+    user_font.query = font_query_font_glyph;
+    user_font.texture = nk_handle_id((int)font->texture->name);
+
+    nk_style_set_font(ctx, &user_font);
+}
+
 NK_API void
 nk_glfw3_load_font_atlas(struct nk_glfw* glfw)
 {
-    font_atlas_init(&glfw->atlas);
-    font_atlas_begin(&glfw->atlas, 3);
+    struct font_config fonts[3];
+    font_atlas_add_default(&fonts[0], 13.0f);
+    ignisFontAtlasLoadFromFile(&fonts[1], "res/fonts/OpenSans.ttf", 13);
+    ignisFontAtlasLoadFromFile(&fonts[2], "res/fonts/ProggyTiny.ttf", 14);
 
-    font_atlas_add_default(&glfw->atlas, 13.0f, NULL);
-    font_atlas_add_from_file(&glfw->atlas, "res/fonts/OpenSans.ttf", 13, NULL);
-    font_atlas_add_from_file(&glfw->atlas, "res/fonts/ProggyTiny.ttf", 14, NULL);
+    font_atlas_bake(&glfw->atlas, fonts, 3, NK_FONT_ATLAS_RGBA32);
 
-    int w = 0, h = 0;
-    const void* pixels = font_atlas_bake(&glfw->atlas, &w, &h, NK_FONT_ATLAS_RGBA32);
-
-    // upload atlas
-    struct nk_glfw_device* dev = &glfw->ogl;
-
-    ignisGenerateTexture2D(&dev->font_tex, w, h, pixels, NULL);
-
-    font_atlas_end(&glfw->atlas, nk_handle_id((int)glfw->ogl.font_tex.name), &glfw->ogl.tex_null);
-
-    nk_style_set_font(&glfw->ctx, &glfw->atlas.fonts[0].handle);
+    set_font(&glfw->ctx, &glfw->atlas.fonts[0]);
 }
 
 NK_API void

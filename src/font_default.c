@@ -258,64 +258,50 @@ nk_decode_85(unsigned char* dst, const unsigned char* src)
     }
 }
 
-NK_API struct font*
-font_atlas_add_compressed(struct font_atlas* atlas,
-    void* compressed_data, nk_size compressed_size, float height,
-    const struct font_config* config)
+uint8_t font_atlas_add_compressed(struct font_config* config, void* data, nk_size size, float height)
 {
-    unsigned int decompressed_size;
-    void* decompressed_data;
-    struct font_config cfg;
+    NK_ASSERT(data);
+    NK_ASSERT(size);
+    if (!data || !size) return IGNIS_FAILURE;
 
-    NK_ASSERT(atlas);
+    uint32_t decompressed_size = nk_decompress_length(data);
+    void* decompressed_data = malloc(decompressed_size);
 
-    NK_ASSERT(compressed_data);
-    NK_ASSERT(compressed_size);
-    if (!atlas || !compressed_data)
-        return 0;
-
-    decompressed_size = nk_decompress_length((unsigned char*)compressed_data);
-    decompressed_data = malloc(decompressed_size);
     NK_ASSERT(decompressed_data);
-    if (!decompressed_data) return 0;
-    nk_decompress((unsigned char*)decompressed_data, (unsigned char*)compressed_data,
-        (unsigned int)compressed_size);
+    if (!decompressed_data) return IGNIS_FAILURE;
 
-    cfg = (config) ? *config : font_default_config(height);
+    nk_decompress(decompressed_data, data, (unsigned int)size);
+
+    struct font_config cfg = font_default_config(height);
     cfg.ttf_blob = decompressed_data;
     cfg.ttf_size = decompressed_size;
     cfg.size = height;
-    cfg.ttf_data_owned_by_atlas = 1;
-    return font_atlas_add(atlas, &cfg);
+
+    nk_memcopy(config, &cfg, sizeof(struct font_config));
+    return IGNIS_SUCCESS;
 }
 
-NK_API struct font*
-font_atlas_add_compressed_base85(struct font_atlas* atlas,
-    const char* data_base85, float height, const struct font_config* config)
+uint8_t font_atlas_add_compressed_base85(struct font_config* config, const char* data_base85, float height)
 {
-    int compressed_size;
-    void* compressed_data;
-    struct font* font;
-
-    NK_ASSERT(atlas);
-
     NK_ASSERT(data_base85);
-    if (!atlas || !data_base85)
-        return 0;
+    if (!data_base85)
+        return IGNIS_FAILURE;
 
-    compressed_size = (((int)nk_strlen(data_base85) + 4) / 5) * 4;
-    compressed_data = malloc((nk_size)compressed_size);
+    uint32_t compressed_size = (((int)nk_strlen(data_base85) + 4) / 5) * 4;
+    void* compressed_data = malloc(compressed_size);
+
     NK_ASSERT(compressed_data);
-    if (!compressed_data) return 0;
-    nk_decode_85((unsigned char*)compressed_data, (const unsigned char*)data_base85);
-    font = font_atlas_add_compressed(atlas, compressed_data, (nk_size)compressed_size, height, config);
+    if (!compressed_data) return IGNIS_FAILURE;
+
+    nk_decode_85(compressed_data, data_base85);
+
+    uint8_t result = font_atlas_add_compressed(config, compressed_data, compressed_size, height, config);
+
     free(compressed_data);
-    return font;
+    return result;
 }
 
-NK_API struct font*
-font_atlas_add_default(struct font_atlas* atlas, float pixel_height, const struct font_config* config)
+uint8_t font_atlas_add_default(struct font_config* config, float pixel_height)
 {
-    NK_ASSERT(atlas);
-    return font_atlas_add_compressed_base85(atlas, nk_proggy_clean_ttf_compressed_data_base85, pixel_height, config);
+    return font_atlas_add_compressed_base85(config, nk_proggy_clean_ttf_compressed_data_base85, pixel_height);
 }

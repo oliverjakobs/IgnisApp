@@ -11,49 +11,34 @@ enum font_coord_type {
     IGNIS_COORD_PIXEL /* texture coordinates inside font glyphs are in absolute pixel */
 };
 
-struct baked_font {
-    float height;
-    /* height of the font  */
-    float ascent, descent;
-    /* font glyphs ascent and descent  */
-    rune glyph_offset;
-    /* glyph array offset inside the font glyph baking output array  */
-    rune glyph_count;
-    /* number of glyphs of this font inside the glyph baking array output */
-    const rune* ranges;
-    /* font codepoint ranges as pairs of (from/to) and 0 as last element */
-};
-
 struct font_config {
-    /* NOTE: only used internally */
-    void* ttf_blob;
-    /* pointer to loaded TTF file memory block.
-     * NOTE: not needed for font_atlas_add_from_memory and font_atlas_add_from_file. */
-    nk_size ttf_size;
-    /* size of the loaded TTF file memory block
-     * NOTE: not needed for font_atlas_add_from_memory and font_atlas_add_from_file. */
+    void* ttf_blob;     /* pointer to loaded TTF file memory block. */
+    nk_size ttf_size;   /* size of the loaded TTF file memory block */
 
-    unsigned char ttf_data_owned_by_atlas;
-    /* used inside font atlas: default to: 0*/
-    unsigned char pixel_snap;
-    /* align every character to pixel boundary (if true set oversample (1,1)) */
-    unsigned char oversample_v, oversample_h;
-    /* rasterize at high quality for sub-pixel position */
-    unsigned char padding[3];
+    unsigned char pixel_snap; /* align every character to pixel boundary (if true set oversample (1,1)) */
+    unsigned char oversample_v, oversample_h; /* rasterize at high quality for sub-pixel position */
 
-    float size;
-    /* baked pixel height of the font */
-    enum font_coord_type coord_type;
-    /* texture coordinate format with either pixel or UV coordinates */
-    struct nk_vec2 spacing;
-    /* extra pixel spacing between glyphs  */
-    const rune* range;
-    /* list of unicode ranges (2 values per range, zero terminated) */
-    struct baked_font font;
-    /* font to setup in the baking process: NOTE: not needed for font atlas */
-    rune fallback_glyph;
-    /* fallback glyph to use if a given rune is not found */
+    enum font_coord_type coord_type; /* texture coordinate format with either pixel or UV coordinates */
+
+    float size; /* pixel height of the font */
+
+    uint32_t glyph_offset;  /* glyph array offset inside the font glyph baking output array  */
+    const rune* range;      /* list of unicode ranges (2 values per range, zero terminated) */
+    rune fallback_glyph;    /* fallback glyph to use if a given rune is not found */
 };
+
+typedef struct
+{
+    float size; /* pixel height of the font */
+
+    unsigned char pixel_snap; /* align every character to pixel boundary (if true set oversample (1,1)) */
+    unsigned char oversample_v, oversample_h; /* rasterize at high quality for sub-pixel position */
+
+    enum font_coord_type coord_type; /* texture coordinate format with either pixel or UV coordinates */
+
+    const rune* range;   /* list of unicode ranges (2 values per range, zero terminated) */
+    rune fallback_glyph; /* fallback glyph to use if a given rune is not found */
+} IgnisFontConfig;
 
 struct font_glyph {
     rune codepoint;
@@ -62,9 +47,8 @@ struct font_glyph {
     float u0, v0, u1, v1;
 };
 
-struct font {
-    struct nk_user_font handle;
-
+struct font {    
+    const IgnisTexture2D* texture;
     float size;
 
     struct font_glyph* glyphs;
@@ -79,23 +63,17 @@ enum font_atlas_format {
 };
 
 struct font_atlas {
-    void* pixel;
-    int tex_width;
-    int tex_height;
-
-    struct nk_recti custom;
-
     struct font_glyph* glyphs;
     int glyph_count;
 
     struct font* fonts;
-    struct font_config* configs;
     int font_count;
-    int font_cap;
+
+    IgnisTexture2D texture;
 };
 
-
-
+void font_query_font_glyph(nk_handle handle, float height, struct nk_user_font_glyph* glyph, rune codepoint, rune next);
+float font_text_width(nk_handle handle, float height, const char* text, int len);
 
 /* some language glyph codepoint ranges */
 const rune* font_default_glyph_ranges(void);
@@ -103,23 +81,22 @@ const rune* font_chinese_glyph_ranges(void);
 const rune* font_cyrillic_glyph_ranges(void);
 const rune* font_korean_glyph_ranges(void);
 
-void font_atlas_init(struct font_atlas*);
-void font_atlas_begin(struct font_atlas*, int count);
-
 struct font_config font_default_config(float pixel_height);
 
-struct font* font_atlas_add(struct font_atlas*, const struct font_config*);
-struct font* font_atlas_add_default(struct font_atlas*, float height, const struct font_config*);
-struct font* font_atlas_add_from_memory(struct font_atlas* atlas, void* memory, nk_size size, float height, const struct font_config* config);
-struct font* font_atlas_add_from_file(struct font_atlas* atlas, const char* file_path, float height, const struct font_config*);
-struct font* font_atlas_add_compressed(struct font_atlas*, void* memory, nk_size size, float height, const struct font_config*);
-struct font* font_atlas_add_compressed_base85(struct font_atlas*, const char* data, float height, const struct font_config* config);
+uint8_t font_atlas_add_default(struct font_config* config, float height);
+uint8_t font_atlas_add_compressed(struct font_config* config, void* memory, nk_size size, float height);
+uint8_t font_atlas_add_compressed_base85(struct font_config* config, const char* data, float height);
 
-const void* font_atlas_bake(struct font_atlas* atlas, int* width, int* height, enum font_atlas_format fmt);
-void font_atlas_end(struct font_atlas*, nk_handle tex, struct nk_draw_null_texture*);
+const void* font_atlas_bake(struct font_atlas* atlas, const struct font_config* configs, int font_count, enum font_atlas_format fmt);
 const struct font_glyph* font_find_glyph(struct font*, rune unicode);
 void font_atlas_cleanup(struct font_atlas* atlas);
 void font_atlas_clear(struct font_atlas*);
+
+
+
+uint8_t ignisFontAtlasLoadFromFile(struct font_config* config, const char* path, float height);
+
+
 
 
 
@@ -133,6 +110,7 @@ typedef struct
 
 typedef struct
 {
+    const IgnisTexture2D* texture;
     float size;
 
     IgnisGlyph* glyphs;
@@ -140,6 +118,8 @@ typedef struct
 
     const rune* range; /* list of unicode ranges (2 values per range, zero terminated) */
 } IgnisFont;
+
+const IgnisGlyph ignisFontFindGlyph(const IgnisFont* font, rune unicode);
 
 typedef struct
 {
