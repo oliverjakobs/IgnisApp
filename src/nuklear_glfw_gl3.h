@@ -43,7 +43,7 @@ struct nk_glfw {
 
     struct nk_glfw_device ogl;
     struct nk_context ctx;
-    struct font_atlas atlas;
+    IgnisFontAtlas atlas;
 
     unsigned int text[NK_GLFW_TEXT_MAX];
     int text_len;

@@ -1,4 +1,5 @@
 #include <time.h>
+#include <math.h>
 
 static int
 overview(struct nk_context* ctx)

@@ -1,4 +1,5 @@
 #include "nuklear_glfw_gl3.h"
+#include "nuklear/nuklear_internal.h"
 
 struct nk_glfw_vertex {
     float position[2];
@@ -83,19 +84,72 @@ nk_glfw3_init(struct nk_glfw* glfw, MinimalWindow* win)
 NK_API
 void nk_glfw3_shutdown(struct nk_glfw* glfw)
 {
-    font_atlas_clear(&glfw->atlas);
+    ignisFontAtlasClear(&glfw->atlas);
     nk_free(&glfw->ctx);
     nk_glfw3_device_destroy(&glfw->ogl);
 }
 
 static struct nk_user_font user_font;
 
-void set_font(struct nk_context* ctx, struct font* font)
+float font_text_width(nk_handle handle, float height, const char* text, int len)
+{
+    IgnisFont* font = handle.ptr;
+
+    NK_ASSERT(font);
+    NK_ASSERT(font->glyphs);
+    if (!font || !text || !len)
+        return 0;
+
+    float scale = height / font->size;
+
+    IgnisRune unicode;
+    int glyph_len = nk_utf_decode(text, &unicode, (int)len);
+    if (!glyph_len) return 0;
+
+    float text_width = 0;
+    int text_len = glyph_len;
+    while (text_len <= len && glyph_len)
+    {
+        if (unicode == NK_UTF_INVALID) break;
+
+        /* query currently drawn glyph information */
+        const IgnisGlyph* g = ignisFontFindGlyph(font, unicode);
+        text_width += g->xadvance * scale;
+
+        /* offset next glyph */
+        glyph_len = nk_utf_decode(text + text_len, &unicode, (int)len - text_len);
+        text_len += glyph_len;
+    }
+    return text_width;
+}
+
+void font_query_glyph(nk_handle handle, float height, struct nk_user_font_glyph* glyph, nk_rune codepoint, nk_rune next)
+{
+    NK_ASSERT(glyph);
+    NK_UNUSED(next);
+
+    IgnisFont* font = handle.ptr;
+    NK_ASSERT(font);
+    NK_ASSERT(font->glyphs);
+    if (!font || !glyph)
+        return;
+
+    float scale = height / font->size;
+    const IgnisGlyph* g = ignisFontFindGlyph(font, codepoint);
+    glyph->width = (g->x1 - g->x0) * scale;
+    glyph->height = (g->y1 - g->y0) * scale;
+    glyph->offset = nk_vec2(g->x0 * scale, g->y0 * scale);
+    glyph->xadvance = (g->xadvance * scale);
+    glyph->uv[0] = nk_vec2(g->u0, g->v0);
+    glyph->uv[1] = nk_vec2(g->u1, g->v1);
+}
+
+void set_font(struct nk_context* ctx, IgnisFont* font)
 {
     user_font.userdata.ptr = font;
     user_font.height = font->size;
     user_font.width = font_text_width;
-    user_font.query = font_query_font_glyph;
+    user_font.query = font_query_glyph;
     user_font.texture = nk_handle_id((int)font->texture->name);
 
     nk_style_set_font(ctx, &user_font);
@@ -104,12 +158,13 @@ void set_font(struct nk_context* ctx, struct font* font)
 NK_API void
 nk_glfw3_load_font_atlas(struct nk_glfw* glfw)
 {
-    struct font_config fonts[3];
-    font_atlas_add_default(&fonts[0], 13.0f);
+    IgnisFontConfig fonts[3];
+    //ignisFontAtlasLoadDefault(&fonts[0], 13.0f);
+    ignisFontAtlasLoadFromFile(&fonts[0], "res/fonts/ProggyClean.ttf", 13);
     ignisFontAtlasLoadFromFile(&fonts[1], "res/fonts/OpenSans.ttf", 13);
     ignisFontAtlasLoadFromFile(&fonts[2], "res/fonts/ProggyTiny.ttf", 14);
 
-    font_atlas_bake(&glfw->atlas, fonts, 3, NK_FONT_ATLAS_RGBA32);
+    ignisFontAtlasBake(&glfw->atlas, fonts, 3, IGNIS_FONT_FORMAT_RGBA32);
 
     set_font(&glfw->ctx, &glfw->atlas.fonts[0]);
 }

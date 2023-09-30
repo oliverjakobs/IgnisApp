@@ -1,27 +1,16 @@
 #include "font.h"
-#include "nuklear/nuklear_internal.h"
 
-
-/* -------------------------------------------------------------
- *
- *                          RECT PACK
- *
- * --------------------------------------------------------------*/
-
-#define STB_RECT_PACK_IMPLEMENTATION
-#include "nuklear/stb_rect_pack.h"
-
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "nuklear/stb_image_write.h"
 
 /*
  * ==============================================================
  *
- *                          TRUETYPE
+ *                          stb
  *
  * ===============================================================
  */
+#define STB_RECT_PACK_IMPLEMENTATION
+#include "nuklear/stb_rect_pack.h"
+
 #define STBTT_MAX_OVERSAMPLE   8
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "nuklear/stb_truetype.h"
@@ -33,37 +22,38 @@
  *
  * --------------------------------------------------------------*/
 
-NK_INTERN int nk_range_count(const rune* range)
+static size_t nk_range_count(const IgnisRune* range)
 {
-    const rune* iter = range;
-    NK_ASSERT(range);
+    IGNIS_ASSERT(range);
     if (!range) return 0;
-    while (*(iter++) != 0);
-    return (iter == range) ? 0 : (int)((iter - range) / 2);
+
+    const IgnisRune* rune = range;
+    while (*(rune++) != 0);
+    return (rune == range) ? 0 : (size_t)((rune - range) / 2);
 }
 
-NK_INTERN int nk_range_glyph_count(const rune* range, int count)
+static size_t nk_range_glyph_count(const IgnisRune* range, size_t count)
 {
-    int total_glyphs = 0;
-    for (int i = 0; i < count; ++i)
+    size_t total_glyphs = 0;
+    for (size_t i = 0; i < count; ++i)
     {
-        rune f = range[(i * 2) + 0];
-        rune t = range[(i * 2) + 1];
-        NK_ASSERT(t >= f);
+        IgnisRune f = range[(i * 2) + 0];
+        IgnisRune t = range[(i * 2) + 1];
+        IGNIS_ASSERT(t >= f);
         total_glyphs += (int)((t - f) + 1);
     }
     return total_glyphs;
 }
 
-NK_API const rune* font_default_glyph_ranges(void)
+const IgnisRune* ignisGlyphRangeDefault()
 {
-    NK_STORAGE const rune ranges[] = { 0x0020, 0x00FF, 0 };
+    static const IgnisRune ranges[] = { 0x0020, 0x00FF, 0 };
     return ranges;
 }
 
-NK_API const rune* font_chinese_glyph_ranges(void)
+const IgnisRune* ignisGlyphRangeChinese()
 {
-    NK_STORAGE const rune ranges[] = {
+    static const IgnisRune ranges[] = {
         0x0020, 0x00FF,
         0x3000, 0x30FF,
         0x31F0, 0x31FF,
@@ -74,9 +64,9 @@ NK_API const rune* font_chinese_glyph_ranges(void)
     return ranges;
 }
 
-NK_API const rune* font_cyrillic_glyph_ranges(void)
+const IgnisRune* ignisGlyphRangeCyrillic()
 {
-    NK_STORAGE const rune ranges[] = {
+    static const IgnisRune ranges[] = {
         0x0020, 0x00FF,
         0x0400, 0x052F,
         0x2DE0, 0x2DFF,
@@ -86,9 +76,9 @@ NK_API const rune* font_cyrillic_glyph_ranges(void)
     return ranges;
 }
 
-NK_API const rune* font_korean_glyph_ranges(void)
+const IgnisRune* ignisGlyphRangeKorean()
 {
-    NK_STORAGE const rune ranges[] = {
+    static const IgnisRune ranges[] = {
         0x0020, 0x00FF,
         0x3131, 0x3163,
         0xAC00, 0xD79D,
@@ -102,227 +92,210 @@ NK_API const rune* font_korean_glyph_ranges(void)
  *                          FONT BAKING
  *
  * --------------------------------------------------------------*/
-struct font_bake_data {
-    struct stbtt_fontinfo info;
-    struct stbrp_rect *rects;
-    stbtt_pack_range *ranges;
-    rune range_count;
-};
+typedef struct
+{
+    stbtt_fontinfo info;
+    stbrp_rect* rects;
+    stbtt_pack_range* ranges;
+    size_t range_count;
+} IgnisBakeData;
 
-struct font_baker {
-    struct stbtt_pack_context spc;
-    struct font_bake_data *build;
+typedef struct
+{
+    stbtt_pack_context spc;
+    IgnisBakeData *build;
     stbtt_packedchar *packed;
-    struct stbrp_rect *rects;
+    stbrp_rect *rects;
     stbtt_pack_range *ranges;
-};
+} IgnisFontBaker;
 
-NK_GLOBAL const nk_size nk_rect_align = NK_ALIGNOF(struct stbrp_rect);
-NK_GLOBAL const nk_size nk_range_align = NK_ALIGNOF(stbtt_pack_range);
-NK_GLOBAL const nk_size nk_char_align = NK_ALIGNOF(stbtt_packedchar);
-NK_GLOBAL const nk_size nk_build_align = NK_ALIGNOF(struct font_bake_data);
-NK_GLOBAL const nk_size nk_baker_align = NK_ALIGNOF(struct font_baker);
-
-
-NK_INTERN void font_baker_memory(nk_size *temp, int *glyph_count, struct font_config *config_list, int count)
+static uint8_t ignisFontBakerAlloc(IgnisFontBaker* baker, size_t fonts, size_t glyphs, size_t ranges)
 {
-    int range_count = 0;
-    int total_range_count = 0;
+    size_t size = sizeof(IgnisBakeData) * fonts;
+    baker->build =  malloc(size);
+    if (!baker->build) return IGNIS_FAILURE;
+    memset(baker->build, 0, size);
 
-    NK_ASSERT(config_list);
-    NK_ASSERT(glyph_count);
-    if (!config_list)
-    {
-        *temp = 0;
-        *glyph_count = 0;
-        return;
-    }
+    size = sizeof(stbtt_packedchar) * glyphs;
+    baker->packed = malloc(size);
+    if (!baker->packed) return IGNIS_FAILURE;
+    memset(baker->packed, 0, size);
 
-    *glyph_count = 0;
-    for (int i = 0; i < count; ++i)
-    {
-        struct font_config* iter = &config_list[i];
-        if (!iter->range) iter->range = font_default_glyph_ranges();
-        range_count = nk_range_count(iter->range);
-        total_range_count += range_count;
-        *glyph_count += nk_range_glyph_count(iter->range, range_count);
-    }
+    size = sizeof(stbrp_rect) * glyphs;
+    baker->rects = malloc(size);
+    if (!baker->rects) return IGNIS_FAILURE;
+    memset(baker->rects, 0, size);
 
-    *temp = (nk_size)*glyph_count * sizeof(struct stbrp_rect);
-    *temp += (nk_size)total_range_count * sizeof(stbtt_pack_range);
-    *temp += (nk_size)*glyph_count * sizeof(stbtt_packedchar);
-    *temp += (nk_size)count * sizeof(struct font_bake_data);
-    *temp += sizeof(struct font_baker);
-    *temp += nk_rect_align + nk_range_align + nk_char_align;
-    *temp += nk_build_align + nk_baker_align;
+    size = sizeof(stbtt_pack_range) * ranges;
+    baker->ranges = malloc(size);
+    if (!baker->ranges) return IGNIS_FAILURE;
+    memset(baker->ranges, 0, size);
+
+    return IGNIS_SUCCESS;
 }
 
-NK_INTERN struct font_baker* font_baker(void *memory, int glyph_count, int count)
+static void ignisFontBakerFree(IgnisFontBaker* baker)
 {
-    if (!memory) return 0;
-    /* setup baker inside a memory block  */
-    struct font_baker* baker = (struct font_baker*)NK_ALIGN_PTR(memory, nk_baker_align);
-    baker->build  = (struct font_bake_data*)NK_ALIGN_PTR((baker + 1), nk_build_align);
-    baker->packed = (stbtt_packedchar*)NK_ALIGN_PTR((baker->build + count), nk_char_align);
-    baker->rects  = (struct stbrp_rect*)NK_ALIGN_PTR((baker->packed + glyph_count), nk_rect_align);
-    baker->ranges = (stbtt_pack_range*)NK_ALIGN_PTR((baker->rects + glyph_count), nk_range_align);
-    return baker;
+    if (!baker->build)  free(baker->build);
+    if (!baker->packed) free(baker->packed);
+    if (!baker->rects)  free(baker->rects);
+    if (!baker->ranges) free(baker->ranges);
 }
 
-NK_INTERN int font_bake_pack(struct font_baker *baker, 
-    int *width, int *height,
-    const struct font_config *config_list, int count)
+static uint32_t ignisPackGlyphs(IgnisFontBaker* baker, const IgnisFontConfig* configs, size_t count)
 {
-    NK_STORAGE const nk_size max_height = 1024 * 32;
+    uint32_t height = 0;
+    size_t range_offset = 0;
+    size_t char_offset = 0;
+    size_t rect_offset = 0;
 
-    NK_ASSERT(width);
-    NK_ASSERT(height);
-    NK_ASSERT(config_list);
-    NK_ASSERT(count);
-
-    if (!width || !height || !config_list || !count) return nk_false;
-
-    int total_glyph_count = 0;
-    int total_range_count = 0;
+    /* first font pass: pack all glyphs */
     for (int i = 0; i < count; ++i)
     {
-        struct font_config* iter = &config_list[i];
-        int range_count = nk_range_count(iter->range);
-        total_range_count += range_count;
-        total_glyph_count += nk_range_glyph_count(iter->range, range_count);
-    }
+        const IgnisFontConfig* cfg = &configs[i];
+        IgnisBakeData* tmp = &baker->build[i];
 
-    /* setup font baker from temporary memory */
-    for (int i = 0; i < count; ++i)
-    {
-        struct font_config* cfg = &config_list[i];
-        struct stbtt_fontinfo* font_info = &baker->build[i].info;
-
-        if (!stbtt_InitFont(font_info, cfg->ttf_blob, stbtt_GetFontOffsetForIndex(cfg->ttf_blob, 0)))
-            return nk_false;
-    }
-
-    *height = 0;
-    *width = (total_glyph_count > 1000) ? 1024 : 512;
-    stbtt_PackBegin(&baker->spc, 0, (int)*width, (int)max_height, 0, 1, NULL);
-    {
-        int range_n = 0;
-        int rect_n = 0;
-        int char_n = 0;
-
-        /* first font pass: pack all glyphs */
-        for (int i = 0; i < count; ++i)
+        /* count glyphs + ranges in current font */
+        int glyph_count = 0;
+        int range_count = 0;
+        for (const IgnisRune* in_range = cfg->range; in_range[0] && in_range[1]; in_range += 2)
         {
-            struct font_config* iter = &config_list[i];
-            struct font_bake_data* tmp = &baker->build[i];
-
-            /* count glyphs + ranges in current font */
-            int glyph_count = 0; 
-            int range_count = 0;
-            for (const rune* in_range = iter->range; in_range[0] && in_range[1]; in_range += 2) {
-                glyph_count += (int)(in_range[1] - in_range[0]) + 1;
-                range_count++;
-            }
-
-            /* setup ranges  */
-            tmp->ranges = baker->ranges + range_n;
-            tmp->range_count = (rune)range_count;
-            range_n += range_count;
-            for (int r = 0; r < range_count; ++r) {
-                const rune* in_range = &iter->range[r * 2];
-                tmp->ranges[r].font_size = iter->size;
-                tmp->ranges[r].first_unicode_codepoint_in_range = (int)in_range[0];
-                tmp->ranges[r].num_chars = (int)(in_range[1] - in_range[0]) + 1;
-                tmp->ranges[r].chardata_for_range = baker->packed + char_n;
-                char_n += tmp->ranges[r].num_chars;
-            }
-
-            /* pack */
-            tmp->rects = baker->rects + rect_n;
-            rect_n += glyph_count;
-            stbtt_PackSetOversampling(&baker->spc, iter->oversample_h, iter->oversample_v);
-            int n = stbtt_PackFontRangesGatherRects(&baker->spc, &tmp->info, tmp->ranges, (int)tmp->range_count, tmp->rects);
-            stbrp_pack_rects((struct stbrp_context*)baker->spc.pack_info, tmp->rects, (int)n);
-
-            /* texture height */
-            for (int t = 0; t < n; ++t) {
-                if (tmp->rects[t].was_packed)
-                    *height = NK_MAX(*height, tmp->rects[t].y + tmp->rects[t].h);
-            }
+            glyph_count += (int)(in_range[1] - in_range[0]) + 1;
+            range_count++;
         }
-        NK_ASSERT(rect_n == total_glyph_count);
-        NK_ASSERT(char_n == total_glyph_count);
-        NK_ASSERT(range_n == total_range_count);
+
+        /* setup ranges  */
+        tmp->ranges = baker->ranges + range_offset;
+        tmp->range_count = range_count;
+        range_offset += range_count;
+        for (size_t r = 0; r < range_count; ++r)
+        {
+            const IgnisRune* in_range = &cfg->range[r * 2];
+            tmp->ranges[r].font_size = cfg->size;
+            tmp->ranges[r].first_unicode_codepoint_in_range = (int)in_range[0];
+            tmp->ranges[r].num_chars = (int)(in_range[1] - in_range[0]) + 1;
+            tmp->ranges[r].chardata_for_range = baker->packed + char_offset;
+            char_offset += tmp->ranges[r].num_chars;
+        }
+
+        /* pack */
+        tmp->rects = baker->rects + rect_offset;
+        rect_offset += glyph_count;
+
+        stbtt_PackSetOversampling(&baker->spc, cfg->oversample_h, cfg->oversample_v);
+        int n = stbtt_PackFontRangesGatherRects(&baker->spc, &tmp->info, tmp->ranges, (int)tmp->range_count, tmp->rects);
+        stbrp_pack_rects((stbrp_context*)baker->spc.pack_info, tmp->rects, n);
+
+        /* texture height */
+        for (size_t t = 0; t < n; ++t)
+        {
+            uint32_t rh = tmp->rects[t].y + tmp->rects[t].h;
+            if (tmp->rects[t].was_packed && rh > height)
+                height = rh;
+        }
     }
-    *height = (int)nk_round_up_pow2((nk_uint)*height);
-    return nk_true;
+
+    return height;
 }
 
-static void* font_bake(struct font_baker *baker, int width, int height, struct font_glyph *glyphs, int glyphs_count, const struct font_config *config_list, int font_count)
+static uint32_t ignisRoundUpPow2(uint32_t v)
 {
-    NK_ASSERT(width);
-    NK_ASSERT(height);
-    NK_ASSERT(config_list);
-    NK_ASSERT(baker);
-    NK_ASSERT(font_count);
-    NK_ASSERT(glyphs_count);
-    if (!width || !height || !config_list || !font_count || !glyphs || !glyphs_count)
-        return NULL;
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
 
-    void* pixels = malloc((size_t)width * (size_t)height);
-    NK_ASSERT(pixels);
+static void* ignisPackFont(IgnisFontBaker *baker, uint32_t *w, uint32_t *h, const IgnisFontConfig *configs, size_t font_count, size_t glyph_count, size_t range_count)
+{
+    IGNIS_ASSERT(w);
+    IGNIS_ASSERT(h);
+    IGNIS_ASSERT(configs);
+
+    if (!w || !h || !configs) return NULL;
+
+    /* setup font baker */
+    for (size_t i = 0; i < font_count; ++i)
+    {
+        const IgnisFontConfig* cfg = &configs[i];
+        if (!stbtt_InitFont(&baker->build[i].info, cfg->ttf_blob, stbtt_GetFontOffsetForIndex(cfg->ttf_blob, 0)))
+            return NULL;
+    }
+
+    uint32_t height = 0;
+    uint32_t width = (glyph_count > 1000) ? 1024 : 512;
+    static const uint32_t max_height = 1024 * 32;
+    stbtt_PackBegin(&baker->spc, 0, width, max_height, 0, 1, NULL);
+    
+    height = ignisPackGlyphs(baker, configs, font_count);
+    height = ignisRoundUpPow2(height);
+
+    size_t size = (size_t)width * (size_t)height;
+    void* pixels = malloc(size);
+    IGNIS_ASSERT(pixels);
     if (!pixels) return NULL;
 
-    nk_zero(pixels, (nk_size)((nk_size)width * (nk_size)height));
+    memset(pixels, 0, size);
 
     /* second font pass: render glyphs */
-    baker->spc.pixels = (unsigned char*)pixels;
-    baker->spc.height = (int)height;
+    baker->spc.pixels = pixels;
+    baker->spc.height = height;
 
     for (int i = 0; i < font_count; ++i)
     {
-        struct font_config* iter = &config_list[i];
-        struct font_bake_data* tmp = &baker->build[i];
-        stbtt_PackSetOversampling(&baker->spc, iter->oversample_h, iter->oversample_v);
-        stbtt_PackFontRangesRenderIntoRects(&baker->spc, &tmp->info, tmp->ranges, tmp->range_count, tmp->rects);
+        const IgnisFontConfig* cfg = &configs[i];
+        IgnisBakeData* tmp = &baker->build[i];
+        stbtt_PackSetOversampling(&baker->spc, cfg->oversample_h, cfg->oversample_v);
+        stbtt_PackFontRangesRenderIntoRects(&baker->spc, &tmp->info, tmp->ranges, (int)tmp->range_count, tmp->rects);
     }
     stbtt_PackEnd(&baker->spc);
 
-    /* third pass: setup font and glyphs */
-    rune glyph_offset = 0;
-    for (int i = 0; i < font_count; ++i)
+    *w = width;
+    *h = height;
+
+    return pixels;
+}
+
+static IgnisGlyph* ignisBakeGlyphs(size_t glyph_count, uint32_t width, uint32_t height, IgnisFontConfig* configs, IgnisBakeData* build, size_t count)
+{
+    IgnisGlyph* glyphs = malloc(sizeof(IgnisGlyph) * glyph_count);
+    if (!glyphs) return NULL;
+
+    size_t glyph_offset = 0;
+    for (size_t i = 0; i < count; ++i)
     {
-        struct font_config* config = &config_list[i];
+        IgnisFontConfig* config = &configs[i];
         config->glyph_offset = glyph_offset;
 
-        struct font_bake_data* tmp = &baker->build[i];
+        IgnisBakeData* tmp = &build[i];
         float font_scale = stbtt_ScaleForPixelHeight(&tmp->info, config->size);
 
         int unscaled_ascent, unscaled_descent, unscaled_line_gap;
         stbtt_GetFontVMetrics(&tmp->info, &unscaled_ascent, &unscaled_descent, &unscaled_line_gap);
 
-        float ascent = ((float)unscaled_ascent * font_scale);
+        float ascent = (float)unscaled_ascent * font_scale;
 
         /* fill own baked font glyph array */
-        rune glyph_count = 0;
-        for (int r = 0; r < tmp->range_count; ++r)
+        IgnisRune glyph_count = 0;
+        for (size_t r = 0; r < tmp->range_count; ++r)
         {
             stbtt_pack_range* range = &tmp->ranges[r];
             for (int char_idx = 0; char_idx < range->num_chars; char_idx++)
             {
-                rune codepoint = 0;
-                float dummy_x = 0, dummy_y = 0;
-                stbtt_aligned_quad q;
-                struct font_glyph* glyph;
-
                 /* query glyph bounds from stb_truetype */
                 const stbtt_packedchar* pc = &range->chardata_for_range[char_idx];
-                codepoint = (rune)(range->first_unicode_codepoint_in_range + char_idx);
+
+                stbtt_aligned_quad q;
+                float dummy_x = 0, dummy_y = 0;
                 stbtt_GetPackedQuad(range->chardata_for_range, width, height, char_idx, &dummy_x, &dummy_y, &q, 0);
 
                 /* fill own glyph type with data */
-                glyph = &glyphs[glyph_offset + glyph_count];
-                glyph->codepoint = codepoint;
+                IgnisGlyph* glyph = &glyphs[glyph_offset + glyph_count];
+                glyph->codepoint = (IgnisRune)(range->first_unicode_codepoint_in_range + char_idx);
                 glyph->x0 = q.x0;
                 glyph->y0 = q.y0 + (ascent + 0.5f);
                 glyph->x1 = q.x1;
@@ -330,271 +303,188 @@ static void* font_bake(struct font_baker *baker, int width, int height, struct f
                 glyph->w = glyph->x1 - glyph->x0 + 0.5f;
                 glyph->h = glyph->y1 - glyph->y0;
 
-                if (config->coord_type == IGNIS_COORD_PIXEL) {
+                if (config->coord_type == IGNIS_COORD_PIXEL)
+                {
                     glyph->u0 = q.s0 * (float)width;
                     glyph->v0 = q.t0 * (float)height;
                     glyph->u1 = q.s1 * (float)width;
                     glyph->v1 = q.t1 * (float)height;
                 }
-                else {
+                else
+                {
                     glyph->u0 = q.s0;
                     glyph->v0 = q.t0;
                     glyph->u1 = q.s1;
                     glyph->v1 = q.t1;
                 }
                 glyph->xadvance = pc->xadvance;
+
                 if (config->pixel_snap)
                     glyph->xadvance = (float)(int)(glyph->xadvance + 0.5f);
+
                 glyph_count++;
             }
         }
         glyph_offset += glyph_count;
     }
 
-    return pixels;
+    return glyphs;
 }
 
-NK_INTERN void font_bake_convert(void *out_memory, int img_width, int img_height, const void *in_memory)
+static void ignisFontConvertRGBA(uint32_t* dst, uint32_t img_width, uint32_t img_height, const uint8_t* src)
 {
-    int n = 0;
-    rune *dst;
-    const nk_byte *src;
+    IGNIS_ASSERT(dst);
+    IGNIS_ASSERT(src);
+    IGNIS_ASSERT(img_width);
+    IGNIS_ASSERT(img_height);
+    if (!dst || !src || !img_height || !img_width) return;
 
-    NK_ASSERT(out_memory);
-    NK_ASSERT(in_memory);
-    NK_ASSERT(img_width);
-    NK_ASSERT(img_height);
-    if (!out_memory || !in_memory || !img_height || !img_width) return;
-
-    dst = (rune*)out_memory;
-    src = (const nk_byte*)in_memory;
-    for (n = (int)(img_width * img_height); n > 0; n--)
-        *dst++ = ((rune)(*src++) << 24) | 0x00FFFFFF;
+    for (uint32_t n = (uint32_t)(img_width * img_height); n > 0; n--)
+        *dst++ = ((uint32_t)(*src++) << 24) | 0x00FFFFFF;
 }
 
-/* -------------------------------------------------------------
- *
- *                          FONT
- *
- * --------------------------------------------------------------*/
-float font_text_width(nk_handle handle, float height, const char *text, int len)
+uint8_t ignisFontAtlasBake(IgnisFontAtlas* atlas, IgnisFontConfig* configs, size_t count, IgnisFontFormat fmt)
 {
-    struct font *font = (struct font*)handle.ptr;
+    IGNIS_ASSERT(atlas);
+    IGNIS_ASSERT(configs);
+    IGNIS_ASSERT(count);
+    if (!atlas || !configs || !count) return IGNIS_FAILURE;
 
-    NK_ASSERT(font);
-    NK_ASSERT(font->glyphs);
-    if (!font || !text || !len)
-        return 0;
-
-    float scale = height / font->size;
-
-    rune unicode;
-    int glyph_len = nk_utf_decode(text, &unicode, (int)len);
-    if (!glyph_len) return 0;
-
-    float text_width = 0;
-    int text_len = glyph_len;
-    while (text_len <= len && glyph_len)
+    size_t glyph_count = 0;
+    size_t range_count = 0;
+    for (size_t i = 0; i < count; ++i)
     {
-        if (unicode == NK_UTF_INVALID) break;
+        IgnisFontConfig* cfg = &configs[i];
+        if (!cfg->range) cfg->range = ignisGlyphRangeDefault();
 
-        /* query currently drawn glyph information */
-        const struct font_glyph* g = font_find_glyph(font, unicode);
-        text_width += g->xadvance * scale;
-
-        /* offset next glyph */
-        glyph_len = nk_utf_decode(text + text_len, &unicode, (int)len - text_len);
-        text_len += glyph_len;
+        size_t rc = nk_range_count(cfg->range);
+        range_count += rc;
+        glyph_count += nk_range_glyph_count(cfg->range, rc);
     }
-    return text_width;
-}
 
-void
-font_query_font_glyph(nk_handle handle, float height, struct nk_user_font_glyph *glyph, rune codepoint, rune next)
-{
-    NK_ASSERT(glyph);
-    NK_UNUSED(next);
-
-    struct font* font = (struct font*)handle.ptr;
-    NK_ASSERT(font);
-    NK_ASSERT(font->glyphs);
-    if (!font || !glyph)
-        return;
-
-    float scale = height/font->size;
-    const struct font_glyph* g = font_find_glyph(font, codepoint);
-    glyph->width = (g->x1 - g->x0) * scale;
-    glyph->height = (g->y1 - g->y0) * scale;
-    glyph->offset = nk_vec2(g->x0 * scale, g->y0 * scale);
-    glyph->xadvance = (g->xadvance * scale);
-    glyph->uv[0] = nk_vec2(g->u0, g->v0);
-    glyph->uv[1] = nk_vec2(g->u1, g->v1);
-}
-
-NK_API const struct font_glyph* font_find_glyph(struct font *font, rune unicode)
-{
-    NK_ASSERT(font);
-    NK_ASSERT(font->glyphs);
-    if (!font || !font->glyphs) return 0;
-
-    int total_glyphs = 0;
-    int count = nk_range_count(font->range);
-    for (int i = 0; i < count; ++i)
-    {
-        rune f = font->range[(i * 2) + 0];
-        rune t = font->range[(i * 2) + 1];
-        int diff = (int)((t - f) + 1);
-        if (unicode >= f && unicode <= t)
-            return &font->glyphs[((rune)total_glyphs + (unicode - f))];
-        total_glyphs += diff;
-    }
-    return font->fallback;
-}
-
-/* -------------------------------------------------------------
- *
- *                          FONT ATLAS
- *
- * --------------------------------------------------------------*/
-struct font_config font_default_config(float pixel_height)
-{
-    struct font_config cfg;
-    nk_zero_struct(cfg);
-    cfg.ttf_blob = NULL;
-    cfg.ttf_size = 0;
-    cfg.size = pixel_height;
-    cfg.oversample_h = 3;
-    cfg.oversample_v = 1;
-    cfg.pixel_snap = 0;
-    cfg.coord_type = IGNIS_COORD_UV;
-    cfg.range = font_default_glyph_ranges();
-    cfg.fallback_glyph = '?';
-    return cfg;
-}
-
-uint8_t ignisFontAtlasLoadFromFile(struct font_config* config, const char* path, float height)
-{
-    nk_size size;
-    char* memory = ignisReadFile(path, &size);
-    if (!memory) return IGNIS_FAILURE;
-
-    struct font_config cfg = font_default_config(height);
-    cfg.ttf_blob = memory;
-    cfg.ttf_size = size;
-
-    nk_memcopy(config, &cfg, sizeof(struct font_config));
-    return IGNIS_SUCCESS;
-}
-
-
-NK_API const void*
-font_atlas_bake(struct font_atlas *atlas, const struct font_config *configs, int font_count, enum font_atlas_format fmt)
-{
-    void *tmp = 0;
-    nk_size tmp_size;
-    struct font_baker *baker;
-
-    NK_ASSERT(atlas);
-    NK_ASSERT(configs);
-    NK_ASSERT(font_count);
-    if (!atlas || !configs || !font_count) return 0;
-
-    /* allocate temporary baker memory required for the baking process */
-    font_baker_memory(&tmp_size, &atlas->glyph_count, configs, font_count);
-    tmp = malloc(tmp_size);
-    NK_ASSERT(tmp);
-    if (!tmp) goto failed;
-    nk_memset(tmp,0,tmp_size);
-
-    /* allocate glyph memory for all fonts */
-    baker = font_baker(tmp, atlas->glyph_count, font_count);
-    atlas->glyphs = malloc(sizeof(struct font_glyph)*(nk_size)atlas->glyph_count);
-    NK_ASSERT(atlas->glyphs);
-    if (!atlas->glyphs)
-        goto failed;
+    IgnisFontBaker baker = { 0 };
+    ignisFontBakerAlloc(&baker, count, glyph_count, range_count);
 
     /* pack all glyphs into a tight fit space */
-    int width, height;
-    if (!font_bake_pack(baker, &width, &height, configs, font_count))
-        goto failed;
+    uint32_t width, height;
+    void* pixels = ignisPackFont(&baker, &width, &height, configs, count, glyph_count, range_count);
 
-    /* bake glyphs */
-    void* pixels = font_bake(baker, width, height, atlas->glyphs, atlas->glyph_count, configs, font_count);
-
-    NK_ASSERT(pixels);
+    IGNIS_ASSERT(pixels);
     if (!pixels)
         goto failed;
 
-    if (fmt == NK_FONT_ATLAS_RGBA32) {
+    if (fmt == IGNIS_FONT_FORMAT_RGBA32)
+    {
         /* convert alpha8 image into rgba32 image */
-        void *img_rgba = malloc((size_t)width * (size_t)height * 4);
-        NK_ASSERT(img_rgba);
-        if (!img_rgba) goto failed;
-        font_bake_convert(img_rgba, width, height, pixels);
+        void* rgba = malloc((size_t)width * (size_t)height * 4);
+        IGNIS_ASSERT(rgba);
+        if (!rgba) goto failed;
+
+        ignisFontConvertRGBA(rgba, width, height, pixels);
+
         free(pixels);
-        pixels = img_rgba;
+        pixels = rgba;
     }
 
-    // init atlas
+    /* bake glyphs */
+    atlas->glyphs = ignisBakeGlyphs(glyph_count, width, height, configs, baker.build, count);
+    atlas->glyph_count = glyph_count;
+
+    IGNIS_ASSERT(atlas->glyphs);
+    if (!atlas->glyphs)
+        goto failed;
 
     /* create texture */
     ignisGenerateTexture2D(&atlas->texture, width, height, pixels, NULL);
 
     /* initialize each font */
-    atlas->fonts = malloc(sizeof(struct font) * font_count);
-    atlas->font_count = font_count;
-    for (int i = 0; i < font_count; ++i)
+    atlas->fonts = malloc(sizeof(IgnisFont) * count);
+    atlas->font_count = count;
+
+    IGNIS_ASSERT(atlas->fonts);
+    if (!atlas->fonts)
+        goto failed;
+
+    for (int i = 0; i < count; ++i)
     {
-        struct font* font = &atlas->fonts[i];
-        struct font_config* config = &configs[i];
+        IgnisFont* font = &atlas->fonts[i];
+        IgnisFontConfig* config = &configs[i];
 
         font->texture = &atlas->texture;
         font->size = config->size;
         font->range = config->range;
         font->glyphs = &atlas->glyphs[config->glyph_offset];
-        font->fallback = font_find_glyph(font, config->fallback_glyph);
+        font->fallback = ignisFontFindGlyph(font, config->fallback_glyph);
     }
 
     // stbi_write_png("font.png", width, height, 4, pixel, 4 * width);
 
-
     /* free temporary memory */
-    free(tmp);
+    ignisFontBakerFree(&baker);
     free(pixels);
-    return NULL;
+    return IGNIS_SUCCESS;
 
 failed:
     /* error so cleanup all memory */
-    if (tmp) free(tmp);
-    if (atlas->glyphs) {
-        free(atlas->glyphs);
-        atlas->glyphs = 0;
-    }
-    if (pixels) {
-        free(pixels);
-        pixels = 0;
-    }
-    return 0;
+    ignisFontBakerFree(&baker);
+    if (pixels) free(pixels);
+    return IGNIS_FAILURE;
 }
 
-NK_API void
-font_atlas_cleanup(struct font_atlas *atlas)
+void ignisFontAtlasClear(IgnisFontAtlas* atlas)
 {
-    NK_ASSERT(atlas);
-    if (!atlas) return;
-}
-NK_API void
-font_atlas_clear(struct font_atlas *atlas)
-{
-    NK_ASSERT(atlas);
-    if (!atlas) return;
+    if (atlas->glyphs) free(atlas->glyphs);
+    if (atlas->fonts) free(atlas->fonts);
 
-    if (atlas->fonts) {
-        free(atlas->fonts);
+    ignisDeleteTexture2D(&atlas->texture);
+}
+
+const IgnisGlyph* ignisFontFindGlyph(const IgnisFont* font, IgnisRune unicode)
+{
+    IGNIS_ASSERT(font);
+    IGNIS_ASSERT(font->glyphs);
+    if (!font || !font->glyphs) return 0;
+
+    size_t total_glyphs = 0;
+    size_t count = nk_range_count(font->range);
+    for (size_t i = 0; i < count; ++i)
+    {
+        IgnisRune f = font->range[(i * 2) + 0];
+        IgnisRune t = font->range[(i * 2) + 1];
+
+        if (unicode >= f && unicode <= t)
+            return &font->glyphs[total_glyphs + (unicode - f)];
+        
+        total_glyphs += (t - f) + 1;
     }
-    if (atlas->glyphs)
-        free(atlas->glyphs);
-    nk_zero_struct(*atlas);
+    return font->fallback;
+}
+
+
+void ignisFontConfigLoadDefautl(IgnisFontConfig* config, float pixel_height)
+{
+    config->ttf_blob = NULL;
+    config->ttf_size = 0;
+    config->size = pixel_height;
+    config->oversample_h = 3;
+    config->oversample_v = 1;
+    config->pixel_snap = 0;
+    config->coord_type = IGNIS_COORD_UV;
+    config->range = ignisGlyphRangeDefault();
+    config->fallback_glyph = '?';
+}
+
+uint8_t ignisFontAtlasLoadFromFile(IgnisFontConfig* config, const char* path, float height)
+{
+    size_t size;
+    char* memory = ignisReadFile(path, &size);
+    if (!memory) return IGNIS_FAILURE;
+
+    ignisFontConfigLoadDefautl(config, height);
+    config->ttf_blob = memory;
+    config->ttf_size = size;
+
+    return IGNIS_SUCCESS;
 }
 
 

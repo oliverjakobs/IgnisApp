@@ -1,5 +1,4 @@
 #include "font.h"
-#include "nuklear/nuklear_internal.h"
 
 /* ---------------------------------------------------------------------------
  *
@@ -18,7 +17,7 @@
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #endif
 
-NK_GLOBAL const char nk_proggy_clean_ttf_compressed_data_base85[11980 + 1] =
+static const char nk_proggy_clean_ttf_compressed_data_base85[11980 + 1] =
 "7])#######hV0qs'/###[),##/l:$#Q6>##5[n42>c-TH`->>#/e>11NNV=Bv(*:.F?uu#(gRU.o0XGH`$vhLG1hxt9?W`#,5LsCp#-i>.r$<$6pD>Lb';9Crc6tgXmKVeU2cD4Eo3R/"
 "2*>]b(MC;$jPfY.;h^`IWM9<Lh2TlS+f-s$o6Q<BWH`YiU.xfLq$N;$0iR/GX:U(jcW2p/W*q?-qmnUCI;jHSAiFWM.R*kU@C=GH?a9wp8f$e.-4^Qg1)Q-GL(lf(r/7GrRgwV%MS=C#"
 "`8ND>Qo#t'X#(v#Y9w0#1D$CIf;W'#pWUPXOuxXuU(H9M(1<q-UE31#^-V'8IRUo7Qf./L>=Ke$$'5F%)]0^#0X@U.a<r:QLtFsLcL6##lOj)#.Y5<-R&KgLwqJfLgN&;Q?gI^#DY2uL"
@@ -106,56 +105,55 @@ NK_GLOBAL const char nk_proggy_clean_ttf_compressed_data_base85[11980 + 1] =
 "GT4CPGT4CPGT4CPGT4CPGT4CPGT4CP-qekC`.9kEg^+F$kwViFJTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5o,^<-28ZI'O?;xp"
 "O?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xp;7q-#lLYI:xvD=#";
 
-
-
 #ifdef __clang__
 #pragma clang diagnostic pop
 #elif defined(__GNUC__) || defined(__GNUG__)
 #pragma GCC diagnostic pop
 #endif
 
-NK_GLOBAL unsigned char* nk__barrier;
-NK_GLOBAL unsigned char* nk__barrier2;
-NK_GLOBAL unsigned char* nk__barrier3;
-NK_GLOBAL unsigned char* nk__barrier4;
-NK_GLOBAL unsigned char* nk__dout;
+unsigned char* nk__barrier;
+unsigned char* nk__barrier2;
+unsigned char* nk__barrier3;
+unsigned char* nk__barrier4;
+unsigned char* nk__dout;
 
-NK_INTERN unsigned int
-nk_decompress_length(unsigned char* input)
+static unsigned int nk_decompress_length(unsigned char* input)
 {
     return (unsigned int)((input[8] << 24) + (input[9] << 16) + (input[10] << 8) + input[11]);
 }
-NK_INTERN void
-nk__match(unsigned char* data, unsigned int length)
+
+static void nk__match(unsigned char* data, unsigned int length)
 {
     /* INVERSE of memmove... write each byte before copying the next...*/
-    NK_ASSERT(nk__dout + length <= nk__barrier);
+    IGNIS_ASSERT(nk__dout + length <= nk__barrier);
     if (nk__dout + length > nk__barrier) { nk__dout += length; return; }
     if (data < nk__barrier4) { nk__dout = nk__barrier + 1; return; }
     while (length--) *nk__dout++ = *data++;
 }
-NK_INTERN void
-nk__lit(unsigned char* data, unsigned int length)
+
+static void nk__lit(unsigned char* data, unsigned int length)
 {
-    NK_ASSERT(nk__dout + length <= nk__barrier);
+    IGNIS_ASSERT(nk__dout + length <= nk__barrier);
     if (nk__dout + length > nk__barrier) { nk__dout += length; return; }
     if (data < nk__barrier2) { nk__dout = nk__barrier + 1; return; }
-    nk_memcopy(nk__dout, data, length);
+    memcpy(nk__dout, data, length);
     nk__dout += length;
 }
-NK_INTERN unsigned char*
-nk_decompress_token(unsigned char* i)
+
+static unsigned char* nk_decompress_token(unsigned char* i)
 {
 #define nk__in2(x)   ((i[x] << 8) + i[(x)+1])
 #define nk__in3(x)   ((i[x] << 16) + nk__in2((x)+1))
 #define nk__in4(x)   ((i[x] << 24) + nk__in3((x)+1))
 
-    if (*i >= 0x20) { /* use fewer if's for cases that expand small */
+    if (*i >= 0x20) /* use fewer if's for cases that expand small */
+    {
         if (*i >= 0x80)       nk__match(nk__dout - i[1] - 1, (unsigned int)i[0] - 0x80 + 1), i += 2;
         else if (*i >= 0x40)  nk__match(nk__dout - (nk__in2(0) - 0x4000 + 1), (unsigned int)i[2] + 1), i += 3;
         else /* *i >= 0x20 */ nk__lit(i + 1, (unsigned int)i[0] - 0x20 + 1), i += 1 + (i[0] - 0x20 + 1);
     }
-    else { /* more ifs for cases that expand large, since overhead is amortized */
+    else /* more ifs for cases that expand large, since overhead is amortized */
+    {
         if (*i >= 0x18)       nk__match(nk__dout - (unsigned int)(nk__in3(0) - 0x180000 + 1), (unsigned int)i[3] + 1), i += 4;
         else if (*i >= 0x10)  nk__match(nk__dout - (unsigned int)(nk__in3(0) - 0x100000 + 1), (unsigned int)nk__in2(3) + 1), i += 5;
         else if (*i >= 0x08)  nk__lit(i + 2, (unsigned int)nk__in2(0) - 0x0800 + 1), i += 2 + (nk__in2(0) - 0x0800 + 1);
@@ -165,16 +163,18 @@ nk_decompress_token(unsigned char* i)
     }
     return i;
 }
-NK_INTERN unsigned int
-nk_adler32(unsigned int adler32, unsigned char* buffer, unsigned int buflen)
+
+static unsigned int nk_adler32(unsigned int adler32, unsigned char* buffer, unsigned int buflen)
 {
     const unsigned long ADLER_MOD = 65521;
     unsigned long s1 = adler32 & 0xffff, s2 = adler32 >> 16;
     unsigned long blocklen, i;
 
     blocklen = buflen % 5552;
-    while (buflen) {
-        for (i = 0; i + 7 < blocklen; i += 8) {
+    while (buflen)
+    {
+        for (i = 0; i + 7 < blocklen; i += 8)
+        {
             s1 += buffer[0]; s2 += s1;
             s1 += buffer[1]; s2 += s1;
             s1 += buffer[2]; s2 += s1;
@@ -185,9 +185,8 @@ nk_adler32(unsigned int adler32, unsigned char* buffer, unsigned int buflen)
             s1 += buffer[7]; s2 += s1;
             buffer += 8;
         }
-        for (; i < blocklen; ++i) {
+        for (; i < blocklen; ++i)
             s1 += *buffer++; s2 += s1;
-        }
 
         s1 %= ADLER_MOD; s2 %= ADLER_MOD;
         buflen -= (unsigned int)blocklen;
@@ -195,8 +194,8 @@ nk_adler32(unsigned int adler32, unsigned char* buffer, unsigned int buflen)
     }
     return (unsigned int)(s2 << 16) + (unsigned int)s1;
 }
-NK_INTERN unsigned int
-nk_decompress(unsigned char* output, unsigned char* i, unsigned int length)
+
+static unsigned int nk_decompress(unsigned char* output, unsigned char* i, unsigned int length)
 {
     unsigned int olen;
     if (nk__in4(0) != 0x57bC0000) return 0;
@@ -209,34 +208,37 @@ nk_decompress(unsigned char* output, unsigned char* i, unsigned int length)
     i += 16;
 
     nk__dout = output;
-    for (;;) {
+    for (;;)
+    {
         unsigned char* old_i = i;
         i = nk_decompress_token(i);
-        if (i == old_i) {
+        if (i == old_i)
+        {
             if (*i == 0x05 && i[1] == 0xfa) {
-                NK_ASSERT(nk__dout == output + olen);
+                IGNIS_ASSERT(nk__dout == output + olen);
                 if (nk__dout != output + olen) return 0;
                 if (nk_adler32(1, output, olen) != (unsigned int)nk__in4(2))
                     return 0;
                 return olen;
             }
-            else {
-                NK_ASSERT(0); /* NOTREACHED */
+            else
+            {
+                IGNIS_ASSERT(0); /* NOTREACHED */
                 return 0;
             }
         }
-        NK_ASSERT(nk__dout <= output + olen);
+        IGNIS_ASSERT(nk__dout <= output + olen);
         if (nk__dout > output + olen)
             return 0;
     }
 }
-NK_INTERN unsigned int
-nk_decode_85_byte(char c)
+
+static unsigned int nk_decode_85_byte(char c)
 {
     return (unsigned int)((c >= '\\') ? c - 36 : c - 35);
 }
-NK_INTERN void
-nk_decode_85(unsigned char* dst, const unsigned char* src)
+
+static void nk_decode_85(unsigned char* dst, const unsigned char* src)
 {
     while (*src)
     {
@@ -258,50 +260,48 @@ nk_decode_85(unsigned char* dst, const unsigned char* src)
     }
 }
 
-uint8_t font_atlas_add_compressed(struct font_config* config, void* data, nk_size size, float height)
+uint8_t font_atlas_add_compressed(IgnisFontConfig* config, void* data, size_t size, float height)
 {
-    NK_ASSERT(data);
-    NK_ASSERT(size);
+    IGNIS_ASSERT(data);
+    IGNIS_ASSERT(size);
     if (!data || !size) return IGNIS_FAILURE;
 
     uint32_t decompressed_size = nk_decompress_length(data);
     void* decompressed_data = malloc(decompressed_size);
 
-    NK_ASSERT(decompressed_data);
+    IGNIS_ASSERT(decompressed_data);
     if (!decompressed_data) return IGNIS_FAILURE;
 
     nk_decompress(decompressed_data, data, (unsigned int)size);
 
-    struct font_config cfg = font_default_config(height);
-    cfg.ttf_blob = decompressed_data;
-    cfg.ttf_size = decompressed_size;
-    cfg.size = height;
+    ignisFontConfigLoadDefautl(config, height);
+    config->ttf_blob = decompressed_data;
+    config->ttf_size = decompressed_size;
 
-    nk_memcopy(config, &cfg, sizeof(struct font_config));
     return IGNIS_SUCCESS;
 }
 
-uint8_t font_atlas_add_compressed_base85(struct font_config* config, const char* data_base85, float height)
+uint8_t font_atlas_add_compressed_base85(IgnisFontConfig* config, const char* data_base85, float height)
 {
-    NK_ASSERT(data_base85);
+    IGNIS_ASSERT(data_base85);
     if (!data_base85)
         return IGNIS_FAILURE;
 
-    uint32_t compressed_size = (((int)nk_strlen(data_base85) + 4) / 5) * 4;
+    uint32_t compressed_size = (((int)strlen(data_base85) + 4) / 5) * 4;
     void* compressed_data = malloc(compressed_size);
 
-    NK_ASSERT(compressed_data);
+    IGNIS_ASSERT(compressed_data);
     if (!compressed_data) return IGNIS_FAILURE;
 
     nk_decode_85(compressed_data, data_base85);
 
-    uint8_t result = font_atlas_add_compressed(config, compressed_data, compressed_size, height, config);
+    uint8_t result = font_atlas_add_compressed(config, compressed_data, compressed_size, height);
 
     free(compressed_data);
     return result;
 }
 
-uint8_t font_atlas_add_default(struct font_config* config, float pixel_height)
+uint8_t ignisFontAtlasLoadDefault(IgnisFontConfig* config, float pixel_height)
 {
     return font_atlas_add_compressed_base85(config, nk_proggy_clean_ttf_compressed_data_base85, pixel_height);
 }
