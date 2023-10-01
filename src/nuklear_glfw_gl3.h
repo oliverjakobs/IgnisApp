@@ -16,7 +16,6 @@
 #include "nuklear/nuklear.h"
 
 #include <ignis/ignis.h>
-#include <ignis/font.h>
 #include <minimal/minimal.h>
 
 #ifndef NK_GLFW_TEXT_MAX
