@@ -1,4 +1,4 @@
-#include "font.h"
+#include "nuklear_glfw_gl3.h"
 
 /* ---------------------------------------------------------------------------
  *
@@ -17,7 +17,11 @@
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #endif
 
-static const char nk_proggy_clean_ttf_compressed_data_base85[11980 + 1] =
+#define DATA__BASE85_LEN    11980
+#define COMPRESSED_SIZE     (((DATA__BASE85_LEN + 4) / 5) * 4)
+
+static unsigned char compressed_data[COMPRESSED_SIZE];
+static const char nk_proggy_clean_ttf_compressed_data_base85[DATA__BASE85_LEN + 1] =
 "7])#######hV0qs'/###[),##/l:$#Q6>##5[n42>c-TH`->>#/e>11NNV=Bv(*:.F?uu#(gRU.o0XGH`$vhLG1hxt9?W`#,5LsCp#-i>.r$<$6pD>Lb';9Crc6tgXmKVeU2cD4Eo3R/"
 "2*>]b(MC;$jPfY.;h^`IWM9<Lh2TlS+f-s$o6Q<BWH`YiU.xfLq$N;$0iR/GX:U(jcW2p/W*q?-qmnUCI;jHSAiFWM.R*kU@C=GH?a9wp8f$e.-4^Qg1)Q-GL(lf(r/7GrRgwV%MS=C#"
 "`8ND>Qo#t'X#(v#Y9w0#1D$CIf;W'#pWUPXOuxXuU(H9M(1<q-UE31#^-V'8IRUo7Qf./L>=Ke$$'5F%)]0^#0X@U.a<r:QLtFsLcL6##lOj)#.Y5<-R&KgLwqJfLgN&;Q?gI^#DY2uL"
@@ -260,48 +264,25 @@ static void nk_decode_85(unsigned char* dst, const unsigned char* src)
     }
 }
 
-uint8_t font_atlas_add_compressed(IgnisFontConfig* config, void* data, size_t size, float height)
+void* default_font_get_data(size_t* size_ptr)
 {
-    IGNIS_ASSERT(data);
-    IGNIS_ASSERT(size);
-    if (!data || !size) return IGNIS_FAILURE;
+    nk_decode_85(compressed_data, nk_proggy_clean_ttf_compressed_data_base85);
 
-    uint32_t decompressed_size = nk_decompress_length(data);
-    void* decompressed_data = malloc(decompressed_size);
+    size_t size = nk_decompress_length(compressed_data);
+    void* data = malloc(size);
 
-    IGNIS_ASSERT(decompressed_data);
-    if (!decompressed_data) return IGNIS_FAILURE;
+    if (!data) return NULL;
 
-    nk_decompress(decompressed_data, data, (unsigned int)size);
+    nk_decompress(data, compressed_data, COMPRESSED_SIZE);
 
-    ignisFontConfigLoadDefautl(config, height);
-    config->ttf_blob = decompressed_data;
-    config->ttf_size = decompressed_size;
-
-    return IGNIS_SUCCESS;
+    *size_ptr = size;
+    return data;
 }
 
-uint8_t font_atlas_add_compressed_base85(IgnisFontConfig* config, const char* data_base85, float height)
+uint8_t loadDefaultFont(IgnisFontConfig* config, float height)
 {
-    IGNIS_ASSERT(data_base85);
-    if (!data_base85)
-        return IGNIS_FAILURE;
+    size_t size = 0;
+    void* data = default_font_get_data(&size);
 
-    uint32_t compressed_size = (((int)strlen(data_base85) + 4) / 5) * 4;
-    void* compressed_data = malloc(compressed_size);
-
-    IGNIS_ASSERT(compressed_data);
-    if (!compressed_data) return IGNIS_FAILURE;
-
-    nk_decode_85(compressed_data, data_base85);
-
-    uint8_t result = font_atlas_add_compressed(config, compressed_data, compressed_size, height);
-
-    free(compressed_data);
-    return result;
-}
-
-uint8_t ignisFontAtlasLoadDefault(IgnisFontConfig* config, float pixel_height)
-{
-    return font_atlas_add_compressed_base85(config, nk_proggy_clean_ttf_compressed_data_base85, pixel_height);
+    return ignisFontAtlasLoadFromMemory(config, data, size, height);
 }

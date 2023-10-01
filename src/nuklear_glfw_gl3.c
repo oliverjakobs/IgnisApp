@@ -159,12 +159,14 @@ NK_API void
 nk_glfw3_load_font_atlas(struct nk_glfw* glfw)
 {
     IgnisFontConfig fonts[3];
-    //ignisFontAtlasLoadDefault(&fonts[0], 13.0f);
-    ignisFontAtlasLoadFromFile(&fonts[0], "res/fonts/ProggyClean.ttf", 13);
+    loadDefaultFont(&fonts[0], 13.0f);
+    //ignisFontAtlasLoadFromFile(&fonts[0], "res/fonts/ProggyClean.ttf", 13);
     ignisFontAtlasLoadFromFile(&fonts[1], "res/fonts/OpenSans.ttf", 13);
     ignisFontAtlasLoadFromFile(&fonts[2], "res/fonts/ProggyTiny.ttf", 14);
 
     ignisFontAtlasBake(&glfw->atlas, fonts, 3, IGNIS_FONT_FORMAT_RGBA32);
+
+    ignisFontConfigClear(fonts, 3);
 
     set_font(&glfw->ctx, &glfw->atlas.fonts[0]);
 }
@@ -203,7 +205,6 @@ nk_glfw3_render(struct nk_glfw* glfw, enum nk_anti_aliasing AA)
     minimalGetFramebufferSize(win, &display_width, &display_height);
 
     struct nk_glfw_device* dev = &glfw->ogl;
-    struct nk_buffer vbuf, ebuf;
     GLfloat ortho[4][4] = {
         {2.0f, 0.0f, 0.0f, 0.0f},
         {0.0f,-2.0f, 0.0f, 0.0f},
@@ -262,6 +263,7 @@ nk_glfw3_render(struct nk_glfw* glfw, enum nk_anti_aliasing AA)
             };
 
             /* setup buffers to load vertices and elements */
+            struct nk_buffer vbuf, ebuf;
             nk_buffer_init_fixed(&vbuf, vertices, (size_t)MAX_VERTEX_BUFFER);
             nk_buffer_init_fixed(&ebuf, elements, (size_t)MAX_ELEMENT_BUFFER);
             nk_convert(&glfw->ctx, &dev->cmds, &vbuf, &ebuf, &config);

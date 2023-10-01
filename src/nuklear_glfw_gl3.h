@@ -16,7 +16,7 @@
 #include "nuklear/nuklear.h"
 
 #include <ignis/ignis.h>
-#include "font.h"
+#include <ignis/font.h>
 #include <minimal/minimal.h>
 
 #ifndef NK_GLFW_TEXT_MAX
@@ -59,6 +59,7 @@ NK_API void                 nk_glfw3_render(struct nk_glfw* glfw, enum nk_anti_a
 NK_API void                 nk_glfw3_device_destroy(struct nk_glfw_device* dev);
 NK_API void                 nk_glfw3_device_create(struct nk_glfw_device* dev);
 
+uint8_t loadDefaultFont(IgnisFontConfig* config, float height);
 
 
 #ifndef NK_GLFW_DOUBLE_CLICK_LO
