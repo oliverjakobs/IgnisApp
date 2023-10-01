@@ -66,7 +66,7 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 
     /* load fonts */
     IgnisFontConfig fonts[1];
-    ignisFontAtlasLoadFromFile(&fonts[0], "res/fonts/ProggyTiny.ttf", 16.0);
+    ignisFontAtlasLoadFromFile(&fonts[0], "res/fonts/ProggyTiny.ttf", 13.0);
 
     ignisFontAtlasBake(&font_atlas, fonts, 1, IGNIS_FONT_FORMAT_RGBA32);
 
@@ -161,12 +161,12 @@ void onTick(MinimalApp* app, float deltatime)
     ignisFontRendererSetProjection(screen_projection.v[0]);
 
     /* fps */
-    ignisFontRendererRenderTextFormat(8.0f, 8.0f, "FPS: %d", app->fps);
+    ignisFontRendererRenderTextFormat(8.0f, 8.0f, 16.0f, "FPS: %d", app->fps);
 
     if (app->debug)
     {
         /* Settings */
-        ignisFontRendererTextFieldBegin(width - 220.0f, 8.0f, 8.0f);
+        ignisFontRendererTextFieldBegin(width - 220.0f, 8.0f, 16.0f, 8.0f);
 
         ignisFontRendererTextFieldLine("F6:  Toggle Vsync");
         ignisFontRendererTextFieldLine("F7:  Toggle debug mode");
