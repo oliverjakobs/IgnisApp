@@ -21,7 +21,7 @@ static void ignisLogCallback(IgnisLogLevel level, const char* desc)
     }
 }
 
-IgnisFont font;
+IgnisFontAtlas font_atlas;
 
 float width, height;
 mat4 screen_projection;
@@ -57,13 +57,21 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
     }
 
     ignisEnableBlend(IGNIS_SRC_ALPHA, IGNIS_ONE_MINUS_SRC_ALPHA);
+    glBlendEquation(GL_FUNC_ADD);
     ignisSetClearColor(IGNIS_DARK_GREY);
 
     /* renderer */
     ignisRenderer2DInit();
     ignisFontRendererInit();
-    ignisCreateFont(&font, "res/fonts/ProggyTiny.ttf", 24.0);
-    ignisFontRendererBindFontColor(&font, IGNIS_WHITE);
+
+    /* load fonts */
+    IgnisFontConfig fonts[1];
+    ignisFontAtlasLoadFromFile(&fonts[0], "res/fonts/ProggyTiny.ttf", 16.0);
+
+    ignisFontAtlasBake(&font_atlas, fonts, 1, IGNIS_FONT_FORMAT_RGBA32);
+
+    ignisFontConfigClear(fonts, 1);
+    ignisFontRendererBindFontColor(&font_atlas.fonts[0], IGNIS_WHITE);
 
     MINIMAL_INFO("[OpenGL]  Version:      %s", ignisGetGLVersion());
     MINIMAL_INFO("[OpenGL]  Vendor:       %s", ignisGetGLVendor());
@@ -87,7 +95,7 @@ void onDestroy(MinimalApp* app)
     watcherDestroy(watcher);
     ResourcesDestroy(&res);
 
-    ignisDeleteFont(&font);
+    ignisFontAtlasClear(&font_atlas);
 
     ignisFontRendererDestroy();
     ignisRenderer2DDestroy();
