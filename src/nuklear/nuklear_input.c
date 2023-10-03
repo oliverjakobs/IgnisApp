@@ -11,14 +11,9 @@
 NK_API void
 nk_input_begin(struct nk_context *ctx)
 {
-    int i;
-    struct nk_input *in;
     NK_ASSERT(ctx);
     if (!ctx) return;
-    in = &ctx->input;
-    for (i = 0; i < NK_BUTTON_MAX; ++i)
-        in->mouse.buttons[i].clicked = 0;
-
+    struct nk_input* in = &ctx->input;
     in->keyboard.text_len = 0;
     in->mouse.scroll_delta = nk_vec2(0,0);
     in->mouse.prev.x = in->mouse.pos.x;
@@ -27,16 +22,8 @@ nk_input_begin(struct nk_context *ctx)
     in->mouse.delta.y = 0;
 }
 
-NK_API void
-nk_input_end(struct nk_context *ctx)
-{
-    struct nk_input *in;
-    NK_ASSERT(ctx);
-    if (!ctx) return;
-    in = &ctx->input;
-}
-NK_API void
-nk_input_motion(struct nk_context *ctx, int x, int y)
+
+NK_API void nk_input_motion(struct nk_context *ctx, int x, int y)
 {
     struct nk_input *in;
     NK_ASSERT(ctx);
@@ -47,30 +34,17 @@ nk_input_motion(struct nk_context *ctx, int x, int y)
     in->mouse.delta.x = in->mouse.pos.x - in->mouse.prev.x;
     in->mouse.delta.y = in->mouse.pos.y - in->mouse.prev.y;
 }
-NK_API void
-nk_input_button(struct nk_context *ctx, enum nk_buttons id, int x, int y, nk_bool down)
+
+NK_API void nk_input_button(struct nk_context *ctx, enum nk_buttons id, nk_bool down)
 {
-    struct nk_mouse_button *btn;
-    struct nk_input *in;
     NK_ASSERT(ctx);
     if (!ctx) return;
-    in = &ctx->input;
-    if (in->mouse.buttons[id].down == down) return;
 
-    btn = &in->mouse.buttons[id];
-    btn->clicked_pos.x = (float)x;
-    btn->clicked_pos.y = (float)y;
-    btn->down = down;
-    btn->clicked++;
-
-    /* Fix Click-Drag for touch events. */
-    in->mouse.delta.x = 0;
-    in->mouse.delta.y = 0;
-
-    if (down && id == NK_BUTTON_LEFT)
+    struct nk_input* in = &ctx->input;
+    if (nk_input_is_mouse_pressed(in, id))
     {
-        in->mouse.down_pos.x = btn->clicked_pos.x;
-        in->mouse.down_pos.y = btn->clicked_pos.y;
+        in->mouse.clicked_pos[id].x = in->mouse.pos.x;
+        in->mouse.clicked_pos[id].y = in->mouse.pos.y;
     }
 }
 
@@ -94,9 +68,9 @@ NK_API void nk_input_glyph(struct nk_context *ctx, const nk_glyph glyph)
     in = &ctx->input;
 
     len = nk_utf_decode(glyph, &unicode, NK_UTF_SIZE);
-    if (len && ((in->keyboard.text_len + len) < NK_INPUT_MAX)) {
-        nk_utf_encode(unicode, &in->keyboard.text[in->keyboard.text_len],
-            NK_INPUT_MAX - in->keyboard.text_len);
+    if (len && ((in->keyboard.text_len + len) < NK_INPUT_MAX))
+    {
+        nk_utf_encode(unicode, &in->keyboard.text[in->keyboard.text_len],  NK_INPUT_MAX - in->keyboard.text_len);
         in->keyboard.text_len += len;
     }
 }
@@ -123,22 +97,8 @@ NK_API void nk_input_unicode(struct nk_context *ctx, nk_rune unicode)
 NK_API nk_bool nk_input_click_in_rect(const struct nk_input *i, enum nk_buttons id, struct nk_rect b)
 {
     if (!i) return nk_false;
-    const struct nk_mouse_button* btn = &i->mouse.buttons[id];
-    return NK_INBOX(btn->clicked_pos.x, btn->clicked_pos.y, b.x, b.y, b.w, b.h);
-}
-
-NK_API nk_bool nk_input_has_mouse_click_down_in_rect(const struct nk_input *i, enum nk_buttons id,
-    struct nk_rect b, nk_bool down)
-{
-    return nk_input_click_in_rect(i, id, b) && (nk_input_is_mouse_down(i, id) == down);
-}
-
-NK_API nk_bool nk_input_is_mouse_click_down_in_rect(const struct nk_input *i, enum nk_buttons id,
-    struct nk_rect b, nk_bool down)
-{
-    if (!i) return nk_false;
-    const struct nk_mouse_button* btn = &i->mouse.buttons[id];
-    return (nk_input_has_mouse_click_down_in_rect(i, id, b, down) && btn->clicked) ? nk_true : nk_false;
+    const struct nk_vec2 pos = i->mouse.clicked_pos[id];
+    return NK_INBOX(pos.x, pos.y, b.x, b.y, b.w, b.h);
 }
 
 NK_API nk_bool nk_input_is_mouse_hovering_rect(const struct nk_input *i, struct nk_rect rect)
@@ -201,8 +161,8 @@ int input_map[][2] = {
     [NK_KEY_TEXT_WORD_RIGHT] = { MINIMAL_KEY_RIGHT, MINIMAL_KEY_MOD_CONTROL },
     [NK_KEY_TEXT_LINE_START] = { MINIMAL_KEY_B, MINIMAL_KEY_MOD_CONTROL },
     [NK_KEY_TEXT_LINE_END]   = { MINIMAL_KEY_E, MINIMAL_KEY_MOD_CONTROL },
-    [NK_KEY_LEFT]            = { MINIMAL_KEY_LEFT, MINIMAL_KEY_MOD_CONTROL },
-    [NK_KEY_RIGHT]           = { MINIMAL_KEY_RIGHT, MINIMAL_KEY_MOD_CONTROL },
+    [NK_KEY_LEFT]            = { MINIMAL_KEY_LEFT, 0 },
+    [NK_KEY_RIGHT]           = { MINIMAL_KEY_RIGHT, 0 },
 };
 
 NK_API nk_bool nk_input_is_key_pressed(const struct nk_input *i, enum nk_keys key)

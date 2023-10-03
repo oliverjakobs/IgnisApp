@@ -26,7 +26,7 @@ nk_draw_symbol(struct nk_command_buffer *out, enum nk_symbol_type type,
         struct nk_text text = {
             .padding = nk_vec2(0,0),
             .background = background,
-            text.text = foreground
+            .text = foreground
         };
         nk_widget_text(out, content, X, 1, &text, NK_TEXT_CENTERED, font);
         break;
@@ -84,7 +84,7 @@ NK_LIB nk_bool nk_button_behavior(nk_flags *state, struct nk_rect r, const struc
         if (nk_input_is_mouse_down(i, NK_BUTTON_LEFT))
             *state = NK_WIDGET_STATE_ACTIVE;
 
-        if (nk_input_click_in_rect(i, NK_BUTTON_LEFT, r) && NK_INBOX(i->mouse.down_pos.x, i->mouse.down_pos.y, r.x, r.y, r.w, r.h))
+        if (nk_input_click_in_rect(i, NK_BUTTON_LEFT, r))
         {
             if (behavior == NK_BUTTON_DEFAULT)  ret = nk_input_is_mouse_released(i, NK_BUTTON_LEFT);
             else                                ret = nk_input_is_mouse_down(i, NK_BUTTON_LEFT);
@@ -100,18 +100,15 @@ NK_LIB nk_bool nk_button_behavior(nk_flags *state, struct nk_rect r, const struc
 }
 
 NK_LIB const struct nk_style_item*
-nk_draw_button(struct nk_command_buffer *out,
-    const struct nk_rect *bounds, nk_flags state,
-    const struct nk_style_button *style)
+nk_draw_button(struct nk_command_buffer *out, const struct nk_rect *bounds, nk_flags state, const struct nk_style_button *style)
 {
-    const struct nk_style_item *background;
-    if (state & NK_WIDGET_STATE_HOVER)
-        background = &style->hover;
-    else if (state & NK_WIDGET_STATE_ACTIVED)
-        background = &style->active;
-    else background = &style->normal;
+    const struct nk_style_item *background = &style->normal;
 
-    switch(background->type) {
+    if (state & NK_WIDGET_STATE_HOVER)          background = &style->hover;
+    else if (state & NK_WIDGET_STATE_ACTIVED)   background = &style->active;
+
+    switch(background->type)
+    {
         case NK_STYLE_ITEM_IMAGE:
             nk_draw_image(out, *bounds, &background->data.image, nk_white);
             break;
@@ -123,8 +120,10 @@ nk_draw_button(struct nk_command_buffer *out,
             nk_stroke_rect(out, *bounds, style->rounding, style->border, style->border_color);
             break;
     }
+
     return background;
 }
+
 NK_LIB nk_bool
 nk_do_button(nk_flags *state, struct nk_command_buffer *out, struct nk_rect r,
     const struct nk_style_button *style, const struct nk_input *in,

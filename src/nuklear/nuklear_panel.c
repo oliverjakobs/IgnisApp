@@ -129,8 +129,8 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
         {
             win->bounds.x = win->bounds.x + in->mouse.delta.x;
             win->bounds.y = win->bounds.y + in->mouse.delta.y;
-            in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.x += in->mouse.delta.x;
-            in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.y += in->mouse.delta.y;
+            in->mouse.clicked_pos[NK_BUTTON_LEFT].x += in->mouse.delta.x;
+            in->mouse.clicked_pos[NK_BUTTON_LEFT].y += in->mouse.delta.y;
             ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_MOVE];
         }
     }
@@ -559,8 +559,8 @@ nk_panel_end(struct nk_context *ctx)
                     }
                 }
                 ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_RESIZE_TOP_RIGHT_DOWN_LEFT];
-                in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.x = scaler.x + scaler.w/2.0f;
-                in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.y = scaler.y + scaler.h/2.0f;
+                in->mouse.clicked_pos[NK_BUTTON_LEFT].x = scaler.x + scaler.w/2.0f;
+                in->mouse.clicked_pos[NK_BUTTON_LEFT].y = scaler.y + scaler.h/2.0f;
             }
         }
     }

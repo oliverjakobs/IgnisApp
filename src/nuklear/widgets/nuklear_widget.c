@@ -129,7 +129,8 @@ nk_widget_has_mouse_click_down(struct nk_context *ctx, enum nk_buttons btn, nk_b
     nk_unify(&v, &c, bounds.x, bounds.y, bounds.x + bounds.w, bounds.y + bounds.h);
     if (!NK_INTERSECT(c.x, c.y, c.w, c.h, bounds.x, bounds.y, bounds.w, bounds.h))
         return 0;
-    return nk_input_has_mouse_click_down_in_rect(&ctx->input, btn, bounds, down);
+
+    return nk_input_click_in_rect(&ctx->input, btn, bounds) && (nk_input_is_mouse_down(&ctx->input, btn) == down);
 }
 NK_API enum nk_widget_layout_states
 nk_widget(struct nk_rect *bounds, const struct nk_context *ctx)

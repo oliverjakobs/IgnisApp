@@ -10,32 +10,29 @@ NK_LIB nk_size
 nk_progress_behavior(nk_flags *state, struct nk_input *in,
     struct nk_rect r, struct nk_rect cursor, nk_size max, nk_size value, nk_bool modifiable)
 {
-    int left_mouse_down = 0;
-    int left_mouse_click_in_cursor = 0;
-
     nk_widget_state_reset(state);
     if (!in || !modifiable) return value;
-    left_mouse_down = in && in->mouse.buttons[NK_BUTTON_LEFT].down;
-    left_mouse_click_in_cursor = in && nk_input_has_mouse_click_down_in_rect(in,
-            NK_BUTTON_LEFT, cursor, nk_true);
+
     if (nk_input_is_mouse_hovering_rect(in, r))
         *state = NK_WIDGET_STATE_HOVERED;
 
-    if (in && left_mouse_down && left_mouse_click_in_cursor) {
-        if (left_mouse_down && left_mouse_click_in_cursor) {
-            float ratio = NK_MAX(0, (float)(in->mouse.pos.x - cursor.x)) / (float)cursor.w;
-            value = (nk_size)NK_CLAMP(0, (float)max * ratio, (float)max);
-            in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.x = cursor.x + cursor.w/2.0f;
-            *state |= NK_WIDGET_STATE_ACTIVE;
-        }
+    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, cursor) && nk_input_is_mouse_down(in, NK_BUTTON_LEFT))
+    {
+        float ratio = NK_MAX(0, (float)(in->mouse.pos.x - cursor.x)) / (float)cursor.w;
+        value = (nk_size)NK_CLAMP(0, (float)max * ratio, (float)max);
+        in->mouse.clicked_pos[NK_BUTTON_LEFT].x = cursor.x + cursor.w / 2.0f;
+        *state |= NK_WIDGET_STATE_ACTIVE;
     }
+
     /* set progressbar widget state */
     if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(in, r))
         *state |= NK_WIDGET_STATE_ENTERED;
     else if (nk_input_is_mouse_prev_hovering_rect(in, r))
         *state |= NK_WIDGET_STATE_LEFT;
+
     return value;
 }
+
 NK_LIB void
 nk_draw_progress(struct nk_command_buffer *out, nk_flags state,
     const struct nk_style_progress *style, const struct nk_rect *bounds,

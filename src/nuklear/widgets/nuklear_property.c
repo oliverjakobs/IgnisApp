@@ -11,19 +11,16 @@ nk_drag_behavior(nk_flags *state, const struct nk_input *in,
     struct nk_rect drag, struct nk_property_variant *variant,
     float inc_per_pixel)
 {
-    int left_mouse_down = in && in->mouse.buttons[NK_BUTTON_LEFT].down;
-    int left_mouse_click_in_cursor = in &&
-        nk_input_has_mouse_click_down_in_rect(in, NK_BUTTON_LEFT, drag, nk_true);
-
     nk_widget_state_reset(state);
     if (nk_input_is_mouse_hovering_rect(in, drag))
         *state = NK_WIDGET_STATE_HOVERED;
 
-    if (left_mouse_down && left_mouse_click_in_cursor) {
-        float delta, pixels;
-        pixels = in->mouse.delta.x;
-        delta = pixels * inc_per_pixel;
-        switch (variant->kind) {
+    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, drag) && nk_input_is_mouse_down(in, NK_BUTTON_LEFT))
+    {
+        float pixels = in->mouse.delta.x;
+        float delta = pixels * inc_per_pixel;
+        switch (variant->kind)
+        {
         default: break;
         case NK_PROPERTY_INT:
             variant->value.i = variant->value.i + (int)delta;
@@ -40,11 +37,13 @@ nk_drag_behavior(nk_flags *state, const struct nk_input *in,
         }
         *state = NK_WIDGET_STATE_ACTIVE;
     }
+
     if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(in, drag))
         *state |= NK_WIDGET_STATE_ENTERED;
     else if (nk_input_is_mouse_prev_hovering_rect(in, drag))
         *state |= NK_WIDGET_STATE_LEFT;
 }
+
 NK_LIB void
 nk_property_behavior(nk_flags *ws, const struct nk_input *in,
     struct nk_rect property,  struct nk_rect label, struct nk_rect edit,
@@ -52,19 +51,23 @@ nk_property_behavior(nk_flags *ws, const struct nk_input *in,
     float inc_per_pixel)
 {
     nk_widget_state_reset(ws);
-    if (in && *state == NK_PROPERTY_DEFAULT) {
+    if (in && *state == NK_PROPERTY_DEFAULT)
+    {
         if (nk_button_behavior(ws, edit, in, NK_BUTTON_DEFAULT))
             *state = NK_PROPERTY_EDIT;
-        else if (nk_input_is_mouse_click_down_in_rect(in, NK_BUTTON_LEFT, label, nk_true))
+        else if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, label) && nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT))
             *state = NK_PROPERTY_DRAG;
-        else if (nk_input_is_mouse_click_down_in_rect(in, NK_BUTTON_LEFT, empty, nk_true))
+        else if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, empty) && nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT))
             *state = NK_PROPERTY_DRAG;
     }
-    if (*state == NK_PROPERTY_DRAG) {
+
+    if (*state == NK_PROPERTY_DRAG)
+    {
         nk_drag_behavior(ws, in, property, variant, inc_per_pixel);
         if (!(*ws & NK_WIDGET_STATE_ACTIVED)) *state = NK_PROPERTY_DEFAULT;
     }
 }
+
 NK_LIB void
 nk_draw_property(struct nk_command_buffer *out, const struct nk_style_property *style,
     const struct nk_rect *bounds, const struct nk_rect *label, nk_flags state,

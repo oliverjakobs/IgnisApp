@@ -647,7 +647,7 @@ int overview(struct nk_context* ctx)
                 nk_tooltipf(ctx, "Value: %.2f", (float)cos((float)index * step));
             if (line_index != -1) {
                 nk_layout_row_dynamic(ctx, 20, 1);
-                nk_labelf(ctx, NK_TEXT_LEFT, "Selected value: %.2f", (float)cos((float)index * step));
+                nk_labelf(ctx, NK_TEXT_LEFT, "Selected value: %.2f", (float)cos((float)line_index* step));
             }
 
             /* column chart */

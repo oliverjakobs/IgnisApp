@@ -92,7 +92,7 @@ nk_chart_add_slot_colored(struct nk_context *ctx, const enum nk_chart_type type,
     if (ctx->current->layout->chart.slot >= NK_CHART_MAX_SLOT) return;
 
     /* add another slot into the graph */
-    {struct nk_chart *chart = &ctx->current->layout->chart;
+    struct nk_chart *chart = &ctx->current->layout->chart;
     struct nk_chart_slot *slot = &chart->slots[chart->slot++];
     slot->type = type;
     slot->count = count;
@@ -100,7 +100,7 @@ nk_chart_add_slot_colored(struct nk_context *ctx, const enum nk_chart_type type,
     slot->highlight = highlight;
     slot->min = NK_MIN(min_value, max_value);
     slot->max = NK_MAX(min_value, max_value);
-    slot->range = slot->max - slot->min;}
+    slot->range = slot->max - slot->min;
 }
 NK_API void
 nk_chart_add_slot(struct nk_context *ctx, const enum nk_chart_type type,
@@ -109,42 +109,37 @@ nk_chart_add_slot(struct nk_context *ctx, const enum nk_chart_type type,
     nk_chart_add_slot_colored(ctx, type, ctx->style.chart.color,
         ctx->style.chart.selected_color, count, min_value, max_value);
 }
-NK_INTERN nk_flags
-nk_chart_push_line(struct nk_context *ctx, struct nk_window *win,
-    struct nk_chart *g, float value, int slot)
+NK_INTERN nk_flags nk_chart_push_line(struct nk_context *ctx, struct nk_window *win, struct nk_chart *g, float value, int slot)
 {
     struct nk_panel *layout = win->layout;
     const struct nk_input *i = &ctx->input;
     struct nk_command_buffer *out = &win->buffer;
 
     nk_flags ret = 0;
-    struct nk_vec2 cur;
-    struct nk_rect bounds;
-    struct nk_color color;
-    float step;
-    float range;
-    float ratio;
 
     NK_ASSERT(slot >= 0 && slot < NK_CHART_MAX_SLOT);
-    step = g->w / (float)g->slots[slot].count;
-    range = g->slots[slot].max - g->slots[slot].min;
-    ratio = (value - g->slots[slot].min) / range;
+    float step = g->w / (float)g->slots[slot].count;
+    float range = g->slots[slot].max - g->slots[slot].min;
+    float ratio = (value - g->slots[slot].min) / range;
 
-    if (g->slots[slot].index == 0) {
-        /* first data point does not have a connection */
+    /* first data point does not have a connection */
+    if (g->slots[slot].index == 0)
+    {
         g->slots[slot].last.x = g->x;
         g->slots[slot].last.y = (g->y + g->h) - ratio * (float)g->h;
 
-        bounds.x = g->slots[slot].last.x - 2;
-        bounds.y = g->slots[slot].last.y - 2;
-        bounds.w = bounds.h = 4;
+        struct nk_rect bounds = {
+            .x = g->slots[slot].last.x - 2,
+            .y = g->slots[slot].last.y - 2,
+            .w = 4,
+            .h = 4
+        };
 
-        color = g->slots[slot].color;
-        if (!(layout->flags & NK_WINDOW_ROM) &&
-            NK_INBOX(i->mouse.pos.x,i->mouse.pos.y, g->slots[slot].last.x-3, g->slots[slot].last.y-3, 6, 6)){
-            ret = nk_input_is_mouse_hovering_rect(i, bounds) ? NK_CHART_HOVERING : 0;
-            ret |= (i->mouse.buttons[NK_BUTTON_LEFT].down &&
-                i->mouse.buttons[NK_BUTTON_LEFT].clicked) ? NK_CHART_CLICKED: 0;
+        struct nk_color color = g->slots[slot].color;
+        if (!(layout->flags & NK_WINDOW_ROM) && nk_input_is_mouse_hovering_rect(i, bounds))
+        {
+            ret = NK_CHART_HOVERING;
+            ret |= nk_input_is_mouse_released(i, NK_BUTTON_LEFT) ? NK_CHART_CLICKED: 0;
             color = g->slots[slot].highlight;
         }
         nk_fill_rect(out, bounds, 0, color);
@@ -153,25 +148,28 @@ nk_chart_push_line(struct nk_context *ctx, struct nk_window *win,
     }
 
     /* draw a line between the last data point and the new one */
-    color = g->slots[slot].color;
-    cur.x = g->x + (float)(step * (float)g->slots[slot].index);
-    cur.y = (g->y + g->h) - (ratio * (float)g->h);
+    struct nk_color color = g->slots[slot].color;
+    struct nk_vec2 cur = {
+        .x = g->x + (float)(step * (float)g->slots[slot].index),
+        .y = (g->y + g->h) - (ratio * (float)g->h)
+    };
     nk_stroke_line(out, g->slots[slot].last.x, g->slots[slot].last.y, cur.x, cur.y, 1.0f, color);
 
-    bounds.x = cur.x - 3;
-    bounds.y = cur.y - 3;
-    bounds.w = bounds.h = 6;
+    struct nk_rect bounds = {
+        .x = cur.x - 2,
+        .y = cur.y - 2,
+        .w = 4,
+        .h = 4
+    };
 
     /* user selection of current data point */
-    if (!(layout->flags & NK_WINDOW_ROM)) {
-        if (nk_input_is_mouse_hovering_rect(i, bounds)) {
-            ret = NK_CHART_HOVERING;
-            ret |= (!i->mouse.buttons[NK_BUTTON_LEFT].down &&
-                i->mouse.buttons[NK_BUTTON_LEFT].clicked) ? NK_CHART_CLICKED: 0;
-            color = g->slots[slot].highlight;
-        }
+    if (!(layout->flags & NK_WINDOW_ROM) && nk_input_is_mouse_hovering_rect(i, bounds))
+    {
+        ret = NK_CHART_HOVERING;
+        ret |= nk_input_is_mouse_released(i, NK_BUTTON_LEFT) ? NK_CHART_CLICKED : 0;
+        color = g->slots[slot].highlight;
     }
-    nk_fill_rect(out, nk_rect(cur.x - 2, cur.y - 2, 4, 4), 0, color);
+    nk_fill_rect(out, bounds, 0, color);
 
     /* save current data point position */
     g->slots[slot].last.x = cur.x;
@@ -179,9 +177,8 @@ nk_chart_push_line(struct nk_context *ctx, struct nk_window *win,
     g->slots[slot].index  += 1;
     return ret;
 }
-NK_INTERN nk_flags
-nk_chart_push_column(const struct nk_context *ctx, struct nk_window *win,
-    struct nk_chart *chart, float value, int slot)
+
+NK_INTERN nk_flags nk_chart_push_column(const struct nk_context *ctx, struct nk_window *win, struct nk_chart *chart, float value, int slot)
 {
     struct nk_command_buffer *out = &win->buffer;
     const struct nk_input *in = &ctx->input;
@@ -193,9 +190,12 @@ nk_chart_push_column(const struct nk_context *ctx, struct nk_window *win,
     struct nk_rect item = {0,0,0,0};
 
     NK_ASSERT(slot >= 0 && slot < NK_CHART_MAX_SLOT);
+
     if (chart->slots[slot].index  >= chart->slots[slot].count)
         return nk_false;
-    if (chart->slots[slot].count) {
+
+    if (chart->slots[slot].count)
+    {
         float padding = (float)(chart->slots[slot].count-1);
         item.w = (chart->w - padding) / (float)(chart->slots[slot].count);
     }
@@ -214,11 +214,10 @@ nk_chart_push_column(const struct nk_context *ctx, struct nk_window *win,
     item.x = item.x + ((float)chart->slots[slot].index);
 
     /* user chart bar selection */
-    if (!(layout->flags & NK_WINDOW_ROM) &&
-        NK_INBOX(in->mouse.pos.x,in->mouse.pos.y,item.x,item.y,item.w,item.h)) {
+    if (!(layout->flags & NK_WINDOW_ROM) && nk_input_is_mouse_hovering_rect(in, item))
+    {
         ret = NK_CHART_HOVERING;
-        ret |= (!in->mouse.buttons[NK_BUTTON_LEFT].down &&
-                in->mouse.buttons[NK_BUTTON_LEFT].clicked) ? NK_CHART_CLICKED: 0;
+        ret |= nk_input_is_mouse_released(in, NK_BUTTON_LEFT) ? NK_CHART_CLICKED : 0;
         color = chart->slots[slot].highlight;
     }
     nk_fill_rect(out, item, 0, color);

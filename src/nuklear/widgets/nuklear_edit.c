@@ -186,15 +186,13 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
     /* update edit state */
     prev_state = (char)edit->active;
     is_hovered = (char)nk_input_is_mouse_hovering_rect(in, bounds);
-    if (in && in->mouse.buttons[NK_BUTTON_LEFT].clicked && in->mouse.buttons[NK_BUTTON_LEFT].down) {
-        edit->active = NK_INBOX(in->mouse.pos.x, in->mouse.pos.y,
-                                bounds.x, bounds.y, bounds.w, bounds.h);
+    if (nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT)) {
+        edit->active = is_hovered;
     }
 
     /* (de)activate text editor */
     if (!prev_state && edit->active) {
-        const enum nk_text_edit_type type = (flags & NK_EDIT_MULTILINE) ?
-            NK_TEXT_EDIT_MULTI_LINE: NK_TEXT_EDIT_SINGLE_LINE;
+        const enum nk_text_edit_type type = (flags & NK_EDIT_MULTILINE) ? NK_TEXT_EDIT_MULTI_LINE: NK_TEXT_EDIT_SINGLE_LINE;
         /* keep scroll position when re-activating edit widget */
         struct nk_vec2 oldscrollbar = edit->scrollbar;
         nk_textedit_clear_state(edit, type, filter);
@@ -224,34 +222,41 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
 
         /* mouse click handler */
         is_hovered = (char)nk_input_is_mouse_hovering_rect(in, area);
-        if (select_all) {
+        if (select_all)
+        {
             nk_textedit_select_all(edit);
-        } else if (is_hovered && in->mouse.buttons[NK_BUTTON_LEFT].down &&
-            in->mouse.buttons[NK_BUTTON_LEFT].clicked) {
+        }
+        else if (is_hovered && nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT)) {
             nk_textedit_click(edit, mouse_x, mouse_y, font, row_height);
-        } else if (is_hovered && in->mouse.buttons[NK_BUTTON_LEFT].down &&
-            (in->mouse.delta.x != 0.0f || in->mouse.delta.y != 0.0f)) {
+        }
+        else if (is_hovered && nk_input_is_mouse_down(in, NK_BUTTON_LEFT) &&
+            (in->mouse.delta.x != 0.0f || in->mouse.delta.y != 0.0f))
+        {
             nk_textedit_drag(edit, mouse_x, mouse_y, font, row_height);
             cursor_follow = nk_true;
-        } else if (is_hovered && in->mouse.buttons[NK_BUTTON_RIGHT].clicked &&
-            in->mouse.buttons[NK_BUTTON_RIGHT].down) {
+        }
+        else if (is_hovered && nk_input_is_mouse_pressed(in, NK_BUTTON_RIGHT))
+        {
             nk_textedit_key(edit, NK_KEY_TEXT_WORD_LEFT, nk_false, font, row_height);
             nk_textedit_key(edit, NK_KEY_TEXT_WORD_RIGHT, nk_true, font, row_height);
             cursor_follow = nk_true;
         }
 
-        {int i; /* keyboard input */
-        int old_mode = edit->mode;
-        for (i = 0; i < NK_KEY_MAX; ++i) {
-            if (i == NK_KEY_ENTER || i == NK_KEY_TAB) continue; /* special case */
-            if (nk_input_is_key_pressed(in, (enum nk_keys)i)) {
-                nk_textedit_key(edit, (enum nk_keys)i, shift_mod, font, row_height);
-                cursor_follow = nk_true;
+        {
+            int i; /* keyboard input */
+            int old_mode = edit->mode;
+            for (i = 0; i < NK_KEY_MAX; ++i)
+            {
+                if (i == NK_KEY_ENTER || i == NK_KEY_TAB) continue; /* special case */
+                if (nk_input_is_key_pressed(in, (enum nk_keys)i)) {
+                    nk_textedit_key(edit, (enum nk_keys)i, shift_mod, font, row_height);
+                    cursor_follow = nk_true;
+                }
             }
+
+            if (old_mode != edit->mode)
+                in->keyboard.text_len = 0;
         }
-        if (old_mode != edit->mode) {
-            in->keyboard.text_len = 0;
-        }}
 
         /* text input */
         edit->filter = filter;

@@ -565,7 +565,7 @@ NK_API void nk_input_motion(struct nk_context*, int x, int y);
 /// __y__       | Must contain an integer describing mouse cursor y-position on click up/down
 /// __down__    | Must be 0 for key is up and 1 for key is down
 */
-NK_API void nk_input_button(struct nk_context*, enum nk_buttons, int x, int y, nk_bool down);
+NK_API void nk_input_button(struct nk_context* ctx, enum nk_buttons id, nk_bool down);
 /*/// #### nk_input_scroll
 /// Copies the last mouse scroll value to nuklear. Is generally
 /// a scroll value. So does not have to come from mouse and could also originate
@@ -4229,18 +4229,12 @@ NK_API void nk_push_custom(struct nk_command_buffer*, struct nk_rect, nk_command
  *                          INPUT
  *
  * ===============================================================*/
-struct nk_mouse_button {
-    nk_bool down;
-    unsigned int clicked;
-    struct nk_vec2 clicked_pos;
-};
 struct nk_mouse {
-    struct nk_mouse_button buttons[NK_BUTTON_MAX];
+    struct nk_vec2 clicked_pos[NK_BUTTON_MAX];
     struct nk_vec2 pos;
     struct nk_vec2 prev;
     struct nk_vec2 delta;
     struct nk_vec2 scroll_delta;
-    struct nk_vec2 down_pos;
 };
 
 struct nk_keyboard {
@@ -4254,9 +4248,6 @@ struct nk_input {
 };
 
 NK_API nk_bool nk_input_click_in_rect(const struct nk_input* i, enum nk_buttons id, struct nk_rect r);
-NK_API nk_bool nk_input_has_mouse_click_down_in_rect(const struct nk_input*, enum nk_buttons, struct nk_rect, nk_bool down);
-NK_API nk_bool nk_input_is_mouse_click_in_rect(const struct nk_input*, enum nk_buttons, struct nk_rect);
-NK_API nk_bool nk_input_is_mouse_click_down_in_rect(const struct nk_input *i, enum nk_buttons id, struct nk_rect b, nk_bool down);
 NK_API nk_bool nk_input_is_mouse_prev_hovering_rect(const struct nk_input*, struct nk_rect);
 NK_API nk_bool nk_input_is_mouse_hovering_rect(const struct nk_input*, struct nk_rect);
 NK_API nk_bool nk_input_mouse_clicked(const struct nk_input*, enum nk_buttons, struct nk_rect);

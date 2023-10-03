@@ -34,7 +34,7 @@ NK_LIB float nk_scrollbar_behavior(nk_flags *state, struct nk_input *in,
             float delta = (pixel / scroll->h) * target;
             scroll_offset = NK_CLAMP(0, scroll_offset + delta, target - scroll->h);
             float cursor_y = scroll->y + ((scroll_offset/target) * scroll->h);
-            in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.y = cursor_y + cursor->h/2.0f;
+            in->mouse.clicked_pos[NK_BUTTON_LEFT].y = cursor_y + cursor->h/2.0f;
         }
         else
         {
@@ -42,7 +42,7 @@ NK_LIB float nk_scrollbar_behavior(nk_flags *state, struct nk_input *in,
             float delta = (pixel / scroll->w) * target;
             scroll_offset = NK_CLAMP(0, scroll_offset + delta, target - scroll->w);
             float cursor_x = scroll->x + ((scroll_offset/target) * scroll->w);
-            in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.x = cursor_x + cursor->w/2.0f;
+            in->mouse.clicked_pos[NK_BUTTON_LEFT].x = cursor_x + cursor->w/2.0f;
         }
     }
     /* scroll page up by click on empty space or shortcut */

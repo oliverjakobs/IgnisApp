@@ -185,12 +185,12 @@ nk_glfw3_new_frame(struct nk_glfw* glfw)
     minimalGetCursorPos(win, &x, &y);
     nk_input_motion(ctx, (int)x, (int)y);
 
-    nk_input_button(ctx, NK_BUTTON_LEFT,   (int)x, (int)y, minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_LEFT));
-    nk_input_button(ctx, NK_BUTTON_MIDDLE, (int)x, (int)y, minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_MIDDLE));
-    nk_input_button(ctx, NK_BUTTON_RIGHT,  (int)x, (int)y, minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_RIGHT));
+    nk_input_button(ctx, NK_BUTTON_LEFT,   minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_LEFT));
+    nk_input_button(ctx, NK_BUTTON_MIDDLE, minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_MIDDLE));
+    nk_input_button(ctx, NK_BUTTON_RIGHT,  minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_RIGHT));
     
     nk_input_scroll(ctx, glfw->scroll);
-    nk_input_end(&glfw->ctx);
+
     glfw->text_len = 0;
     glfw->scroll = nk_vec2(0, 0);
 }
