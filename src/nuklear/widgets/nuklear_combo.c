@@ -83,7 +83,8 @@ nk_combo_begin_text(struct nk_context *ctx, const char *selected, int len,
         text.text = style->combo.label_normal;
     }
 
-    switch(background->type) {
+    switch(background->type)
+    {
         case NK_STYLE_ITEM_IMAGE:
             text.background = nk_rgba(0, 0, 0, 0);
             nk_draw_image(&win->buffer, header, &background->data.image, nk_white);
@@ -98,52 +99,52 @@ nk_combo_begin_text(struct nk_context *ctx, const char *selected, int len,
             nk_stroke_rect(&win->buffer, header, style->combo.rounding, style->combo.border, style->combo.border_color);
             break;
     }
-    {
-        /* print currently selected text item */
-        struct nk_rect label;
-        struct nk_rect button;
-        struct nk_rect content;
-        int draw_button_symbol;
 
-        enum nk_symbol_type sym;
-        if (ctx->last_widget_state & NK_WIDGET_STATE_HOVER)
-            sym = style->combo.sym_hover;
-        else if (is_clicked)
-            sym = style->combo.sym_active;
-        else
-            sym = style->combo.sym_normal;
+    /* print currently selected text item */
+    struct nk_rect label;
+    struct nk_rect button;
+    struct nk_rect content;
+    int draw_button_symbol;
 
-        /* represents whether or not the combo's button symbol should be drawn */
-        draw_button_symbol = sym != NK_SYMBOL_NONE;
+    enum nk_symbol_type sym;
+    if (ctx->last_widget_state & NK_WIDGET_STATE_HOVER)
+        sym = style->combo.sym_hover;
+    else if (is_clicked)
+        sym = style->combo.sym_active;
+    else
+        sym = style->combo.sym_normal;
 
-        /* calculate button */
-        button.w = header.h - 2 * style->combo.button_padding.y;
-        button.x = (header.x + header.w - header.h) - style->combo.button_padding.x;
-        button.y = header.y + style->combo.button_padding.y;
-        button.h = button.w;
+    /* represents whether or not the combo's button symbol should be drawn */
+    draw_button_symbol = sym != NK_SYMBOL_NONE;
 
-        content.x = button.x + style->combo.button.padding.x;
-        content.y = button.y + style->combo.button.padding.y;
-        content.w = button.w - 2 * style->combo.button.padding.x;
-        content.h = button.h - 2 * style->combo.button.padding.y;
+    /* calculate button */
+    button.w = header.h - 2 * style->combo.button_padding.y;
+    button.x = (header.x + header.w - header.h) - style->combo.button_padding.x;
+    button.y = header.y + style->combo.button_padding.y;
+    button.h = button.w;
 
-        /* draw selected label */
-        text.padding = nk_vec2(0,0);
-        label.x = header.x + style->combo.content_padding.x;
-        label.y = header.y + style->combo.content_padding.y;
-        label.h = header.h - 2 * style->combo.content_padding.y;
-        if (draw_button_symbol)
-            label.w = button.x - (style->combo.content_padding.x + style->combo.spacing.x) - label.x;
-        else
-            label.w = header.w - 2 * style->combo.content_padding.x;
-        nk_widget_text(&win->buffer, label, selected, len, &text,
-            NK_TEXT_LEFT, ctx->style.font);
+    content.x = button.x + style->combo.button.padding.x;
+    content.y = button.y + style->combo.button.padding.y;
+    content.w = button.w - 2 * style->combo.button.padding.x;
+    content.h = button.h - 2 * style->combo.button.padding.y;
 
-        /* draw open/close button */
-        if (draw_button_symbol)
-            nk_draw_button_symbol(&win->buffer, &button, &content, ctx->last_widget_state,
-                &ctx->style.combo.button, sym, style->font);
-    }
+    /* draw selected label */
+    text.padding = nk_vec2(0,0);
+    label.x = header.x + style->combo.content_padding.x;
+    label.y = header.y + style->combo.content_padding.y;
+    label.h = header.h - 2 * style->combo.content_padding.y;
+    if (draw_button_symbol)
+        label.w = button.x - (style->combo.content_padding.x + style->combo.spacing.x) - label.x;
+    else
+        label.w = header.w - 2 * style->combo.content_padding.x;
+    nk_widget_text(&win->buffer, label, selected, len, &text,
+        NK_TEXT_LEFT, ctx->style.font);
+
+    /* draw open/close button */
+    if (draw_button_symbol)
+        nk_draw_button_symbol(&win->buffer, &button, &content, ctx->last_widget_state,
+            &ctx->style.combo.button, sym, style->font);
+
     return nk_combo_begin(ctx, win, size, is_clicked, header);
 }
 NK_API nk_bool

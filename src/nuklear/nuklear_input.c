@@ -66,9 +66,15 @@ nk_input_button(struct nk_context *ctx, enum nk_buttons id, int x, int y, nk_boo
     /* Fix Click-Drag for touch events. */
     in->mouse.delta.x = 0;
     in->mouse.delta.y = 0;
+
+    if (down && id == NK_BUTTON_LEFT)
+    {
+        in->mouse.down_pos.x = btn->clicked_pos.x;
+        in->mouse.down_pos.y = btn->clicked_pos.y;
+    }
 }
-NK_API void
-nk_input_scroll(struct nk_context *ctx, struct nk_vec2 val)
+
+NK_API void nk_input_scroll(struct nk_context *ctx, struct nk_vec2 val)
 {
     NK_ASSERT(ctx);
     if (!ctx) return;
@@ -77,8 +83,7 @@ nk_input_scroll(struct nk_context *ctx, struct nk_vec2 val)
 }
 
 
-NK_API void
-nk_input_glyph(struct nk_context *ctx, const nk_glyph glyph)
+NK_API void nk_input_glyph(struct nk_context *ctx, const nk_glyph glyph)
 {
     int len = 0;
     nk_rune unicode;
@@ -95,8 +100,8 @@ nk_input_glyph(struct nk_context *ctx, const nk_glyph glyph)
         in->keyboard.text_len += len;
     }
 }
-NK_API void
-nk_input_char(struct nk_context *ctx, char c)
+
+NK_API void nk_input_char(struct nk_context *ctx, char c)
 {
     nk_glyph glyph;
     NK_ASSERT(ctx);
@@ -104,8 +109,8 @@ nk_input_char(struct nk_context *ctx, char c)
     glyph[0] = c;
     nk_input_glyph(ctx, glyph);
 }
-NK_API void
-nk_input_unicode(struct nk_context *ctx, nk_rune unicode)
+
+NK_API void nk_input_unicode(struct nk_context *ctx, nk_rune unicode)
 {
     nk_glyph rune;
     NK_ASSERT(ctx);
@@ -114,55 +119,45 @@ nk_input_unicode(struct nk_context *ctx, nk_rune unicode)
     nk_input_glyph(ctx, rune);
 }
 
-
-
-
 // ----------------------------------------------------------------------------------------
-NK_API nk_bool
-nk_input_has_mouse_click_in_rect(const struct nk_input *i, enum nk_buttons id, struct nk_rect b)
+NK_API nk_bool nk_input_click_in_rect(const struct nk_input *i, enum nk_buttons id, struct nk_rect b)
 {
     if (!i) return nk_false;
     const struct nk_mouse_button* btn = &i->mouse.buttons[id];
     return NK_INBOX(btn->clicked_pos.x, btn->clicked_pos.y, b.x, b.y, b.w, b.h);
 }
 
-NK_API nk_bool
-nk_input_has_mouse_click_down_in_rect(const struct nk_input *i, enum nk_buttons id,
+NK_API nk_bool nk_input_has_mouse_click_down_in_rect(const struct nk_input *i, enum nk_buttons id,
     struct nk_rect b, nk_bool down)
 {
-    return nk_input_has_mouse_click_in_rect(i, id, b) && (nk_input_is_mouse_down(i, id) == down);
+    return nk_input_click_in_rect(i, id, b) && (nk_input_is_mouse_down(i, id) == down);
 }
 
-NK_API nk_bool
-nk_input_is_mouse_click_down_in_rect(const struct nk_input *i, enum nk_buttons id,
+NK_API nk_bool nk_input_is_mouse_click_down_in_rect(const struct nk_input *i, enum nk_buttons id,
     struct nk_rect b, nk_bool down)
 {
-    const struct nk_mouse_button *btn;
     if (!i) return nk_false;
-    btn = &i->mouse.buttons[id];
+    const struct nk_mouse_button* btn = &i->mouse.buttons[id];
     return (nk_input_has_mouse_click_down_in_rect(i, id, b, down) && btn->clicked) ? nk_true : nk_false;
 }
 
-NK_API nk_bool
-nk_input_is_mouse_hovering_rect(const struct nk_input *i, struct nk_rect rect)
+NK_API nk_bool nk_input_is_mouse_hovering_rect(const struct nk_input *i, struct nk_rect rect)
 {
     if (!i) return nk_false;
     return NK_INBOX(i->mouse.pos.x, i->mouse.pos.y, rect.x, rect.y, rect.w, rect.h);
 }
 
-NK_API nk_bool
-nk_input_is_mouse_prev_hovering_rect(const struct nk_input *i, struct nk_rect rect)
+NK_API nk_bool nk_input_is_mouse_prev_hovering_rect(const struct nk_input *i, struct nk_rect rect)
 {
     if (!i) return nk_false;
     return NK_INBOX(i->mouse.prev.x, i->mouse.prev.y, rect.x, rect.y, rect.w, rect.h);
 }
 
-NK_API nk_bool
-nk_input_mouse_clicked(const struct nk_input *i, enum nk_buttons id, struct nk_rect rect)
+NK_API nk_bool nk_input_mouse_clicked(const struct nk_input *i, enum nk_buttons id, struct nk_rect rect)
 {
     if (!i) return nk_false;
     if (!nk_input_is_mouse_hovering_rect(i, rect)) return nk_false;
-    return nk_input_has_mouse_click_in_rect(i, id, rect) && nk_input_is_mouse_released(i, id);
+    return nk_input_click_in_rect(i, id, rect) && nk_input_is_mouse_released(i, id);
 }
 
 //-------------------------------------------------------------------------------------

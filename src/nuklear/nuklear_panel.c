@@ -6,8 +6,7 @@
  *                              PANEL
  *
  * ===============================================================*/
-NK_LIB void*
-nk_create_panel(struct nk_context *ctx)
+NK_LIB void* nk_create_panel(struct nk_context *ctx)
 {
     struct nk_page_element *elem;
     elem = nk_create_page_element(ctx);
@@ -15,15 +14,15 @@ nk_create_panel(struct nk_context *ctx)
     nk_zero_struct(*elem);
     return &elem->data.pan;
 }
-NK_LIB void
-nk_free_panel(struct nk_context *ctx, struct nk_panel *pan)
+
+NK_LIB void nk_free_panel(struct nk_context *ctx, struct nk_panel *pan)
 {
     union nk_page_data *pd = NK_CONTAINER_OF(pan, union nk_page_data, pan);
     struct nk_page_element *pe = NK_CONTAINER_OF(pd, struct nk_page_element, data);
     nk_free_page_element(ctx, pe);
 }
-NK_LIB nk_bool
-nk_panel_has_header(nk_flags flags, const char *title)
+
+NK_LIB nk_bool nk_panel_has_header(nk_flags flags, const char *title)
 {
     nk_bool active = 0;
     active = (flags & (NK_WINDOW_CLOSABLE|NK_WINDOW_MINIMIZABLE));
@@ -31,117 +30,103 @@ nk_panel_has_header(nk_flags flags, const char *title)
     active = active && !(flags & NK_WINDOW_HIDDEN) && title;
     return active;
 }
-NK_LIB struct nk_vec2
-nk_panel_get_padding(const struct nk_style *style, enum nk_panel_type type)
-{
-    switch (type) {
-    default:
-    case NK_PANEL_WINDOW: return style->window.padding;
-    case NK_PANEL_GROUP: return style->window.group_padding;
-    case NK_PANEL_POPUP: return style->window.popup_padding;
-    case NK_PANEL_CONTEXTUAL: return style->window.contextual_padding;
-    case NK_PANEL_COMBO: return style->window.combo_padding;
-    case NK_PANEL_MENU: return style->window.menu_padding;
-    case NK_PANEL_TOOLTIP: return style->window.menu_padding;}
-}
-NK_LIB float
-nk_panel_get_border(const struct nk_style *style, nk_flags flags,
-    enum nk_panel_type type)
-{
-    if (flags & NK_WINDOW_BORDER) {
-        switch (type) {
-        default:
-        case NK_PANEL_WINDOW: return style->window.border;
-        case NK_PANEL_GROUP: return style->window.group_border;
-        case NK_PANEL_POPUP: return style->window.popup_border;
-        case NK_PANEL_CONTEXTUAL: return style->window.contextual_border;
-        case NK_PANEL_COMBO: return style->window.combo_border;
-        case NK_PANEL_MENU: return style->window.menu_border;
-        case NK_PANEL_TOOLTIP: return style->window.menu_border;
-    }} else return 0;
-}
-NK_LIB struct nk_color
-nk_panel_get_border_color(const struct nk_style *style, enum nk_panel_type type)
-{
-    switch (type) {
-    default:
-    case NK_PANEL_WINDOW: return style->window.border_color;
-    case NK_PANEL_GROUP: return style->window.group_border_color;
-    case NK_PANEL_POPUP: return style->window.popup_border_color;
-    case NK_PANEL_CONTEXTUAL: return style->window.contextual_border_color;
-    case NK_PANEL_COMBO: return style->window.combo_border_color;
-    case NK_PANEL_MENU: return style->window.menu_border_color;
-    case NK_PANEL_TOOLTIP: return style->window.menu_border_color;}
-}
-NK_LIB nk_bool
-nk_panel_is_sub(enum nk_panel_type type)
-{
-    return (type & NK_PANEL_SET_SUB)?1:0;
-}
-NK_LIB nk_bool
-nk_panel_is_nonblock(enum nk_panel_type type)
-{
-    return (type & NK_PANEL_SET_NONBLOCK)?1:0;
-}
-NK_LIB nk_bool
-nk_panel_begin(struct nk_context *ctx, const char *title, enum nk_panel_type panel_type)
-{
-    struct nk_input *in;
-    struct nk_window *win;
-    struct nk_panel *layout;
-    struct nk_command_buffer *out;
-    const struct nk_style *style;
-    const struct nk_user_font *font;
 
-    struct nk_vec2 scrollbar_size;
-    struct nk_vec2 panel_padding;
+NK_LIB struct nk_vec2 nk_panel_get_padding(const struct nk_style *style, enum nk_panel_type type)
+{
+    switch (type)
+    {
+    default:
+    case NK_PANEL_WINDOW:       return style->window.padding;
+    case NK_PANEL_GROUP:        return style->window.group_padding;
+    case NK_PANEL_POPUP:        return style->window.popup_padding;
+    case NK_PANEL_CONTEXTUAL:   return style->window.contextual_padding;
+    case NK_PANEL_COMBO:        return style->window.combo_padding;
+    case NK_PANEL_MENU:         return style->window.menu_padding;
+    case NK_PANEL_TOOLTIP:      return style->window.menu_padding;
+    }
+}
 
+NK_LIB float nk_panel_get_border(const struct nk_style *style, nk_flags flags, enum nk_panel_type type)
+{
+    if (!(flags & NK_WINDOW_BORDER)) return 0.0f;
+
+    switch (type)
+    {
+    default:
+    case NK_PANEL_WINDOW:       return style->window.border;
+    case NK_PANEL_GROUP:        return style->window.group_border;
+    case NK_PANEL_POPUP:        return style->window.popup_border;
+    case NK_PANEL_CONTEXTUAL:   return style->window.contextual_border;
+    case NK_PANEL_COMBO:        return style->window.combo_border;
+    case NK_PANEL_MENU:         return style->window.menu_border;
+    case NK_PANEL_TOOLTIP:      return style->window.menu_border;
+    }
+}
+
+NK_LIB struct nk_color nk_panel_get_border_color(const struct nk_style *style, enum nk_panel_type type)
+{
+    switch (type)
+    {
+    default:
+    case NK_PANEL_WINDOW:       return style->window.border_color;
+    case NK_PANEL_GROUP:        return style->window.group_border_color;
+    case NK_PANEL_POPUP:        return style->window.popup_border_color;
+    case NK_PANEL_CONTEXTUAL:   return style->window.contextual_border_color;
+    case NK_PANEL_COMBO:        return style->window.combo_border_color;
+    case NK_PANEL_MENU:         return style->window.menu_border_color;
+    case NK_PANEL_TOOLTIP:      return style->window.menu_border_color;
+    }
+}
+
+NK_LIB nk_bool nk_panel_is_sub(enum nk_panel_type type)       { return (type & NK_PANEL_SET_SUB); }
+NK_LIB nk_bool nk_panel_is_nonblock(enum nk_panel_type type)  { return (type & NK_PANEL_SET_NONBLOCK); }
+
+NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk_panel_type panel_type)
+{
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
     if (!ctx || !ctx->current || !ctx->current->layout) return 0;
     nk_zero(ctx->current->layout, sizeof(*ctx->current->layout));
-    if ((ctx->current->flags & NK_WINDOW_HIDDEN) || (ctx->current->flags & NK_WINDOW_CLOSED)) {
+
+    if ((ctx->current->flags & NK_WINDOW_HIDDEN) || (ctx->current->flags & NK_WINDOW_CLOSED))
+    {
         nk_zero(ctx->current->layout, sizeof(struct nk_panel));
         ctx->current->layout->type = panel_type;
         return 0;
     }
+
     /* pull state into local stack */
-    style = &ctx->style;
-    font = style->font;
-    win = ctx->current;
-    layout = win->layout;
-    out = &win->buffer;
-    in = (win->flags & NK_WINDOW_NO_INPUT) ? 0: &ctx->input;
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-    win->buffer.userdata = ctx->userdata;
-#endif
+    const struct nk_style* style = &ctx->style;
+    const struct nk_user_font* font = style->font;
+    struct nk_window* win = ctx->current;
+    struct nk_panel* layout = win->layout;
+    struct nk_command_buffer* out = &win->buffer;
+    struct nk_input* in = (win->flags & NK_WINDOW_NO_INPUT) ? NULL : &ctx->input;
+
     /* pull style configuration into local stack */
-    scrollbar_size = style->window.scrollbar_size;
-    panel_padding = nk_panel_get_padding(style, panel_type);
+    struct nk_vec2 scrollbar_size = style->window.scrollbar_size;
+    struct nk_vec2 panel_padding = nk_panel_get_padding(style, panel_type);
 
     /* window movement */
-    if ((win->flags & NK_WINDOW_MOVABLE) && !(win->flags & NK_WINDOW_ROM)) {
-        nk_bool left_mouse_down;
-        unsigned int left_mouse_clicked;
-        int left_mouse_click_in_cursor;
-
+    if ((win->flags & NK_WINDOW_MOVABLE) && !(win->flags & NK_WINDOW_ROM))
+    {
         /* calculate draggable window space */
-        struct nk_rect header;
-        header.x = win->bounds.x;
-        header.y = win->bounds.y;
-        header.w = win->bounds.w;
-        if (nk_panel_has_header(win->flags, title)) {
+        struct nk_rect header = {
+            .x = win->bounds.x,
+            .y = win->bounds.y,
+            .w = win->bounds.w,
+            .h = panel_padding.y,
+        };
+        if (nk_panel_has_header(win->flags, title))
+        {
             header.h = font->height + 2.0f * style->window.header.padding.y;
             header.h += 2.0f * style->window.header.label_padding.y;
-        } else header.h = panel_padding.y;
+        }
 
         /* window movement by dragging */
-        left_mouse_down = in->mouse.buttons[NK_BUTTON_LEFT].down;
-        left_mouse_clicked = in->mouse.buttons[NK_BUTTON_LEFT].clicked;
-        left_mouse_click_in_cursor = nk_input_has_mouse_click_down_in_rect(in,
-            NK_BUTTON_LEFT, header, nk_true);
-        if (left_mouse_down && left_mouse_click_in_cursor && !left_mouse_clicked) {
+        if (nk_input_is_mouse_down(in, NK_BUTTON_LEFT) && nk_input_click_in_rect(in, NK_BUTTON_LEFT, header))
+        {
             win->bounds.x = win->bounds.x + in->mouse.delta.x;
             win->bounds.y = win->bounds.y + in->mouse.delta.y;
             in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.x += in->mouse.delta.x;
@@ -323,6 +308,8 @@ nk_panel_begin(struct nk_context *ctx, const char *title, enum nk_panel_type pan
     layout->clip = clip;}
     return !(layout->flags & NK_WINDOW_HIDDEN) && !(layout->flags & NK_WINDOW_MINIMIZED);
 }
+
+
 NK_LIB void
 nk_panel_end(struct nk_context *ctx)
 {
@@ -538,29 +525,34 @@ nk_panel_end(struct nk_context *ctx)
         }}
 
         /* do window scaling */
-        if (!(window->flags & NK_WINDOW_ROM)) {
+        if (!(window->flags & NK_WINDOW_ROM))
+        {
             struct nk_vec2 window_size = style->window.min_size;
-            int left_mouse_down = in->mouse.buttons[NK_BUTTON_LEFT].down;
-            int left_mouse_click_in_scaler = nk_input_has_mouse_click_down_in_rect(in,
-                    NK_BUTTON_LEFT, scaler, nk_true);
 
-            if (left_mouse_down && left_mouse_click_in_scaler) {
+            if (nk_input_is_mouse_down(in, NK_BUTTON_LEFT) && nk_input_click_in_rect(in, NK_BUTTON_LEFT, scaler))
+            {
                 float delta_x = in->mouse.delta.x;
-                if (layout->flags & NK_WINDOW_SCALE_LEFT) {
+                if (layout->flags & NK_WINDOW_SCALE_LEFT)
+                {
                     delta_x = -delta_x;
                     window->bounds.x += in->mouse.delta.x;
                 }
                 /* dragging in x-direction  */
-                if (window->bounds.w + delta_x >= window_size.x) {
-                    if ((delta_x < 0) || (delta_x > 0 && in->mouse.pos.x >= scaler.x)) {
+                if (window->bounds.w + delta_x >= window_size.x)
+                {
+                    if ((delta_x < 0) || (delta_x > 0 && in->mouse.pos.x >= scaler.x))
+                    {
                         window->bounds.w = window->bounds.w + delta_x;
                         scaler.x += in->mouse.delta.x;
                     }
                 }
                 /* dragging in y-direction (only possible if static window) */
-                if (!(layout->flags & NK_WINDOW_DYNAMIC)) {
-                    if (window_size.y < window->bounds.h + in->mouse.delta.y) {
-                        if ((in->mouse.delta.y < 0) || (in->mouse.delta.y > 0 && in->mouse.pos.y >= scaler.y)) {
+                if (!(layout->flags & NK_WINDOW_DYNAMIC))
+                {
+                    if (window_size.y < window->bounds.h + in->mouse.delta.y)
+                    {
+                        if ((in->mouse.delta.y < 0) || (in->mouse.delta.y > 0 && in->mouse.pos.y >= scaler.y))
+                        {
                             window->bounds.h = window->bounds.h + in->mouse.delta.y;
                             scaler.y += in->mouse.delta.y;
                         }

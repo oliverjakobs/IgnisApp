@@ -198,13 +198,55 @@ nk_glfw3_new_frame(struct nk_glfw* glfw)
 NK_API void
 nk_glfw3_render(struct nk_glfw* glfw, enum nk_anti_aliasing AA)
 {
-    MinimalWindow* win = glfw->win;
+    struct nk_glfw_device* dev = &glfw->ogl;
+
+    /* convert from command queue into draw list and draw to screen */
+    /* allocate vertex and element buffer */
+    ignisBindVertexArray(&dev->vao);
+
+    /* load draw vertices & elements directly into vertex + element buffer */
+    void* vertices = ignisMapBuffer(&dev->vao.buffers[0], GL_WRITE_ONLY);
+    void* elements = ignisMapBuffer(&dev->vao.buffers[1], GL_WRITE_ONLY);
+    {
+        /* fill convert configuration */
+        static const struct nk_draw_vertex_layout_element vertex_layout[] = {
+            {NK_VERTEX_POSITION, NK_FORMAT_FLOAT,    NK_OFFSETOF(struct nk_glfw_vertex, position)},
+            {NK_VERTEX_COLOR,    NK_FORMAT_R8G8B8A8, NK_OFFSETOF(struct nk_glfw_vertex, col)},
+            {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT,    NK_OFFSETOF(struct nk_glfw_vertex, uv)},
+            {NK_VERTEX_LAYOUT_END}
+        };
+
+        struct nk_convert_config config = {
+            .vertex_layout = vertex_layout,
+            .vertex_size = sizeof(struct nk_glfw_vertex),
+            .vertex_alignment = NK_ALIGNOF(struct nk_glfw_vertex),
+            .tex_null = dev->tex_null,
+            .circle_segment_count = 22,
+            .curve_segment_count = 22,
+            .arc_segment_count = 22,
+            .global_alpha = 1.0f,
+            .shape_AA = AA,
+            .line_AA = AA
+        };
+
+        /* setup buffers to load vertices and elements */
+        struct nk_buffer vbuf, ebuf;
+        nk_buffer_init_fixed(&vbuf, vertices, (size_t)MAX_VERTEX_BUFFER);
+        nk_buffer_init_fixed(&ebuf, elements, (size_t)MAX_ELEMENT_BUFFER);
+        nk_convert(&glfw->ctx, &dev->cmds, &vbuf, &ebuf, &config);
+    }
+    ignisUnmapBuffer(&dev->vao.buffers[0]);
+    ignisUnmapBuffer(&dev->vao.buffers[1]);
+
+
     int width, height;
     int display_width, display_height;
-    minimalGetWindowSize(win, &width, &height);
-    minimalGetFramebufferSize(win, &display_width, &display_height);
+    minimalGetWindowSize(glfw->win, &width, &height);
+    minimalGetFramebufferSize(glfw->win, &display_width, &display_height);
 
-    struct nk_glfw_device* dev = &glfw->ogl;
+    struct nk_vec2 fb_scale;
+    minimalGetWindowContentScale(glfw->win, &fb_scale.x, &fb_scale.y);
+
     GLfloat ortho[4][4] = {
         {2.0f, 0.0f, 0.0f, 0.0f},
         {0.0f,-2.0f, 0.0f, 0.0f},
@@ -223,74 +265,33 @@ nk_glfw3_render(struct nk_glfw* glfw, enum nk_anti_aliasing AA)
     glEnable(GL_SCISSOR_TEST);
     glActiveTexture(GL_TEXTURE0);
 
-
-    struct nk_vec2 fb_scale;
-    minimalGetWindowContentScale(win, &fb_scale.x, &fb_scale.y);
+    glViewport(0, 0, (GLsizei)display_width, (GLsizei)display_height);
 
     /* setup program */
     ignisUseShader(dev->prog);
     ignisSetUniformil(dev->prog, dev->uniform_tex, 0);
     ignisSetUniformMat4l(dev->prog, dev->uniform_proj, 1, &ortho[0][0]);
-    glViewport(0, 0, (GLsizei)display_width, (GLsizei)display_height);
+
+
+    /* iterate over and execute each draw command */
+    nk_size offset = 0;
+    const struct nk_draw_command* cmd;
+    nk_draw_foreach(cmd, &glfw->ctx, &dev->cmds)
     {
-        /* convert from command queue into draw list and draw to screen */
-        /* allocate vertex and element buffer */
-        ignisBindVertexArray(&dev->vao);
-
-        /* load draw vertices & elements directly into vertex + element buffer */
-        void* vertices = ignisMapBuffer(&dev->vao.buffers[0], GL_WRITE_ONLY);
-        void* elements = ignisMapBuffer(&dev->vao.buffers[1], GL_WRITE_ONLY);
-        {
-            /* fill convert configuration */
-            static const struct nk_draw_vertex_layout_element vertex_layout[] = {
-                {NK_VERTEX_POSITION, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_glfw_vertex, position)},
-                {NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, NK_OFFSETOF(struct nk_glfw_vertex, col)},
-                {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_glfw_vertex, uv)},
-                {NK_VERTEX_LAYOUT_END}
-            };
-
-            struct nk_convert_config config = {
-                .vertex_layout = vertex_layout,
-                .vertex_size = sizeof(struct nk_glfw_vertex),
-                .vertex_alignment = NK_ALIGNOF(struct nk_glfw_vertex),
-                .tex_null = dev->tex_null,
-                .circle_segment_count = 22,
-                .curve_segment_count = 22,
-                .arc_segment_count = 22,
-                .global_alpha = 1.0f,
-                .shape_AA = AA,
-                .line_AA = AA
-            };
-
-            /* setup buffers to load vertices and elements */
-            struct nk_buffer vbuf, ebuf;
-            nk_buffer_init_fixed(&vbuf, vertices, (size_t)MAX_VERTEX_BUFFER);
-            nk_buffer_init_fixed(&ebuf, elements, (size_t)MAX_ELEMENT_BUFFER);
-            nk_convert(&glfw->ctx, &dev->cmds, &vbuf, &ebuf, &config);
-        }
-        ignisUnmapBuffer(&dev->vao.buffers[0]);
-        ignisUnmapBuffer(&dev->vao.buffers[1]);
-
-        /* iterate over and execute each draw command */
-        nk_size offset = 0;
-        const struct nk_draw_command* cmd;
-        nk_draw_foreach(cmd, &glfw->ctx, &dev->cmds)
-        {
-            if (!cmd->elem_count) continue;
-            glBindTexture(GL_TEXTURE_2D, (GLuint)cmd->texture.id);
-            IgnisRect rect = {
-                .x = cmd->clip_rect.x * fb_scale.x,
-                .y = (height - (GLint)(cmd->clip_rect.y + cmd->clip_rect.h)) * fb_scale.y,
-                .w = cmd->clip_rect.w * fb_scale.x,
-                .h = cmd->clip_rect.h * fb_scale.y
-            };
-            glScissor((GLint)rect.x, (GLint)rect.y, (GLint)rect.w, (GLint)rect.h);
-            glDrawElements(GL_TRIANGLES, (GLsizei)cmd->elem_count, GL_UNSIGNED_SHORT, (const void*)offset);
-            offset += cmd->elem_count * sizeof(nk_draw_index);
-        }
-        nk_clear(&glfw->ctx);
-        nk_buffer_clear(&dev->cmds);
+        if (!cmd->elem_count) continue;
+        glBindTexture(GL_TEXTURE_2D, (GLuint)cmd->texture.id);
+        IgnisRect rect = {
+            .x = cmd->clip_rect.x * fb_scale.x,
+            .y = (height - (GLint)(cmd->clip_rect.y + cmd->clip_rect.h)) * fb_scale.y,
+            .w = cmd->clip_rect.w * fb_scale.x,
+            .h = cmd->clip_rect.h * fb_scale.y
+        };
+        glScissor((GLint)rect.x, (GLint)rect.y, (GLint)rect.w, (GLint)rect.h);
+        glDrawElements(GL_TRIANGLES, (GLsizei)cmd->elem_count, GL_UNSIGNED_SHORT, (const void*)offset);
+        offset += cmd->elem_count * sizeof(nk_draw_index);
     }
+    nk_clear(&glfw->ctx);
+    nk_buffer_clear(&dev->cmds);
 
     /* default OpenGL state */
     glUseProgram(0);

@@ -1,8 +1,7 @@
-#include <time.h>
-#include <math.h>
+#include "demo.h"
 
-static int
-overview(struct nk_context* ctx)
+
+int overview(struct nk_context* ctx)
 {
     /* window flags */
     static int show_menu = nk_true;
@@ -1299,4 +1298,5 @@ overview(struct nk_context* ctx)
     nk_end(ctx);
     return !nk_window_is_closed(ctx, "Overview");
 }
+
 

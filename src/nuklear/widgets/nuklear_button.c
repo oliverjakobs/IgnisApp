@@ -11,77 +11,94 @@ nk_draw_symbol(struct nk_command_buffer *out, enum nk_symbol_type type,
     struct nk_rect content, struct nk_color background, struct nk_color foreground,
     float border_width, const struct nk_user_font *font)
 {
-    switch (type) {
+    switch (type)
+    {
     case NK_SYMBOL_X:
     case NK_SYMBOL_UNDERSCORE:
     case NK_SYMBOL_PLUS:
-    case NK_SYMBOL_MINUS: {
+    case NK_SYMBOL_MINUS:
+    {
         /* single character text symbol */
         const char *X = (type == NK_SYMBOL_X) ? "x":
             (type == NK_SYMBOL_UNDERSCORE) ? "_":
-            (type == NK_SYMBOL_PLUS) ? "+": "-";
-        struct nk_text text;
-        text.padding = nk_vec2(0,0);
-        text.background = background;
-        text.text = foreground;
+            (type == NK_SYMBOL_PLUS) ? "+" : "-";
+
+        struct nk_text text = {
+            .padding = nk_vec2(0,0),
+            .background = background,
+            text.text = foreground
+        };
         nk_widget_text(out, content, X, 1, &text, NK_TEXT_CENTERED, font);
-    } break;
+        break;
+    }
     case NK_SYMBOL_CIRCLE_SOLID:
     case NK_SYMBOL_CIRCLE_OUTLINE:
     case NK_SYMBOL_RECT_SOLID:
-    case NK_SYMBOL_RECT_OUTLINE: {
+    case NK_SYMBOL_RECT_OUTLINE:
+    {
         /* simple empty/filled shapes */
-        if (type == NK_SYMBOL_RECT_SOLID || type == NK_SYMBOL_RECT_OUTLINE) {
+        if (type == NK_SYMBOL_RECT_SOLID || type == NK_SYMBOL_RECT_OUTLINE)
+        {
             nk_fill_rect(out, content,  0, foreground);
             if (type == NK_SYMBOL_RECT_OUTLINE)
                 nk_fill_rect(out, nk_shrink_rect(content, border_width), 0, background);
-        } else {
+        }
+        else
+        {
             nk_fill_circle(out, content, foreground);
             if (type == NK_SYMBOL_CIRCLE_OUTLINE)
                 nk_fill_circle(out, nk_shrink_rect(content, 1), background);
         }
-    } break;
+        break;
+    }
     case NK_SYMBOL_TRIANGLE_UP:
     case NK_SYMBOL_TRIANGLE_DOWN:
     case NK_SYMBOL_TRIANGLE_LEFT:
-    case NK_SYMBOL_TRIANGLE_RIGHT: {
-        enum nk_heading heading;
-        struct nk_vec2 points[3];
-        heading = (type == NK_SYMBOL_TRIANGLE_RIGHT) ? NK_RIGHT :
+    case NK_SYMBOL_TRIANGLE_RIGHT:
+    {
+        enum nk_heading heading = (type == NK_SYMBOL_TRIANGLE_RIGHT) ? NK_RIGHT :
             (type == NK_SYMBOL_TRIANGLE_LEFT) ? NK_LEFT:
             (type == NK_SYMBOL_TRIANGLE_UP) ? NK_UP: NK_DOWN;
+
+        struct nk_vec2 points[3];
         nk_triangle_from_direction(points, content, 0, 0, heading);
-        nk_fill_triangle(out, points[0].x, points[0].y, points[1].x, points[1].y,
-            points[2].x, points[2].y, foreground);
-    } break;
+        nk_fill_triangle(out, points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, foreground);
+        break;
+    }
     default:
     case NK_SYMBOL_NONE:
     case NK_SYMBOL_MAX: break;
     }
 }
-NK_LIB nk_bool
-nk_button_behavior(nk_flags *state, struct nk_rect r,
-    const struct nk_input *i, enum nk_button_behavior behavior)
+
+NK_LIB nk_bool nk_button_behavior(nk_flags *state, struct nk_rect r, const struct nk_input *i, enum nk_button_behavior behavior)
 {
     int ret = 0;
     nk_widget_state_reset(state);
     if (!i) return 0;
-    if (nk_input_is_mouse_hovering_rect(i, r)) {
+
+    if (nk_input_is_mouse_hovering_rect(i, r))
+    {
         *state = NK_WIDGET_STATE_HOVERED;
+
         if (nk_input_is_mouse_down(i, NK_BUTTON_LEFT))
             *state = NK_WIDGET_STATE_ACTIVE;
-        if (nk_input_has_mouse_click_in_rect(i, NK_BUTTON_LEFT, r)) {
-            ret = (behavior != NK_BUTTON_DEFAULT) ?
-                nk_input_is_mouse_down(i, NK_BUTTON_LEFT):
-                nk_input_is_mouse_released(i, NK_BUTTON_LEFT);
+
+        if (nk_input_click_in_rect(i, NK_BUTTON_LEFT, r) && NK_INBOX(i->mouse.down_pos.x, i->mouse.down_pos.y, r.x, r.y, r.w, r.h))
+        {
+            if (behavior == NK_BUTTON_DEFAULT)  ret = nk_input_is_mouse_released(i, NK_BUTTON_LEFT);
+            else                                ret = nk_input_is_mouse_down(i, NK_BUTTON_LEFT);
         }
     }
+
     if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(i, r))
         *state |= NK_WIDGET_STATE_ENTERED;
     else if (nk_input_is_mouse_prev_hovering_rect(i, r))
         *state |= NK_WIDGET_STATE_LEFT;
+
     return ret;
 }
+
 NK_LIB const struct nk_style_item*
 nk_draw_button(struct nk_command_buffer *out,
     const struct nk_rect *bounds, nk_flags state,

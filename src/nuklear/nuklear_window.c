@@ -138,6 +138,14 @@ nk_begin(struct nk_context *ctx, const char *title,
 {
     return nk_begin_titled(ctx, title, title, bounds, flags);
 }
+
+NK_INTERN struct nk_rect nk_get_window_bounds(struct nk_window* win, float h)
+{
+    if (win->flags & NK_WINDOW_MINIMIZED)
+        return nk_rect(win->bounds.x, win->bounds.y, win->bounds.w, h);
+    return win->bounds;
+}
+
 NK_API nk_bool
 nk_begin_titled(struct nk_context *ctx, const char *name, const char *title,
     struct nk_rect bounds, nk_flags flags)
@@ -161,7 +169,8 @@ nk_begin_titled(struct nk_context *ctx, const char *name, const char *title,
     name_len = (int)nk_strlen(name);
     name_hash = nk_murmur_hash(name, (int)name_len, NK_WINDOW_TITLE);
     win = nk_find_window(ctx, name_hash, name);
-    if (!win) {
+    if (!win)
+    {
         /* create new window */
         nk_size name_length = (nk_size)name_len;
         win = (struct nk_window*)nk_create_window(ctx);
@@ -182,7 +191,9 @@ nk_begin_titled(struct nk_context *ctx, const char *name, const char *title,
         win->popup.win = 0;
         if (!ctx->active)
             ctx->active = win;
-    } else {
+    }
+    else
+    {
         /* update window */
         win->flags &= ~(nk_flags)(NK_WINDOW_PRIVATE-1);
         win->flags |= flags;
@@ -211,22 +222,23 @@ nk_begin_titled(struct nk_context *ctx, const char *name, const char *title,
     /* window overlapping */
     if (!(win->flags & NK_WINDOW_HIDDEN) && !(win->flags & NK_WINDOW_NO_INPUT))
     {
-        int inpanel, ishovered;
-        struct nk_window *iter = win;
-        float h = ctx->style.font->height + 2.0f * style->window.header.padding.y +
-            (2.0f * style->window.header.label_padding.y);
-        struct nk_rect win_bounds = (!(win->flags & NK_WINDOW_MINIMIZED))?
-            win->bounds: nk_rect(win->bounds.x, win->bounds.y, win->bounds.w, h);
+        float h = style->font->height + 2.0f * (style->window.header.padding.y + style->window.header.label_padding.y);
+        struct nk_rect win_bounds = nk_get_window_bounds(win, h);
 
         /* activate window if hovered and no other window is overlapping this window */
-        inpanel = nk_input_has_mouse_click_down_in_rect(&ctx->input, NK_BUTTON_LEFT, win_bounds, nk_true);
-        inpanel = inpanel && ctx->input.mouse.buttons[NK_BUTTON_LEFT].clicked;
-        ishovered = nk_input_is_mouse_hovering_rect(&ctx->input, win_bounds);
-        if ((win != ctx->active) && ishovered && !ctx->input.mouse.buttons[NK_BUTTON_LEFT].down) {
+        struct nk_input* in = &ctx->input;
+        nk_bool click = nk_input_click_in_rect(in, NK_BUTTON_LEFT, win_bounds) && nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT);
+        nk_bool down = nk_input_is_mouse_down(&ctx->input, NK_BUTTON_LEFT);
+        nk_bool hover = nk_input_is_mouse_hovering_rect(&ctx->input, win_bounds);
+
+        struct nk_window* iter = win;
+        if ((win != ctx->active) && hover && !down)
+        {
             iter = win->next;
-            while (iter) {
-                struct nk_rect iter_bounds = (!(iter->flags & NK_WINDOW_MINIMIZED))?
-                    iter->bounds: nk_rect(iter->bounds.x, iter->bounds.y, iter->bounds.w, h);
+            while (iter)
+            {
+                struct nk_rect iter_bounds = nk_get_window_bounds(iter, h);
+
                 if (NK_INTERSECT(win_bounds.x, win_bounds.y, win_bounds.w, win_bounds.h,
                     iter_bounds.x, iter_bounds.y, iter_bounds.w, iter_bounds.h) &&
                     (!(iter->flags & NK_WINDOW_HIDDEN)))
@@ -237,42 +249,54 @@ nk_begin_titled(struct nk_context *ctx, const char *name, const char *title,
                     iter->popup.win->bounds.x, iter->popup.win->bounds.y,
                     iter->popup.win->bounds.w, iter->popup.win->bounds.h))
                     break;
+
                 iter = iter->next;
             }
         }
 
         /* activate window if clicked */
-        if (iter && inpanel && (win != ctx->end)) {
+        if (iter && click && (win != ctx->end))
+        {
             iter = win->next;
-            while (iter) {
+            while (iter)
+            {
                 /* try to find a panel with higher priority in the same position */
-                struct nk_rect iter_bounds = (!(iter->flags & NK_WINDOW_MINIMIZED))?
-                iter->bounds: nk_rect(iter->bounds.x, iter->bounds.y, iter->bounds.w, h);
+                struct nk_rect iter_bounds = nk_get_window_bounds(iter, h);
+
                 if (NK_INBOX(ctx->input.mouse.pos.x, ctx->input.mouse.pos.y,
                     iter_bounds.x, iter_bounds.y, iter_bounds.w, iter_bounds.h) &&
                     !(iter->flags & NK_WINDOW_HIDDEN))
                     break;
+
                 if (iter->popup.win && iter->popup.active && !(iter->flags & NK_WINDOW_HIDDEN) &&
                     NK_INTERSECT(win_bounds.x, win_bounds.y, win_bounds.w, win_bounds.h,
                     iter->popup.win->bounds.x, iter->popup.win->bounds.y,
                     iter->popup.win->bounds.w, iter->popup.win->bounds.h))
                     break;
+
                 iter = iter->next;
             }
         }
-        if (iter && !(win->flags & NK_WINDOW_ROM) && (win->flags & NK_WINDOW_BACKGROUND)) {
+
+        if (iter && !(win->flags & NK_WINDOW_ROM) && (win->flags & NK_WINDOW_BACKGROUND))
+        {
             win->flags |= (nk_flags)NK_WINDOW_ROM;
             iter->flags &= ~(nk_flags)NK_WINDOW_ROM;
             ctx->active = iter;
-            if (!(iter->flags & NK_WINDOW_BACKGROUND)) {
+            if (!(iter->flags & NK_WINDOW_BACKGROUND))
+            {
                 /* current window is active in that position so transfer to top
                  * at the highest priority in stack */
                 nk_remove_window(ctx, iter);
                 nk_insert_window(ctx, iter, NK_INSERT_BACK);
             }
-        } else {
-            if (!iter && ctx->end != win) {
-                if (!(win->flags & NK_WINDOW_BACKGROUND)) {
+        }
+        else
+        {
+            if (!iter && ctx->end != win)
+            {
+                if (!(win->flags & NK_WINDOW_BACKGROUND))
+                {
                     /* current window is active in that position so transfer to top
                      * at the highest priority in stack */
                     nk_remove_window(ctx, win);
@@ -285,6 +309,7 @@ nk_begin_titled(struct nk_context *ctx, const char *name, const char *title,
                 win->flags |= NK_WINDOW_ROM;
         }
     }
+
     win->layout = (struct nk_panel*)nk_create_panel(ctx);
     ctx->current = win;
     ret = nk_panel_begin(ctx, title, NK_PANEL_WINDOW);

@@ -1,12 +1,10 @@
 #include <Ignis/Ignis.h>
-
 #include <minimal/minimal.h>
 
 #include "math/mat4.h"
 
 #include "nuklear_glfw_gl3.h"
-
-#include "overview.c"
+#include "demo/demo.h"
 
 static void ignisLogCallback(IgnisLogLevel level, const char* desc)
 {

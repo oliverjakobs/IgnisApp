@@ -4240,6 +4240,7 @@ struct nk_mouse {
     struct nk_vec2 prev;
     struct nk_vec2 delta;
     struct nk_vec2 scroll_delta;
+    struct nk_vec2 down_pos;
 };
 
 struct nk_keyboard {
@@ -4252,7 +4253,7 @@ struct nk_input {
     struct nk_mouse mouse;
 };
 
-NK_API nk_bool nk_input_has_mouse_click_in_rect(const struct nk_input*, enum nk_buttons, struct nk_rect);
+NK_API nk_bool nk_input_click_in_rect(const struct nk_input* i, enum nk_buttons id, struct nk_rect r);
 NK_API nk_bool nk_input_has_mouse_click_down_in_rect(const struct nk_input*, enum nk_buttons, struct nk_rect, nk_bool down);
 NK_API nk_bool nk_input_is_mouse_click_in_rect(const struct nk_input*, enum nk_buttons, struct nk_rect);
 NK_API nk_bool nk_input_is_mouse_click_down_in_rect(const struct nk_input *i, enum nk_buttons id, struct nk_rect b, nk_bool down);
