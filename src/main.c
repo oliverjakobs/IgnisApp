@@ -64,6 +64,7 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
     setViewport((float)w, (float)h);
 
     nk_glfw3_init(&glfw, app->window);
+    glfw.ctx.input.handle = &app->input;
 
     nk_glfw3_load_font_atlas(&glfw);
 
@@ -98,6 +99,12 @@ int onEvent(MinimalApp* app, const MinimalEvent* e)
         glfw.scroll.x += x;
         glfw.scroll.y += y;
     }
+
+    /*
+    // TODO: fix minimal not registering mouse release if moved out of window while pressed
+    if (minimalEventMouseButtonReleased(e, MINIMAL_MOUSE_BUTTON_1, NULL, NULL))
+        MINIMAL_INFO("Released");
+    */
 
     switch (minimalEventKeyPressed(e))
     {

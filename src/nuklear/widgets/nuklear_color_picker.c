@@ -12,49 +12,59 @@ nk_color_picker_behavior(nk_flags *state,
     const struct nk_rect *hue_bar, const struct nk_rect *alpha_bar,
     struct nk_colorf *color, const struct nk_input *in)
 {
-    float hsva[4];
-    nk_bool value_changed = 0;
-    nk_bool hsv_changed = 0;
-
     NK_ASSERT(state);
     NK_ASSERT(matrix);
     NK_ASSERT(hue_bar);
     NK_ASSERT(color);
 
+    struct nk_vec2 pos = in->mouse_pos;
+
+    float hsva[4];
+    nk_bool value_changed = 0;
+    nk_bool hsv_changed = 0;
+
     /* color matrix */
     nk_colorf_hsva_fv(hsva, *color);
-    if (nk_button_behavior(state, *matrix, in, NK_BUTTON_REPEATER)) {
-        hsva[1] = NK_SATURATE((in->mouse.pos.x - matrix->x) / (matrix->w-1));
-        hsva[2] = 1.0f - NK_SATURATE((in->mouse.pos.y - matrix->y) / (matrix->h-1));
+    if (nk_button_behavior(state, *matrix, in, NK_BUTTON_REPEATER))
+    {
+        hsva[1] = NK_SATURATE((pos.x - matrix->x) / (matrix->w-1));
+        hsva[2] = 1.0f - NK_SATURATE((pos.y - matrix->y) / (matrix->h-1));
         value_changed = hsv_changed = 1;
     }
+
     /* hue bar */
-    if (nk_button_behavior(state, *hue_bar, in, NK_BUTTON_REPEATER)) {
-        hsva[0] = NK_SATURATE((in->mouse.pos.y - hue_bar->y) / (hue_bar->h-1));
+    if (nk_button_behavior(state, *hue_bar, in, NK_BUTTON_REPEATER))
+    {
+        hsva[0] = NK_SATURATE((pos.y - hue_bar->y) / (hue_bar->h-1));
         value_changed = hsv_changed = 1;
     }
+
     /* alpha bar */
-    if (alpha_bar) {
-        if (nk_button_behavior(state, *alpha_bar, in, NK_BUTTON_REPEATER)) {
-            hsva[3] = 1.0f - NK_SATURATE((in->mouse.pos.y - alpha_bar->y) / (alpha_bar->h-1));
-            value_changed = 1;
-        }
+    if (alpha_bar && nk_button_behavior(state, *alpha_bar, in, NK_BUTTON_REPEATER))
+    {
+        hsva[3] = 1.0f - NK_SATURATE((pos.y - alpha_bar->y) / (alpha_bar->h - 1));
+        value_changed = 1;
     }
+
     nk_widget_state_reset(state);
-    if (hsv_changed) {
+    if (hsv_changed)
+    {
         *color = nk_hsva_colorfv(hsva);
         *state = NK_WIDGET_STATE_ACTIVE;
     }
-    if (value_changed) {
+
+    if (value_changed)
+    {
         color->a = hsva[3];
         *state = NK_WIDGET_STATE_ACTIVE;
     }
+
     /* set color picker widget state */
-    if (nk_input_is_mouse_hovering_rect(in, *bounds))
+    if (nk_input_mouse_hover(in, *bounds))
         *state = NK_WIDGET_STATE_HOVERED;
-    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(in, *bounds))
+    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(in, *bounds))
         *state |= NK_WIDGET_STATE_ENTERED;
-    else if (nk_input_is_mouse_prev_hovering_rect(in, *bounds))
+    else if (nk_input_mouse_prev_hover(in, *bounds))
         *state |= NK_WIDGET_STATE_LEFT;
     return value_changed;
 }

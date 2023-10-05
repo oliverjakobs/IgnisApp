@@ -14,75 +14,74 @@ NK_LIB float nk_scrollbar_behavior(nk_flags *state, struct nk_input *in,
 {
     nk_flags ws = 0;
 
-    float scroll_delta;
-
     nk_widget_state_reset(state);
     if (!in) return scroll_offset;
 
-    if (nk_input_is_mouse_hovering_rect(in, *scroll))
+    if (nk_input_mouse_hover(in, *scroll))
         *state = NK_WIDGET_STATE_HOVERED;
 
-    scroll_delta = (o == NK_VERTICAL) ? in->mouse.scroll_delta.y : in->mouse.scroll_delta.x;
 
     /* update cursor by mouse dragging */
-    if (nk_input_is_mouse_down(in, NK_BUTTON_LEFT) && nk_input_click_in_rect(in, NK_BUTTON_LEFT, *cursor))
+    if (nk_input_mouse_down(in, NK_BUTTON_LEFT) && nk_input_click_in_rect(in, NK_BUTTON_LEFT, *cursor))
     {
+        struct nk_vec2 delta = in->mouse_delta;
+
         *state = NK_WIDGET_STATE_ACTIVE;
         if (o == NK_VERTICAL)
         {
-            float pixel = in->mouse.delta.y;
-            float delta = (pixel / scroll->h) * target;
-            scroll_offset = NK_CLAMP(0, scroll_offset + delta, target - scroll->h);
+            float d = (delta.y / scroll->h) * target;
+            scroll_offset = NK_CLAMP(0, scroll_offset + d, target - scroll->h);
             float cursor_y = scroll->y + ((scroll_offset/target) * scroll->h);
-            in->mouse.clicked_pos[NK_BUTTON_LEFT].y = cursor_y + cursor->h/2.0f;
+            in->clicked_pos[NK_BUTTON_LEFT].y = cursor_y + cursor->h/2.0f;
         }
         else
         {
-            float pixel = in->mouse.delta.x;
-            float delta = (pixel / scroll->w) * target;
-            scroll_offset = NK_CLAMP(0, scroll_offset + delta, target - scroll->w);
+            float d = (delta.x / scroll->w) * target;
+            scroll_offset = NK_CLAMP(0, scroll_offset + d, target - scroll->w);
             float cursor_x = scroll->x + ((scroll_offset/target) * scroll->w);
-            in->mouse.clicked_pos[NK_BUTTON_LEFT].x = cursor_x + cursor->w/2.0f;
+            in->clicked_pos[NK_BUTTON_LEFT].x = cursor_x + cursor->w/2.0f;
         }
     }
     /* scroll page up by click on empty space or shortcut */
-    else if ((nk_input_is_key_pressed(in, NK_KEY_SCROLL_UP) && o == NK_VERTICAL && has_scrolling)||
+    else if ((nk_input_key_pressed(in, NK_KEY_SCROLL_UP) && o == NK_VERTICAL && has_scrolling)||
             nk_button_behavior(&ws, *empty0, in, NK_BUTTON_DEFAULT))
     {
-        if (o == NK_VERTICAL) scroll_offset = NK_MAX(0, scroll_offset - scroll->h);
-        else                  scroll_offset = NK_MAX(0, scroll_offset - scroll->w);
+        if (o == NK_VERTICAL) scroll_offset = scroll_offset - scroll->h;
+        else                  scroll_offset = scroll_offset - scroll->w;
     }
-    else if ((nk_input_is_key_pressed(in, NK_KEY_SCROLL_DOWN) && o == NK_VERTICAL && has_scrolling) ||
+    else if ((nk_input_key_pressed(in, NK_KEY_SCROLL_DOWN) && o == NK_VERTICAL && has_scrolling) ||
         nk_button_behavior(&ws, *empty1, in, NK_BUTTON_DEFAULT))
     {
         /* scroll page down by click on empty space or shortcut */
-        if (o == NK_VERTICAL) scroll_offset = NK_MIN(scroll_offset + scroll->h, target - scroll->h);
-        else                  scroll_offset = NK_MIN(scroll_offset + scroll->w, target - scroll->w);
+        if (o == NK_VERTICAL) scroll_offset = scroll_offset + scroll->h;
+        else                  scroll_offset = scroll_offset + scroll->w;
     }
     else if (has_scrolling)
     {
         /* update cursor by mouse scrolling */
-        if ((scroll_delta < 0 || (scroll_delta > 0)))
+        float scroll_delta = (o == NK_VERTICAL) ? in->scroll_delta.y : in->scroll_delta.x;
+        if (scroll_delta != 0.0f)
         {
-            scroll_offset = scroll_offset + scroll_step * (-scroll_delta);
-            if (o == NK_VERTICAL) scroll_offset = NK_CLAMP(0, scroll_offset, target - scroll->h);
-            else                  scroll_offset = NK_CLAMP(0, scroll_offset, target - scroll->w);
+            scroll_offset += scroll_step * (-scroll_delta);
         }
         /* update cursor to the beginning  */
-        else if (nk_input_is_key_pressed(in, NK_KEY_SCROLL_START))
+        else if (nk_input_key_pressed(in, NK_KEY_SCROLL_START))
         {
             if (o == NK_VERTICAL) scroll_offset = 0;
         }
         /* update cursor to the end */
-        else if (nk_input_is_key_pressed(in, NK_KEY_SCROLL_END))
+        else if (nk_input_key_pressed(in, NK_KEY_SCROLL_END))
         {
             if (o == NK_VERTICAL) scroll_offset = target - scroll->h;
         }
     }
 
-    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(in, *scroll))
+    if (o == NK_VERTICAL) scroll_offset = NK_CLAMP(0, scroll_offset, target - scroll->h);
+    else                  scroll_offset = NK_CLAMP(0, scroll_offset, target - scroll->w);
+
+    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(in, *scroll))
         *state |= NK_WIDGET_STATE_ENTERED;
-    else if (nk_input_is_mouse_prev_hovering_rect(in, *scroll))
+    else if (nk_input_mouse_prev_hover(in, *scroll))
         *state |= NK_WIDGET_STATE_LEFT;
 
     return scroll_offset;

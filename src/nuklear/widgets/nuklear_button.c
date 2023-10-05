@@ -77,23 +77,23 @@ NK_LIB nk_bool nk_button_behavior(nk_flags *state, struct nk_rect r, const struc
     nk_widget_state_reset(state);
     if (!i) return 0;
 
-    if (nk_input_is_mouse_hovering_rect(i, r))
+    if (nk_input_mouse_hover(i, r))
     {
         *state = NK_WIDGET_STATE_HOVERED;
 
-        if (nk_input_is_mouse_down(i, NK_BUTTON_LEFT))
+        if (nk_input_mouse_down(i, NK_BUTTON_LEFT))
             *state = NK_WIDGET_STATE_ACTIVE;
 
         if (nk_input_click_in_rect(i, NK_BUTTON_LEFT, r))
         {
-            if (behavior == NK_BUTTON_DEFAULT)  ret = nk_input_is_mouse_released(i, NK_BUTTON_LEFT);
-            else                                ret = nk_input_is_mouse_down(i, NK_BUTTON_LEFT);
+            if (behavior == NK_BUTTON_DEFAULT)  ret = nk_input_mouse_released(i, NK_BUTTON_LEFT);
+            else                                ret = nk_input_mouse_down(i, NK_BUTTON_LEFT);
         }
     }
 
-    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(i, r))
+    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(i, r))
         *state |= NK_WIDGET_STATE_ENTERED;
-    else if (nk_input_is_mouse_prev_hovering_rect(i, r))
+    else if (nk_input_mouse_prev_hover(i, r))
         *state |= NK_WIDGET_STATE_LEFT;
 
     return ret;

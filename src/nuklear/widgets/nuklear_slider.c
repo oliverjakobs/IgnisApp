@@ -15,10 +15,12 @@ nk_slider_behavior(nk_flags *state, struct nk_rect *logical_cursor,
     /* check if visual cursor is being dragged */
     nk_widget_state_reset(state);
 
-    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, *visual_cursor) && nk_input_is_mouse_down(in, NK_BUTTON_LEFT))
+    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, *visual_cursor) && nk_input_mouse_down(in, NK_BUTTON_LEFT))
     {
+        struct nk_vec2 pos = in->mouse_pos;
+
         float ratio = 0;
-        const float d = in->mouse.pos.x - (visual_cursor->x+visual_cursor->w*0.5f);
+        const float d = pos.x - (visual_cursor->x+visual_cursor->w*0.5f);
         const float pxstep = bounds.w / slider_steps;
 
         /* only update value if the next slider step is reached */
@@ -30,16 +32,16 @@ nk_slider_behavior(nk_flags *state, struct nk_rect *logical_cursor,
             slider_value = NK_CLAMP(slider_min, slider_value, slider_max);
             ratio = (slider_value - slider_min)/slider_step;
             logical_cursor->x = bounds.x + (logical_cursor->w * ratio);
-            in->mouse.clicked_pos[NK_BUTTON_LEFT].x = logical_cursor->x;
+            in->clicked_pos[NK_BUTTON_LEFT].x = logical_cursor->x;
         }
     }
 
     /* slider widget state */
-    if (nk_input_is_mouse_hovering_rect(in, bounds))
+    if (nk_input_mouse_hover(in, bounds))
         *state = NK_WIDGET_STATE_HOVERED;
-    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(in, bounds))
+    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(in, bounds))
         *state |= NK_WIDGET_STATE_ENTERED;
-    else if (nk_input_is_mouse_prev_hovering_rect(in, bounds))
+    else if (nk_input_mouse_prev_hover(in, bounds))
         *state |= NK_WIDGET_STATE_LEFT;
     return slider_value;
 }

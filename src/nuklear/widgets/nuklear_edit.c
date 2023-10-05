@@ -185,8 +185,8 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
 
     /* update edit state */
     prev_state = (char)edit->active;
-    is_hovered = (char)nk_input_is_mouse_hovering_rect(in, bounds);
-    if (nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT)) {
+    is_hovered = (char)nk_input_mouse_hover(in, bounds);
+    if (nk_input_mouse_pressed(in, NK_BUTTON_LEFT)) {
         edit->active = is_hovered;
     }
 
@@ -217,25 +217,26 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
     if (edit->active && in)
     {
         int shift_mod = 0;// in->keyboard.keys[NK_KEY_SHIFT].down;
-        const float mouse_x = (in->mouse.pos.x - area.x) + edit->scrollbar.x;
-        const float mouse_y = (in->mouse.pos.y - area.y) + edit->scrollbar.y;
+
+        struct nk_vec2 mouse = in->mouse_pos;
+        mouse.x -= area.x + edit->scrollbar.x;
+        mouse.y -= area.y + edit->scrollbar.y;
 
         /* mouse click handler */
-        is_hovered = (char)nk_input_is_mouse_hovering_rect(in, area);
+        is_hovered = (char)nk_input_mouse_hover(in, area);
         if (select_all)
         {
             nk_textedit_select_all(edit);
         }
-        else if (is_hovered && nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT)) {
-            nk_textedit_click(edit, mouse_x, mouse_y, font, row_height);
+        else if (is_hovered && nk_input_mouse_pressed(in, NK_BUTTON_LEFT)) {
+            nk_textedit_click(edit, mouse.x, mouse.y, font, row_height);
         }
-        else if (is_hovered && nk_input_is_mouse_down(in, NK_BUTTON_LEFT) &&
-            (in->mouse.delta.x != 0.0f || in->mouse.delta.y != 0.0f))
+        else if (is_hovered && nk_input_mouse_down(in, NK_BUTTON_LEFT) && nk_input_mouse_moved(in))
         {
-            nk_textedit_drag(edit, mouse_x, mouse_y, font, row_height);
+            nk_textedit_drag(edit, mouse.x, mouse.y, font, row_height);
             cursor_follow = nk_true;
         }
-        else if (is_hovered && nk_input_is_mouse_pressed(in, NK_BUTTON_RIGHT))
+        else if (is_hovered && nk_input_mouse_pressed(in, NK_BUTTON_RIGHT))
         {
             nk_textedit_key(edit, NK_KEY_TEXT_WORD_LEFT, nk_false, font, row_height);
             nk_textedit_key(edit, NK_KEY_TEXT_WORD_RIGHT, nk_true, font, row_height);
@@ -248,26 +249,26 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
             for (i = 0; i < NK_KEY_MAX; ++i)
             {
                 if (i == NK_KEY_ENTER || i == NK_KEY_TAB) continue; /* special case */
-                if (nk_input_is_key_pressed(in, (enum nk_keys)i)) {
+                if (nk_input_key_pressed(in, (enum nk_keys)i)) {
                     nk_textedit_key(edit, (enum nk_keys)i, shift_mod, font, row_height);
                     cursor_follow = nk_true;
                 }
             }
 
             if (old_mode != edit->mode)
-                in->keyboard.text_len = 0;
+                in->text_len = 0;
         }
 
         /* text input */
         edit->filter = filter;
-        if (in->keyboard.text_len) {
-            nk_textedit_text(edit, in->keyboard.text, in->keyboard.text_len);
+        if (in->text_len) {
+            nk_textedit_text(edit, in->text, in->text_len);
             cursor_follow = nk_true;
-            in->keyboard.text_len = 0;
+            in->text_len = 0;
         }
 
         /* enter key handler */
-        if (nk_input_is_key_pressed(in, NK_KEY_ENTER)) {
+        if (nk_input_key_pressed(in, NK_KEY_ENTER)) {
             cursor_follow = nk_true;
             if (flags & NK_EDIT_CTRL_ENTER_NEWLINE && shift_mod)
                 nk_textedit_text(edit, "\n", 1);
@@ -277,8 +278,8 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         }
 
         /* cut & copy handler */
-        {int copy= nk_input_is_key_pressed(in, NK_KEY_COPY);
-        int cut = nk_input_is_key_pressed(in, NK_KEY_CUT);
+        {int copy= nk_input_key_pressed(in, NK_KEY_COPY);
+        int cut = nk_input_key_pressed(in, NK_KEY_CUT);
         if ((copy || cut) && (flags & NK_EDIT_CLIPBOARD))
         {
             int glyph_len;
@@ -299,14 +300,14 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         }}
 
         /* paste handler */
-        {int paste = nk_input_is_key_pressed(in, NK_KEY_PASTE);
+        {int paste = nk_input_key_pressed(in, NK_KEY_PASTE);
         if (paste && (flags & NK_EDIT_CLIPBOARD) && edit->clip.paste) {
             edit->clip.paste(edit->clip.userdata, edit);
             cursor_follow = nk_true;
         }}
 
         /* tab handler */
-        {int tab = nk_input_is_key_pressed(in, NK_KEY_TAB);
+        {int tab = nk_input_key_pressed(in, NK_KEY_TAB);
         if (tab && (flags & NK_EDIT_ALLOW_TAB)) {
             nk_textedit_text(edit, "    ", 4);
             cursor_follow = nk_true;
@@ -322,30 +323,30 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         *state |= NK_WIDGET_STATE_HOVERED;
 
     /* DRAW EDIT */
-    {const char *text = nk_str_get_const(&edit->string);
+    const char *text = nk_str_get_const(&edit->string);
     int len = nk_str_len_char(&edit->string);
 
-    {/* select background colors/images  */
-    const struct nk_style_item *background;
-    if (*state & NK_WIDGET_STATE_ACTIVED)
-        background = &style->active;
-    else if (*state & NK_WIDGET_STATE_HOVER)
-        background = &style->hover;
-    else background = &style->normal;
+    {
+        /* select background colors/images  */
+        const struct nk_style_item *background = &style->normal;
+        if (*state & NK_WIDGET_STATE_ACTIVED)       background = &style->active;
+        else if (*state & NK_WIDGET_STATE_HOVER)    background = &style->hover;
 
-    /* draw background frame */
-    switch(background->type) {
-        case NK_STYLE_ITEM_IMAGE:
-            nk_draw_image(out, bounds, &background->data.image, nk_white);
-            break;
-        case NK_STYLE_ITEM_NINE_SLICE:
-            nk_draw_nine_slice(out, bounds, &background->data.slice, nk_white);
-            break;
-        case NK_STYLE_ITEM_COLOR:
-            nk_fill_rect(out, bounds, style->rounding, background->data.color);
-            nk_stroke_rect(out, bounds, style->rounding, style->border, style->border_color);
-            break;
-    }}
+        /* draw background frame */
+        switch(background->type)
+        {
+            case NK_STYLE_ITEM_IMAGE:
+                nk_draw_image(out, bounds, &background->data.image, nk_white);
+                break;
+            case NK_STYLE_ITEM_NINE_SLICE:
+                nk_draw_nine_slice(out, bounds, &background->data.slice, nk_white);
+                break;
+            case NK_STYLE_ITEM_COLOR:
+                nk_fill_rect(out, bounds, style->rounding, background->data.color);
+                nk_stroke_rect(out, bounds, style->rounding, style->border, style->border_color);
+                break;
+        }
+    }
 
 
     area.w = NK_MAX(0, area.w - style->cursor_size);
@@ -663,7 +664,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
             area.y - edit->scrollbar.y, 0, begin, l, row_height, font,
             background_color, text_color, nk_false);
     }
-    nk_push_scissor(out, old_clip);}
+    nk_push_scissor(out, old_clip);
     return ret;
 }
 NK_API void

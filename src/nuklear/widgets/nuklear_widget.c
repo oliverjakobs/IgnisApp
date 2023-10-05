@@ -85,7 +85,7 @@ nk_widget_is_hovered(struct nk_context *ctx)
     nk_unify(&v, &c, bounds.x, bounds.y, bounds.x + bounds.w, bounds.y + bounds.h);
     if (!NK_INTERSECT(c.x, c.y, c.w, c.h, bounds.x, bounds.y, bounds.w, bounds.h))
         return 0;
-    return nk_input_is_mouse_hovering_rect(&ctx->input, bounds);
+    return nk_input_mouse_hover(&ctx->input, bounds);
 }
 NK_API nk_bool
 nk_widget_is_mouse_clicked(struct nk_context *ctx, enum nk_buttons btn)
@@ -130,7 +130,7 @@ nk_widget_has_mouse_click_down(struct nk_context *ctx, enum nk_buttons btn, nk_b
     if (!NK_INTERSECT(c.x, c.y, c.w, c.h, bounds.x, bounds.y, bounds.w, bounds.h))
         return 0;
 
-    return nk_input_click_in_rect(&ctx->input, btn, bounds) && (nk_input_is_mouse_down(&ctx->input, btn) == down);
+    return nk_input_click_in_rect(&ctx->input, btn, bounds) && (nk_input_mouse_down(&ctx->input, btn) == down);
 }
 NK_API enum nk_widget_layout_states
 nk_widget(struct nk_rect *bounds, const struct nk_context *ctx)
@@ -176,8 +176,12 @@ nk_widget(struct nk_rect *bounds, const struct nk_context *ctx)
     nk_unify(&v, &c, bounds->x, bounds->y, bounds->x + bounds->w, bounds->y + bounds->h);
     if (!NK_INTERSECT(c.x, c.y, c.w, c.h, bounds->x, bounds->y, bounds->w, bounds->h))
         return NK_WIDGET_INVALID;
-    if (!NK_INBOX(in->mouse.pos.x, in->mouse.pos.y, v.x, v.y, v.w, v.h))
+
+    struct nk_vec2 pos = in->mouse_pos;
+
+    if (!NK_INBOX(pos.x, pos.y, v.x, v.y, v.w, v.h))
         return NK_WIDGET_ROM;
+
     return NK_WIDGET_VALID;
 }
 NK_API enum nk_widget_layout_states

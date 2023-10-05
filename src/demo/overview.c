@@ -782,7 +782,7 @@ int overview(struct nk_context* ctx)
             nk_layout_row_static(ctx, 30, 150, 1);
             bounds = nk_widget_bounds(ctx);
             nk_label(ctx, "Hover me for tooltip", NK_TEXT_LEFT);
-            if (nk_input_is_mouse_hovering_rect(in, bounds))
+            if (nk_input_mouse_hover(in, bounds))
                 nk_tooltip(ctx, "This is a tooltip");
 
             nk_tree_pop(ctx);
@@ -1122,6 +1122,7 @@ int overview(struct nk_context* ctx)
                 nk_label(ctx, "Use slider and spinner to change tile size", NK_TEXT_LEFT);
                 nk_label(ctx, "Drag the space between tiles to change tile ratio", NK_TEXT_LEFT);
 
+                struct nk_vec2 delta = in->mouse_delta;
                 if (nk_tree_push(ctx, NK_TREE_NODE, "Vertical", NK_MINIMIZED))
                 {
                     static float a = 100, b = 100, c = 100;
@@ -1163,12 +1164,12 @@ int overview(struct nk_context* ctx)
                     /* scaler */
                     bounds = nk_widget_bounds(ctx);
                     nk_spacing(ctx, 1);
-                    if ((nk_input_is_mouse_hovering_rect(in, bounds) ||
-                        nk_input_is_mouse_prev_hovering_rect(in, bounds)) &&
-                        nk_input_is_mouse_down(in, NK_BUTTON_LEFT))
+                    if ((nk_input_mouse_hover(in, bounds) ||
+                        nk_input_mouse_prev_hover(in, bounds)) &&
+                        nk_input_mouse_down(in, NK_BUTTON_LEFT))
                     {
-                        a = row_layout[0] + in->mouse.delta.x;
-                        b = row_layout[2] - in->mouse.delta.x;
+                        a = row_layout[0] + delta.x;
+                        b = row_layout[2] - delta.x;
                     }
 
                     /* middle space */
@@ -1186,12 +1187,12 @@ int overview(struct nk_context* ctx)
                     /* scaler */
                     bounds = nk_widget_bounds(ctx);
                     nk_spacing(ctx, 1);
-                    if ((nk_input_is_mouse_hovering_rect(in, bounds) ||
-                        nk_input_is_mouse_prev_hovering_rect(in, bounds)) &&
-                        nk_input_is_mouse_down(in, NK_BUTTON_LEFT))
+                    if ((nk_input_mouse_hover(in, bounds) ||
+                        nk_input_mouse_prev_hover(in, bounds)) &&
+                        nk_input_mouse_down(in, NK_BUTTON_LEFT))
                     {
-                        b = (row_layout[2] + in->mouse.delta.x);
-                        c = (row_layout[4] - in->mouse.delta.x);
+                        b = (row_layout[2] + delta.x);
+                        c = (row_layout[4] - delta.x);
                     }
 
                     /* right space */
@@ -1242,12 +1243,12 @@ int overview(struct nk_context* ctx)
                     nk_layout_row_dynamic(ctx, 8, 1);
                     bounds = nk_widget_bounds(ctx);
                     nk_spacing(ctx, 1);
-                    if ((nk_input_is_mouse_hovering_rect(in, bounds) ||
-                        nk_input_is_mouse_prev_hovering_rect(in, bounds)) &&
-                        nk_input_is_mouse_down(in, NK_BUTTON_LEFT))
+                    if ((nk_input_mouse_hover(in, bounds) ||
+                        nk_input_mouse_prev_hover(in, bounds)) &&
+                        nk_input_mouse_down(in, NK_BUTTON_LEFT))
                     {
-                        a = a + in->mouse.delta.y;
-                        b = b - in->mouse.delta.y;
+                        a = a + delta.y;
+                        b = b - delta.y;
                     }
 
                     /* middle space */
@@ -1267,12 +1268,12 @@ int overview(struct nk_context* ctx)
                         /* scaler */
                         nk_layout_row_dynamic(ctx, 8, 1);
                         bounds = nk_widget_bounds(ctx);
-                        if ((nk_input_is_mouse_hovering_rect(in, bounds) ||
-                            nk_input_is_mouse_prev_hovering_rect(in, bounds)) &&
-                            nk_input_is_mouse_down(in, NK_BUTTON_LEFT))
+                        if ((nk_input_mouse_hover(in, bounds) ||
+                            nk_input_mouse_prev_hover(in, bounds)) &&
+                            nk_input_mouse_down(in, NK_BUTTON_LEFT))
                         {
-                            b = b + in->mouse.delta.y;
-                            c = c - in->mouse.delta.y;
+                            b = b + delta.y;
+                            c = c - delta.y;
                         }
                     }
 

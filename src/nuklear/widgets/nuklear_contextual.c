@@ -44,8 +44,8 @@ nk_contextual_begin(struct nk_context *ctx, nk_flags flags, struct nk_vec2 size,
     /* calculate contextual position on click */
     win->popup.active_con = win->popup.con_count;
     if (is_clicked) {
-        body.x = ctx->input.mouse.pos.x;
-        body.y = ctx->input.mouse.pos.y;
+        body.x = ctx->input.mouse_pos.x;
+        body.y = ctx->input.mouse_pos.y;
     } else {
         body.x = popup->bounds.x;
         body.y = popup->bounds.y;
@@ -207,8 +207,8 @@ nk_contextual_end(struct nk_context *ctx)
             body.y = (panel->at_y + panel->footer_height + panel->border + padding.y + panel->row.height);
             body.h = (panel->bounds.y + panel->bounds.h) - body.y;
         }
-        {int pressed = nk_input_is_mouse_pressed(&ctx->input, NK_BUTTON_LEFT);
-        int in_body = nk_input_is_mouse_hovering_rect(&ctx->input, body);
+        {int pressed = nk_input_mouse_pressed(&ctx->input, NK_BUTTON_LEFT);
+        int in_body = nk_input_mouse_hover(&ctx->input, body);
         if (pressed && in_body)
             popup->flags |= NK_WINDOW_HIDDEN;
         }

@@ -13,21 +13,23 @@ nk_progress_behavior(nk_flags *state, struct nk_input *in,
     nk_widget_state_reset(state);
     if (!in || !modifiable) return value;
 
-    if (nk_input_is_mouse_hovering_rect(in, r))
+    if (nk_input_mouse_hover(in, r))
         *state = NK_WIDGET_STATE_HOVERED;
 
-    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, cursor) && nk_input_is_mouse_down(in, NK_BUTTON_LEFT))
+    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, cursor) && nk_input_mouse_down(in, NK_BUTTON_LEFT))
     {
-        float ratio = NK_MAX(0, (float)(in->mouse.pos.x - cursor.x)) / (float)cursor.w;
+        struct nk_vec2 pos = in->mouse_pos;
+
+        float ratio = NK_MAX(0, (float)(pos.x - cursor.x)) / (float)cursor.w;
         value = (nk_size)NK_CLAMP(0, (float)max * ratio, (float)max);
-        in->mouse.clicked_pos[NK_BUTTON_LEFT].x = cursor.x + cursor.w / 2.0f;
+        in->clicked_pos[NK_BUTTON_LEFT].x = cursor.x + cursor.w / 2.0f;
         *state |= NK_WIDGET_STATE_ACTIVE;
     }
 
     /* set progressbar widget state */
-    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(in, r))
+    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(in, r))
         *state |= NK_WIDGET_STATE_ENTERED;
-    else if (nk_input_is_mouse_prev_hovering_rect(in, r))
+    else if (nk_input_mouse_prev_hover(in, r))
         *state |= NK_WIDGET_STATE_LEFT;
 
     return value;

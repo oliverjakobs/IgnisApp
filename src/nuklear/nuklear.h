@@ -509,142 +509,7 @@ enum nk_buttons {
     NK_BUTTON_DOUBLE,
     NK_BUTTON_MAX
 };
-/*/// #### nk_input_begin
-/// Begins the input mirroring process by resetting text, scroll
-/// mouse, previous mouse position and movement as well as key state transitions,
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_input_begin(struct nk_context*);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-*/
-NK_API void nk_input_begin(struct nk_context*);
-/*/// #### nk_input_motion
-/// Mirrors current mouse position to nuklear
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_input_motion(struct nk_context *ctx, int x, int y);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-/// __x__       | Must hold an integer describing the current mouse cursor x-position
-/// __y__       | Must hold an integer describing the current mouse cursor y-position
-*/
-NK_API void nk_input_motion(struct nk_context*, int x, int y);
-/*/// #### nk_input_key
-/// Mirrors the state of a specific key to nuklear
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_input_key(struct nk_context*, enum nk_keys key, nk_bool down);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-/// __key__     | Must be any value specified in enum `nk_keys` that needs to be mirrored
-/// __down__    | Must be 0 for key is up and 1 for key is down
-*/
-//NK_API void nk_input_key(struct nk_context*, enum nk_keys key, nk_bool down);
-/*/// #### nk_input_button
-/// Mirrors the state of a specific mouse button to nuklear
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_input_button(struct nk_context *ctx, enum nk_buttons btn, int x, int y, nk_bool down);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-/// __btn__     | Must be any value specified in enum `nk_buttons` that needs to be mirrored
-/// __x__       | Must contain an integer describing mouse cursor x-position on click up/down
-/// __y__       | Must contain an integer describing mouse cursor y-position on click up/down
-/// __down__    | Must be 0 for key is up and 1 for key is down
-*/
-NK_API void nk_input_button(struct nk_context* ctx, enum nk_buttons id, nk_bool down);
-/*/// #### nk_input_scroll
-/// Copies the last mouse scroll value to nuklear. Is generally
-/// a scroll value. So does not have to come from mouse and could also originate
-/// TODO finish this sentence
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_input_scroll(struct nk_context *ctx, struct nk_vec2 val);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-/// __val__     | vector with both X- as well as Y-scroll value
-*/
-NK_API void nk_input_scroll(struct nk_context*, struct nk_vec2 val);
-/*/// #### nk_input_char
-/// Copies a single ASCII character into an internal text buffer
-/// This is basically a helper function to quickly push ASCII characters into
-/// nuklear.
-///
-/// !!! Note
-///     Stores up to NK_INPUT_MAX bytes between `nk_input_begin` and `nk_input_end`.
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_input_char(struct nk_context *ctx, char c);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-/// __c__       | Must be a single ASCII character preferable one that can be printed
-*/
-NK_API void nk_input_char(struct nk_context*, char);
-/*/// #### nk_input_glyph
-/// Converts an encoded unicode rune into UTF-8 and copies the result into an
-/// internal text buffer.
-///
-/// !!! Note
-///     Stores up to NK_INPUT_MAX bytes between `nk_input_begin` and `nk_input_end`.
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_input_glyph(struct nk_context *ctx, const nk_glyph g);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-/// __g__       | UTF-32 unicode codepoint
-*/
-NK_API void nk_input_glyph(struct nk_context*, const nk_glyph);
-/*/// #### nk_input_unicode
-/// Converts a unicode rune into UTF-8 and copies the result
-/// into an internal text buffer.
-/// !!! Note
-///     Stores up to NK_INPUT_MAX bytes between `nk_input_begin` and `nk_input_end`.
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_input_unicode(struct nk_context*, nk_rune rune);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-/// __rune__    | UTF-32 unicode codepoint
-*/
-NK_API void nk_input_unicode(struct nk_context*, nk_rune);
-/*/// #### nk_input_end
-/// End the input mirroring process by resetting mouse grabbing
-/// state to ensure the mouse cursor is not grabbed indefinitely.
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_input_end(struct nk_context *ctx);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-*/
-NK_API void nk_input_end(struct nk_context*);
+
 /* =============================================================================
  *
  *                                  DRAWING
@@ -4229,36 +4094,39 @@ NK_API void nk_push_custom(struct nk_command_buffer*, struct nk_rect, nk_command
  *                          INPUT
  *
  * ===============================================================*/
-struct nk_mouse {
-    struct nk_vec2 clicked_pos[NK_BUTTON_MAX];
-    struct nk_vec2 pos;
-    struct nk_vec2 prev;
-    struct nk_vec2 delta;
-    struct nk_vec2 scroll_delta;
-};
+struct nk_input
+{
+    void* handle;
 
-struct nk_keyboard {
     char text[NK_INPUT_MAX];
     int text_len;
+
+    struct nk_vec2 scroll_delta;
+
+    /* mouse state */
+    struct nk_vec2 clicked_pos[NK_BUTTON_MAX];
+    struct nk_vec2 mouse_pos;
+    struct nk_vec2 mouse_prev;
+    struct nk_vec2 mouse_delta;
 };
 
-struct nk_input {
-    struct nk_keyboard keyboard;
-    struct nk_mouse mouse;
-};
+void nk_input_update_mouse(struct nk_input* i, struct nk_vec2 pos, struct nk_vec2 scroll);
+void nk_input_update_text(struct nk_input* i, const char* text, int len);
+void nk_input_update_text_unicode(struct nk_input* i, const unsigned int* text, int len);
 
 NK_API nk_bool nk_input_click_in_rect(const struct nk_input* i, enum nk_buttons id, struct nk_rect r);
-NK_API nk_bool nk_input_is_mouse_prev_hovering_rect(const struct nk_input*, struct nk_rect);
-NK_API nk_bool nk_input_is_mouse_hovering_rect(const struct nk_input*, struct nk_rect);
-NK_API nk_bool nk_input_mouse_clicked(const struct nk_input*, enum nk_buttons, struct nk_rect);
+NK_API nk_bool nk_input_mouse_prev_hover(const struct nk_input* i, struct nk_rect r);
+NK_API nk_bool nk_input_mouse_hover(const struct nk_input* i, struct nk_rect r);
+NK_API nk_bool nk_input_mouse_clicked(const struct nk_input* i, enum nk_buttons id, struct nk_rect r);
 
+NK_API nk_bool nk_input_mouse_moved(const struct nk_input* i);
 
-NK_API nk_bool nk_input_is_mouse_pressed(const struct nk_input* i, enum nk_buttons id);
-NK_API nk_bool nk_input_is_mouse_released(const struct nk_input* i, enum nk_buttons id);
-NK_API nk_bool nk_input_is_mouse_down(const struct nk_input* i, enum nk_buttons id);
-NK_API nk_bool nk_input_is_key_pressed(const struct nk_input* i, enum nk_keys key);
-NK_API nk_bool nk_input_is_key_released(const struct nk_input* i, enum nk_keys key);
-NK_API nk_bool nk_input_is_key_down(const struct nk_input* i, enum nk_keys key);
+NK_API nk_bool nk_input_mouse_pressed(const struct nk_input* i, enum nk_buttons id);
+NK_API nk_bool nk_input_mouse_released(const struct nk_input* i, enum nk_buttons id);
+NK_API nk_bool nk_input_mouse_down(const struct nk_input* i, enum nk_buttons id);
+NK_API nk_bool nk_input_key_pressed(const struct nk_input* i, enum nk_keys key);
+NK_API nk_bool nk_input_key_released(const struct nk_input* i, enum nk_keys key);
+NK_API nk_bool nk_input_key_down(const struct nk_input* i, enum nk_keys key);
 
 /* ===============================================================
  *

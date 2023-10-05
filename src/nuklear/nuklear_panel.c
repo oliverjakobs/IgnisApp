@@ -125,12 +125,14 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
         }
 
         /* window movement by dragging */
-        if (nk_input_is_mouse_down(in, NK_BUTTON_LEFT) && nk_input_click_in_rect(in, NK_BUTTON_LEFT, header))
+        if (nk_input_mouse_down(in, NK_BUTTON_LEFT) && nk_input_click_in_rect(in, NK_BUTTON_LEFT, header))
         {
-            win->bounds.x = win->bounds.x + in->mouse.delta.x;
-            win->bounds.y = win->bounds.y + in->mouse.delta.y;
-            in->mouse.clicked_pos[NK_BUTTON_LEFT].x += in->mouse.delta.x;
-            in->mouse.clicked_pos[NK_BUTTON_LEFT].y += in->mouse.delta.y;
+            struct nk_vec2 delta = in->mouse_delta;
+
+            win->bounds.x = win->bounds.x + delta.x;
+            win->bounds.y = win->bounds.y + delta.y;
+            in->clicked_pos[NK_BUTTON_LEFT].x += delta.x;
+            in->clicked_pos[NK_BUTTON_LEFT].y += delta.y;
             ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_MOVE];
         }
     }
@@ -191,7 +193,7 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
         if (ctx->active == win) {
             background = &style->window.header.active;
             text.text = style->window.header.label_active;
-        } else if (nk_input_is_mouse_hovering_rect(&ctx->input, header)) {
+        } else if (nk_input_mouse_hover(&ctx->input, header)) {
             background = &style->window.header.hover;
             text.text = style->window.header.label_hover;
         } else {
@@ -409,9 +411,10 @@ nk_panel_end(struct nk_context *ctx)
 
             /* only allow scrolling if parent window is active */
             scroll_has_scrolling = 0;
-            if ((root_window == ctx->active) && layout->has_scrolling) {
+            if ((root_window == ctx->active) && layout->has_scrolling)
+            {
                 /* and panel is being hovered and inside clip rect*/
-                if (nk_input_is_mouse_hovering_rect(in, layout->bounds) &&
+                if (nk_input_mouse_hover(in, layout->bounds) &&
                     NK_INTERSECT(layout->bounds.x, layout->bounds.y, layout->bounds.w, layout->bounds.h,
                         root_panel->clip.x, root_panel->clip.y, root_panel->clip.w, root_panel->clip.h))
                 {
@@ -425,13 +428,18 @@ nk_panel_end(struct nk_context *ctx)
                     scroll_has_scrolling = nk_true;
                 }
             }
-        } else if (!nk_panel_is_sub(layout->type)) {
+        }
+        else if (!nk_panel_is_sub(layout->type))
+        {
             /* window mouse wheel scrolling */
             scroll_has_scrolling = (window == ctx->active) && layout->has_scrolling;
-            if (in && (in->mouse.scroll_delta.y > 0 || in->mouse.scroll_delta.x > 0) && scroll_has_scrolling)
-                window->scrolled = nk_true;
-            else window->scrolled = nk_false;
-        } else scroll_has_scrolling = nk_false;
+            window->scrolled = (in && (in->scroll_delta.y > 0 || in->scroll_delta.x > 0) && scroll_has_scrolling);
+
+        }
+        else
+        {
+            scroll_has_scrolling = nk_false;
+        }
 
         {
             /* vertical scrollbar */
@@ -450,7 +458,7 @@ nk_panel_end(struct nk_context *ctx)
                 &ctx->style.scrollv, in, style->font);
             *layout->offset_y = (nk_uint)scroll_offset;
             if (in && scroll_has_scrolling)
-                in->mouse.scroll_delta.y = 0;
+                in->scroll_delta.y = 0;
         }
         {
             /* horizontal scrollbar */
@@ -472,14 +480,18 @@ nk_panel_end(struct nk_context *ctx)
     }
 
     /* hide scroll if no user input */
-    if (window->flags & NK_WINDOW_SCROLL_AUTO_HIDE) {
-        int has_input = ctx->input.mouse.delta.x != 0 || ctx->input.mouse.delta.y != 0 || ctx->input.mouse.scroll_delta.y != 0;
+    if (window->flags & NK_WINDOW_SCROLL_AUTO_HIDE)
+    {
+        int has_input = nk_input_mouse_moved(&ctx->input) || ctx->input.scroll_delta.y != 0;
         int is_window_hovered = nk_window_is_hovered(ctx);
         int any_item_active = (ctx->last_widget_state & NK_WIDGET_STATE_MODIFIED);
+
         if ((!has_input && is_window_hovered) || (!is_window_hovered && !any_item_active))
             window->scrollbar_hiding_timer += ctx->delta_time_seconds;
-        else window->scrollbar_hiding_timer = 0;
-    } else window->scrollbar_hiding_timer = 0;
+        else
+            window->scrollbar_hiding_timer = 0;
+    } 
+    else window->scrollbar_hiding_timer = 0;
 
     /* window border */
     if (layout->flags & NK_WINDOW_BORDER)
@@ -529,38 +541,40 @@ nk_panel_end(struct nk_context *ctx)
         {
             struct nk_vec2 window_size = style->window.min_size;
 
-            if (nk_input_is_mouse_down(in, NK_BUTTON_LEFT) && nk_input_click_in_rect(in, NK_BUTTON_LEFT, scaler))
+            if (nk_input_mouse_down(in, NK_BUTTON_LEFT) && nk_input_click_in_rect(in, NK_BUTTON_LEFT, scaler))
             {
-                float delta_x = in->mouse.delta.x;
+                struct nk_vec2 mouse = in->mouse_pos;
+                struct nk_vec2 delta = in->mouse_delta;
+
                 if (layout->flags & NK_WINDOW_SCALE_LEFT)
                 {
-                    delta_x = -delta_x;
-                    window->bounds.x += in->mouse.delta.x;
+                    delta.x = -delta.x;
+                    window->bounds.x += delta.x;
                 }
                 /* dragging in x-direction  */
-                if (window->bounds.w + delta_x >= window_size.x)
+                if (window->bounds.w + delta.x >= window_size.x)
                 {
-                    if ((delta_x < 0) || (delta_x > 0 && in->mouse.pos.x >= scaler.x))
+                    if ((delta.x < 0) || (delta.x > 0 && mouse.x >= scaler.x))
                     {
-                        window->bounds.w = window->bounds.w + delta_x;
-                        scaler.x += in->mouse.delta.x;
+                        window->bounds.w = window->bounds.w + delta.x;
+                        scaler.x += delta.x;
                     }
                 }
                 /* dragging in y-direction (only possible if static window) */
                 if (!(layout->flags & NK_WINDOW_DYNAMIC))
                 {
-                    if (window_size.y < window->bounds.h + in->mouse.delta.y)
+                    if (window_size.y < window->bounds.h + delta.y)
                     {
-                        if ((in->mouse.delta.y < 0) || (in->mouse.delta.y > 0 && in->mouse.pos.y >= scaler.y))
+                        if ((delta.y < 0) || (delta.y > 0 && mouse.y >= scaler.y))
                         {
-                            window->bounds.h = window->bounds.h + in->mouse.delta.y;
-                            scaler.y += in->mouse.delta.y;
+                            window->bounds.h = window->bounds.h + delta.y;
+                            scaler.y += delta.y;
                         }
                     }
                 }
                 ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_RESIZE_TOP_RIGHT_DOWN_LEFT];
-                in->mouse.clicked_pos[NK_BUTTON_LEFT].x = scaler.x + scaler.w/2.0f;
-                in->mouse.clicked_pos[NK_BUTTON_LEFT].y = scaler.y + scaler.h/2.0f;
+                in->clicked_pos[NK_BUTTON_LEFT].x = scaler.x + scaler.w/2.0f;
+                in->clicked_pos[NK_BUTTON_LEFT].y = scaler.y + scaler.h/2.0f;
             }
         }
     }

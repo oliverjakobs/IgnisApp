@@ -12,35 +12,35 @@ nk_drag_behavior(nk_flags *state, const struct nk_input *in,
     float inc_per_pixel)
 {
     nk_widget_state_reset(state);
-    if (nk_input_is_mouse_hovering_rect(in, drag))
+    if (nk_input_mouse_hover(in, drag))
         *state = NK_WIDGET_STATE_HOVERED;
 
-    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, drag) && nk_input_is_mouse_down(in, NK_BUTTON_LEFT))
+    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, drag) && nk_input_mouse_down(in, NK_BUTTON_LEFT))
     {
-        float pixels = in->mouse.delta.x;
-        float delta = pixels * inc_per_pixel;
+        struct nk_vec2 delta = in->mouse_delta;
+
         switch (variant->kind)
         {
         default: break;
         case NK_PROPERTY_INT:
-            variant->value.i = variant->value.i + (int)delta;
+            variant->value.i = variant->value.i + (int)((float)delta.x * inc_per_pixel);
             variant->value.i = NK_CLAMP(variant->min_value.i, variant->value.i, variant->max_value.i);
             break;
         case NK_PROPERTY_FLOAT:
-            variant->value.f = variant->value.f + (float)delta;
+            variant->value.f = variant->value.f + (float)delta.x * inc_per_pixel;
             variant->value.f = NK_CLAMP(variant->min_value.f, variant->value.f, variant->max_value.f);
             break;
         case NK_PROPERTY_DOUBLE:
-            variant->value.d = variant->value.d + (double)delta;
+            variant->value.d = variant->value.d + (double)delta.x * inc_per_pixel;
             variant->value.d = NK_CLAMP(variant->min_value.d, variant->value.d, variant->max_value.d);
             break;
         }
         *state = NK_WIDGET_STATE_ACTIVE;
     }
 
-    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_is_mouse_prev_hovering_rect(in, drag))
+    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(in, drag))
         *state |= NK_WIDGET_STATE_ENTERED;
-    else if (nk_input_is_mouse_prev_hovering_rect(in, drag))
+    else if (nk_input_mouse_prev_hover(in, drag))
         *state |= NK_WIDGET_STATE_LEFT;
 }
 
@@ -55,9 +55,9 @@ nk_property_behavior(nk_flags *ws, const struct nk_input *in,
     {
         if (nk_button_behavior(ws, edit, in, NK_BUTTON_DEFAULT))
             *state = NK_PROPERTY_EDIT;
-        else if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, label) && nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT))
+        else if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, label) && nk_input_mouse_pressed(in, NK_BUTTON_LEFT))
             *state = NK_PROPERTY_DRAG;
-        else if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, empty) && nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT))
+        else if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, empty) && nk_input_mouse_pressed(in, NK_BUTTON_LEFT))
             *state = NK_PROPERTY_DRAG;
     }
 
@@ -259,7 +259,7 @@ nk_do_property(nk_flags *ws,
     *cursor = text_edit->cursor;
     *select_begin = text_edit->select_start;
     *select_end = text_edit->select_end;
-    if (text_edit->active && nk_input_is_key_pressed(in, NK_KEY_ENTER))
+    if (text_edit->active && nk_input_key_pressed(in, NK_KEY_ENTER))
         text_edit->active = nk_false;
 
     if (active && !text_edit->active) {

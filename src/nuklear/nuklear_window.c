@@ -227,9 +227,9 @@ nk_begin_titled(struct nk_context *ctx, const char *name, const char *title,
 
         /* activate window if hovered and no other window is overlapping this window */
         struct nk_input* in = &ctx->input;
-        nk_bool click = nk_input_click_in_rect(in, NK_BUTTON_LEFT, win_bounds) && nk_input_is_mouse_pressed(in, NK_BUTTON_LEFT);
-        nk_bool down = nk_input_is_mouse_down(&ctx->input, NK_BUTTON_LEFT);
-        nk_bool hover = nk_input_is_mouse_hovering_rect(&ctx->input, win_bounds);
+        nk_bool click = nk_input_click_in_rect(in, NK_BUTTON_LEFT, win_bounds) && nk_input_mouse_pressed(in, NK_BUTTON_LEFT);
+        nk_bool down = nk_input_mouse_down(&ctx->input, NK_BUTTON_LEFT);
+        nk_bool hover = nk_input_mouse_hover(&ctx->input, win_bounds);
 
         struct nk_window* iter = win;
         if ((win != ctx->active) && hover && !down)
@@ -263,8 +263,9 @@ nk_begin_titled(struct nk_context *ctx, const char *name, const char *title,
                 /* try to find a panel with higher priority in the same position */
                 struct nk_rect iter_bounds = nk_get_window_bounds(iter, h);
 
-                if (NK_INBOX(ctx->input.mouse.pos.x, ctx->input.mouse.pos.y,
-                    iter_bounds.x, iter_bounds.y, iter_bounds.w, iter_bounds.h) &&
+                struct nk_vec2 mouse = in->mouse_pos;
+
+                if (NK_INBOX(mouse.x, mouse.y, iter_bounds.x, iter_bounds.y, iter_bounds.w, iter_bounds.h) &&
                     !(iter->flags & NK_WINDOW_HIDDEN))
                     break;
 
@@ -463,7 +464,7 @@ nk_window_is_hovered(struct nk_context *ctx)
         if (ctx->begin->flags & NK_WINDOW_MINIMIZED) {
             actual_bounds.h = ctx->current->layout->header_height;
         }
-        return nk_input_is_mouse_hovering_rect(&ctx->input, actual_bounds);
+        return nk_input_mouse_hover(&ctx->input, actual_bounds);
     }
 }
 NK_API nk_bool
@@ -477,15 +478,15 @@ nk_window_is_any_hovered(struct nk_context *ctx)
         /* check if window is being hovered */
         if(!(iter->flags & NK_WINDOW_HIDDEN)) {
             /* check if window popup is being hovered */
-            if (iter->popup.active && iter->popup.win && nk_input_is_mouse_hovering_rect(&ctx->input, iter->popup.win->bounds))
+            if (iter->popup.active && iter->popup.win && nk_input_mouse_hover(&ctx->input, iter->popup.win->bounds))
                 return 1;
 
             if (iter->flags & NK_WINDOW_MINIMIZED) {
                 struct nk_rect header = iter->bounds;
                 header.h = ctx->style.font->height + 2 * ctx->style.window.header.padding.y;
-                if (nk_input_is_mouse_hovering_rect(&ctx->input, header))
+                if (nk_input_mouse_hover(&ctx->input, header))
                     return 1;
-            } else if (nk_input_is_mouse_hovering_rect(&ctx->input, iter->bounds)) {
+            } else if (nk_input_mouse_hover(&ctx->input, iter->bounds)) {
                 return 1;
             }
         }

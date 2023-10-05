@@ -174,25 +174,21 @@ nk_glfw3_load_font_atlas(struct nk_glfw* glfw)
 NK_API void
 nk_glfw3_new_frame(struct nk_glfw* glfw)
 {
-    struct nk_context* ctx = &glfw->ctx;
-    MinimalWindow* win = glfw->win;
+    struct nk_input* in = &glfw->ctx.input;
 
-    nk_input_begin(ctx);
-    for (int i = 0; i < glfw->text_len; ++i)
-        nk_input_unicode(ctx, glfw->text[i]);
-
-    float x, y;
-    minimalGetCursorPos(win, &x, &y);
-    nk_input_motion(ctx, (int)x, (int)y);
-
-    nk_input_button(ctx, NK_BUTTON_LEFT,   minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_LEFT));
-    nk_input_button(ctx, NK_BUTTON_MIDDLE, minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_MIDDLE));
-    nk_input_button(ctx, NK_BUTTON_RIGHT,  minimalGetMouseButtonState(win, MINIMAL_MOUSE_BUTTON_RIGHT));
-    
-    nk_input_scroll(ctx, glfw->scroll);
-
+    nk_input_update_text_unicode(in, glfw->text, glfw->text_len);
     glfw->text_len = 0;
+
+    struct nk_vec2 pos = { 0 };
+    minimalCursorPos(in->handle, &pos.x, &pos.y);
+
+    nk_input_update_mouse(in, pos, glfw->scroll);
     glfw->scroll = nk_vec2(0, 0);
+    
+    /*
+    if (glfw->scroll.x != 0.0f || glfw->scroll.y != 0.0f)
+        MINIMAL_INFO("Scroll: %f, %f", glfw->scroll.x, glfw->scroll.y);
+    */
 }
 
 NK_API void

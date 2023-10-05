@@ -134,9 +134,9 @@ nk_nonblock_begin(struct nk_context *ctx,
     } else {
         /* close the popup if user pressed outside or in the header */
         int pressed, in_body, in_header;
-        pressed = nk_input_is_mouse_released(&ctx->input, NK_BUTTON_LEFT);
-        in_body = nk_input_is_mouse_hovering_rect(&ctx->input, body);
-        in_header = nk_input_is_mouse_hovering_rect(&ctx->input, header);
+        pressed = nk_input_mouse_released(&ctx->input, NK_BUTTON_LEFT);
+        in_body = nk_input_mouse_hover(&ctx->input, body);
+        in_header = nk_input_mouse_hover(&ctx->input, header);
         if (pressed && (!in_body || in_header))
             is_active = nk_false;
     }

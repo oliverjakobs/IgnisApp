@@ -136,10 +136,10 @@ NK_INTERN nk_flags nk_chart_push_line(struct nk_context *ctx, struct nk_window *
         };
 
         struct nk_color color = g->slots[slot].color;
-        if (!(layout->flags & NK_WINDOW_ROM) && nk_input_is_mouse_hovering_rect(i, bounds))
+        if (!(layout->flags & NK_WINDOW_ROM) && nk_input_mouse_hover(i, bounds))
         {
             ret = NK_CHART_HOVERING;
-            ret |= nk_input_is_mouse_released(i, NK_BUTTON_LEFT) ? NK_CHART_CLICKED: 0;
+            ret |= nk_input_mouse_released(i, NK_BUTTON_LEFT) ? NK_CHART_CLICKED: 0;
             color = g->slots[slot].highlight;
         }
         nk_fill_rect(out, bounds, 0, color);
@@ -163,10 +163,10 @@ NK_INTERN nk_flags nk_chart_push_line(struct nk_context *ctx, struct nk_window *
     };
 
     /* user selection of current data point */
-    if (!(layout->flags & NK_WINDOW_ROM) && nk_input_is_mouse_hovering_rect(i, bounds))
+    if (!(layout->flags & NK_WINDOW_ROM) && nk_input_mouse_hover(i, bounds))
     {
         ret = NK_CHART_HOVERING;
-        ret |= nk_input_is_mouse_released(i, NK_BUTTON_LEFT) ? NK_CHART_CLICKED : 0;
+        ret |= nk_input_mouse_released(i, NK_BUTTON_LEFT) ? NK_CHART_CLICKED : 0;
         color = g->slots[slot].highlight;
     }
     nk_fill_rect(out, bounds, 0, color);
@@ -214,10 +214,10 @@ NK_INTERN nk_flags nk_chart_push_column(const struct nk_context *ctx, struct nk_
     item.x = item.x + ((float)chart->slots[slot].index);
 
     /* user chart bar selection */
-    if (!(layout->flags & NK_WINDOW_ROM) && nk_input_is_mouse_hovering_rect(in, item))
+    if (!(layout->flags & NK_WINDOW_ROM) && nk_input_mouse_hover(in, item))
     {
         ret = NK_CHART_HOVERING;
-        ret |= nk_input_is_mouse_released(in, NK_BUTTON_LEFT) ? NK_CHART_CLICKED : 0;
+        ret |= nk_input_mouse_released(in, NK_BUTTON_LEFT) ? NK_CHART_CLICKED : 0;
         color = chart->slots[slot].highlight;
     }
     nk_fill_rect(out, item, 0, color);
