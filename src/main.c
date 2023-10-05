@@ -68,6 +68,8 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 
     nk_glfw3_load_font_atlas(&glfw);
 
+    set_style(&glfw.ctx, THEME_BLACK);
+
     return MINIMAL_OK;
 }
 
@@ -166,6 +168,9 @@ void onTick(MinimalApp* app, float deltatime)
     nk_end(ctx);
 
     overview(ctx);
+    //node_editor(ctx);
+    calculator(ctx);
+    //canvas(ctx);
 
     nk_glfw3_render(&glfw, NK_ANTI_ALIASING_ON);
 }
