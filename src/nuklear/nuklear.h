@@ -386,21 +386,6 @@ NK_API void nk_clear(struct nk_context*);
 /// __ctx__     | Must point to a previously initialized `nk_context` struct
 */
 NK_API void nk_free(struct nk_context*);
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-/*/// #### nk_set_user_data
-/// Sets the currently passed userdata passed down into each draw command.
-///
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// void nk_set_user_data(struct nk_context *ctx, nk_handle data);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|--------------------------------------------------------------
-/// __ctx__     | Must point to a previously initialized `nk_context` struct
-/// __data__    | Handle with either pointer or index to be passed into every draw commands
-*/
-NK_API void nk_set_user_data(struct nk_context*, nk_handle handle);
-#endif
 /* =============================================================================
  *
  *                                  INPUT
@@ -838,7 +823,7 @@ NK_API const struct nk_command* nk__next(struct nk_context*, const struct nk_com
 /// NK_CONVERT_VERTEX_BUFFER_FULL   | The provided buffer for storing vertices is full or failed to allocate more memory
 /// NK_CONVERT_ELEMENT_BUFFER_FULL  | The provided buffer for storing indices is full or failed to allocate more memory
 */
-NK_API nk_flags nk_convert(struct nk_context*, struct nk_buffer *cmds, struct nk_buffer *vertices, struct nk_buffer *elements, const struct nk_convert_config*);
+NK_API nk_flags nk_convert(struct nk_context* ctx, struct nk_buffer *cmds, struct nk_buffer *vertices, struct nk_buffer *elements, const struct nk_convert_config* cfg);
 /*/// #### nk__draw_begin
 /// Returns a draw vertex command buffer iterator to iterate over the vertex draw command buffer
 ///
@@ -3878,25 +3863,16 @@ enum nk_command_type {
     NK_COMMAND_RECT_MULTI_COLOR,
     NK_COMMAND_CIRCLE,
     NK_COMMAND_CIRCLE_FILLED,
-    NK_COMMAND_ARC,
-    NK_COMMAND_ARC_FILLED,
     NK_COMMAND_TRIANGLE,
     NK_COMMAND_TRIANGLE_FILLED,
-    NK_COMMAND_POLYGON,
-    NK_COMMAND_POLYGON_FILLED,
-    NK_COMMAND_POLYLINE,
     NK_COMMAND_TEXT,
-    NK_COMMAND_IMAGE,
-    NK_COMMAND_CUSTOM
+    NK_COMMAND_IMAGE
 };
 
 /* command base and header of every command inside the buffer */
 struct nk_command {
     enum nk_command_type type;
     nk_size next;
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-    nk_handle userdata;
-#endif
 };
 
 struct nk_command_scissor {
@@ -3931,14 +3907,6 @@ struct nk_command_rect {
     struct nk_color color;
 };
 
-struct nk_command_rect_filled {
-    struct nk_command header;
-    unsigned short rounding;
-    short x, y;
-    unsigned short w, h;
-    struct nk_color color;
-};
-
 struct nk_command_rect_multi_color {
     struct nk_command header;
     short x, y;
@@ -3958,67 +3926,12 @@ struct nk_command_triangle {
     struct nk_color color;
 };
 
-struct nk_command_triangle_filled {
-    struct nk_command header;
-    struct nk_vec2i a;
-    struct nk_vec2i b;
-    struct nk_vec2i c;
-    struct nk_color color;
-};
-
 struct nk_command_circle {
     struct nk_command header;
     short x, y;
     unsigned short line_thickness;
-    unsigned short w, h;
-    struct nk_color color;
-};
-
-struct nk_command_circle_filled {
-    struct nk_command header;
-    short x, y;
-    unsigned short w, h;
-    struct nk_color color;
-};
-
-struct nk_command_arc {
-    struct nk_command header;
-    short cx, cy;
     unsigned short r;
-    unsigned short line_thickness;
-    float a[2];
     struct nk_color color;
-};
-
-struct nk_command_arc_filled {
-    struct nk_command header;
-    short cx, cy;
-    unsigned short r;
-    float a[2];
-    struct nk_color color;
-};
-
-struct nk_command_polygon {
-    struct nk_command header;
-    struct nk_color color;
-    unsigned short line_thickness;
-    unsigned short point_count;
-    struct nk_vec2i points[1];
-};
-
-struct nk_command_polygon_filled {
-    struct nk_command header;
-    struct nk_color color;
-    unsigned short point_count;
-    struct nk_vec2i points[1];
-};
-
-struct nk_command_polyline {
-    struct nk_command header;
-    struct nk_color color;
-    unsigned short line_thickness;
-    unsigned short point_count;
-    struct nk_vec2i points[1];
 };
 
 struct nk_command_image {
@@ -4027,16 +3940,6 @@ struct nk_command_image {
     unsigned short w, h;
     struct nk_image img;
     struct nk_color col;
-};
-
-typedef void (*nk_command_custom_callback)(void *canvas, short x,short y,
-    unsigned short w, unsigned short h, nk_handle callback_data);
-struct nk_command_custom {
-    struct nk_command header;
-    short x, y;
-    unsigned short w, h;
-    nk_handle callback_data;
-    nk_command_custom_callback callback;
 };
 
 struct nk_command_text {
@@ -4069,25 +3972,19 @@ NK_API void nk_stroke_line(struct nk_command_buffer *b, float x0, float y0, floa
 NK_API void nk_stroke_curve(struct nk_command_buffer*, float, float, float, float, float, float, float, float, float line_thickness, struct nk_color);
 NK_API void nk_stroke_rect(struct nk_command_buffer*, struct nk_rect, float rounding, float line_thickness, struct nk_color);
 NK_API void nk_stroke_circle(struct nk_command_buffer*, struct nk_rect, float line_thickness, struct nk_color);
-NK_API void nk_stroke_arc(struct nk_command_buffer*, float cx, float cy, float radius, float a_min, float a_max, float line_thickness, struct nk_color);
 NK_API void nk_stroke_triangle(struct nk_command_buffer*, float, float, float, float, float, float, float line_thichness, struct nk_color);
-NK_API void nk_stroke_polyline(struct nk_command_buffer*, float *points, int point_count, float line_thickness, struct nk_color col);
-NK_API void nk_stroke_polygon(struct nk_command_buffer*, float*, int point_count, float line_thickness, struct nk_color);
 
 /* filled shades */
 NK_API void nk_fill_rect(struct nk_command_buffer*, struct nk_rect, float rounding, struct nk_color);
 NK_API void nk_fill_rect_multi_color(struct nk_command_buffer*, struct nk_rect, struct nk_color left, struct nk_color top, struct nk_color right, struct nk_color bottom);
 NK_API void nk_fill_circle(struct nk_command_buffer*, struct nk_rect, struct nk_color);
-NK_API void nk_fill_arc(struct nk_command_buffer*, float cx, float cy, float radius, float a_min, float a_max, struct nk_color);
 NK_API void nk_fill_triangle(struct nk_command_buffer*, float x0, float y0, float x1, float y1, float x2, float y2, struct nk_color);
-NK_API void nk_fill_polygon(struct nk_command_buffer*, float*, int point_count, struct nk_color);
 
 /* misc */
 NK_API void nk_draw_image(struct nk_command_buffer*, struct nk_rect, const struct nk_image*, struct nk_color);
 NK_API void nk_draw_nine_slice(struct nk_command_buffer*, struct nk_rect, const struct nk_nine_slice*, struct nk_color);
 NK_API void nk_draw_text(struct nk_command_buffer*, struct nk_rect, const char *text, int len, const struct nk_user_font*, struct nk_color, struct nk_color);
 NK_API void nk_push_scissor(struct nk_command_buffer*, struct nk_rect);
-NK_API void nk_push_custom(struct nk_command_buffer*, struct nk_rect, nk_command_custom_callback, nk_handle usr);
 
 /* ===============================================================
  *
@@ -4208,9 +4105,6 @@ struct nk_draw_command {
     /* current screen clipping rectangle */
     nk_handle texture;
     /* current texture to set */
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-    nk_handle userdata;
-#endif
 };
 
 struct nk_draw_list {
@@ -4232,21 +4126,11 @@ struct nk_draw_list {
 
     enum nk_anti_aliasing line_AA;
     enum nk_anti_aliasing shape_AA;
-
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-    nk_handle userdata;
-#endif
 };
 
 /* draw list */
 NK_API void nk_draw_list_init(struct nk_draw_list*);
 NK_API void nk_draw_list_setup(struct nk_draw_list*, const struct nk_convert_config*, struct nk_buffer *cmds, struct nk_buffer *vertices, struct nk_buffer *elements, enum nk_anti_aliasing line_aa,enum nk_anti_aliasing shape_aa);
-
-/* drawing */
-#define nk_draw_list_foreach(cmd, can, b) for((cmd)=nk__draw_list_begin(can, b); (cmd)!=0; (cmd)=nk__draw_list_next(cmd, b, can))
-NK_API const struct nk_draw_command* nk__draw_list_begin(const struct nk_draw_list*, const struct nk_buffer*);
-NK_API const struct nk_draw_command* nk__draw_list_next(const struct nk_draw_command*, const struct nk_buffer*, const struct nk_draw_list*);
-NK_API const struct nk_draw_command* nk__draw_list_end(const struct nk_draw_list*, const struct nk_buffer*);
 
 /* path */
 NK_API void nk_draw_list_path_clear(struct nk_draw_list*);
@@ -4276,9 +4160,6 @@ NK_API void nk_draw_list_fill_poly_convex(struct nk_draw_list*, const struct nk_
 /* misc */
 NK_API void nk_draw_list_add_image(struct nk_draw_list*, struct nk_image texture, struct nk_rect rect, struct nk_color);
 NK_API void nk_draw_list_add_text(struct nk_draw_list*, const struct nk_user_font*, struct nk_rect, const char *text, int len, float font_height, struct nk_color);
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-NK_API void nk_draw_list_push_userdata(struct nk_draw_list*, nk_handle userdata);
-#endif
 
 
 
@@ -5070,9 +4951,6 @@ struct nk_context {
     should only be accessed if you
     know what you are doing */
     struct nk_draw_list draw_list;
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-    nk_handle userdata;
-#endif
     /* text editor objects are quite big because of an internal
      * undo/redo stack. Therefore it does not make sense to have one for
      * each window for temporary use cases, so I only provide *one* instance

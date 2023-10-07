@@ -32,25 +32,17 @@ nk_draw_symbol(struct nk_command_buffer *out, enum nk_symbol_type type,
         break;
     }
     case NK_SYMBOL_CIRCLE_SOLID:
-    case NK_SYMBOL_CIRCLE_OUTLINE:
-    case NK_SYMBOL_RECT_SOLID:
-    case NK_SYMBOL_RECT_OUTLINE:
-    {
-        /* simple empty/filled shapes */
-        if (type == NK_SYMBOL_RECT_SOLID || type == NK_SYMBOL_RECT_OUTLINE)
-        {
-            nk_fill_rect(out, content,  0, foreground);
-            if (type == NK_SYMBOL_RECT_OUTLINE)
-                nk_fill_rect(out, nk_shrink_rect(content, border_width), 0, background);
-        }
-        else
-        {
-            nk_fill_circle(out, content, foreground);
-            if (type == NK_SYMBOL_CIRCLE_OUTLINE)
-                nk_fill_circle(out, nk_shrink_rect(content, 1), background);
-        }
+        nk_fill_circle(out, content, foreground);
         break;
-    }
+    case NK_SYMBOL_CIRCLE_OUTLINE:
+        nk_stroke_circle(out, content, border_width, foreground);
+        break;
+    case NK_SYMBOL_RECT_SOLID:
+        nk_fill_rect(out, content, 0, foreground);
+        break;
+    case NK_SYMBOL_RECT_OUTLINE:
+        nk_stroke_rect(out, content, 0, border_width, foreground);
+        break;
     case NK_SYMBOL_TRIANGLE_UP:
     case NK_SYMBOL_TRIANGLE_DOWN:
     case NK_SYMBOL_TRIANGLE_LEFT:
@@ -196,6 +188,7 @@ nk_do_button_text(nk_flags *state,
     if (style->draw_end) style->draw_end(out, style->userdata);
     return ret;
 }
+
 NK_LIB void
 nk_draw_button_symbol(struct nk_command_buffer *out,
     const struct nk_rect *bounds, const struct nk_rect *content,
@@ -218,6 +211,7 @@ nk_draw_button_symbol(struct nk_command_buffer *out,
     else sym = style->text_normal;
     nk_draw_symbol(out, type, *content, bg, sym, 1, font);
 }
+
 NK_LIB nk_bool
 nk_do_button_symbol(nk_flags *state,
     struct nk_command_buffer *out, struct nk_rect bounds,
@@ -241,6 +235,7 @@ nk_do_button_symbol(nk_flags *state,
     if (style->draw_end) style->draw_end(out, style->userdata);
     return ret;
 }
+
 NK_LIB void
 nk_draw_button_image(struct nk_command_buffer *out,
     const struct nk_rect *bounds, const struct nk_rect *content,

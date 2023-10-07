@@ -17,8 +17,6 @@ nk_color_picker_behavior(nk_flags *state,
     NK_ASSERT(hue_bar);
     NK_ASSERT(color);
 
-    struct nk_vec2 pos = in->mouse_pos;
-
     float hsva[4];
     nk_bool value_changed = 0;
     nk_bool hsv_changed = 0;
@@ -27,22 +25,22 @@ nk_color_picker_behavior(nk_flags *state,
     nk_colorf_hsva_fv(hsva, *color);
     if (nk_button_behavior(state, *matrix, in, NK_BUTTON_REPEATER))
     {
-        hsva[1] = NK_SATURATE((pos.x - matrix->x) / (matrix->w-1));
-        hsva[2] = 1.0f - NK_SATURATE((pos.y - matrix->y) / (matrix->h-1));
+        hsva[1] = NK_SATURATE((in->mouse_pos.x - matrix->x) / (matrix->w-1));
+        hsva[2] = 1.0f - NK_SATURATE((in->mouse_pos.y - matrix->y) / (matrix->h-1));
         value_changed = hsv_changed = 1;
     }
 
     /* hue bar */
     if (nk_button_behavior(state, *hue_bar, in, NK_BUTTON_REPEATER))
     {
-        hsva[0] = NK_SATURATE((pos.y - hue_bar->y) / (hue_bar->h-1));
+        hsva[0] = NK_SATURATE((in->mouse_pos.y - hue_bar->y) / (hue_bar->h-1));
         value_changed = hsv_changed = 1;
     }
 
     /* alpha bar */
     if (alpha_bar && nk_button_behavior(state, *alpha_bar, in, NK_BUTTON_REPEATER))
     {
-        hsva[3] = 1.0f - NK_SATURATE((pos.y - alpha_bar->y) / (alpha_bar->h - 1));
+        hsva[3] = 1.0f - NK_SATURATE((in->mouse_pos.y - alpha_bar->y) / (alpha_bar->h - 1));
         value_changed = 1;
     }
 

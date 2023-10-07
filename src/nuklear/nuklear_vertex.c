@@ -47,56 +47,6 @@ nk_draw_list_setup(struct nk_draw_list *canvas, const struct nk_convert_config *
     canvas->cmd_count = 0;
     canvas->path_count = 0;
 }
-NK_API const struct nk_draw_command*
-nk__draw_list_begin(const struct nk_draw_list *canvas, const struct nk_buffer *buffer)
-{
-    nk_byte *memory;
-    nk_size offset;
-    const struct nk_draw_command *cmd;
-
-    NK_ASSERT(buffer);
-    if (!buffer || !buffer->size || !canvas->cmd_count)
-        return 0;
-
-    memory = (nk_byte*)buffer->memory.ptr;
-    offset = buffer->memory.size - canvas->cmd_offset;
-    cmd = nk_ptr_add(const struct nk_draw_command, memory, offset);
-    return cmd;
-}
-NK_API const struct nk_draw_command*
-nk__draw_list_end(const struct nk_draw_list *canvas, const struct nk_buffer *buffer)
-{
-    nk_size size;
-    nk_size offset;
-    nk_byte *memory;
-    const struct nk_draw_command *end;
-
-    NK_ASSERT(buffer);
-    NK_ASSERT(canvas);
-    if (!buffer || !canvas)
-        return 0;
-
-    memory = (nk_byte*)buffer->memory.ptr;
-    size = buffer->memory.size;
-    offset = size - canvas->cmd_offset;
-    end = nk_ptr_add(const struct nk_draw_command, memory, offset);
-    end -= (canvas->cmd_count-1);
-    return end;
-}
-NK_API const struct nk_draw_command*
-nk__draw_list_next(const struct nk_draw_command *cmd,
-    const struct nk_buffer *buffer, const struct nk_draw_list *canvas)
-{
-    const struct nk_draw_command *end;
-    NK_ASSERT(buffer);
-    NK_ASSERT(canvas);
-    if (!cmd || !buffer || !canvas)
-        return 0;
-
-    end = nk__draw_list_end(canvas, buffer);
-    if (cmd <= end) return 0;
-    return (cmd-1);
-}
 NK_INTERN struct nk_vec2*
 nk_draw_list_alloc_path(struct nk_draw_list *list, int count)
 {
@@ -149,9 +99,6 @@ nk_draw_list_push_command(struct nk_draw_list *list, struct nk_rect clip,
     cmd->elem_count = 0;
     cmd->clip_rect = clip;
     cmd->texture = texture;
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-    cmd->userdata = list->userdata;
-#endif
 
     list->cmd_count++;
     list->clip_rect = clip;
@@ -189,29 +136,19 @@ nk_draw_list_push_image(struct nk_draw_list *list, nk_handle texture)
 {
     NK_ASSERT(list);
     if (!list) return;
-    if (!list->cmd_count) {
+    if (!list->cmd_count)
+    {
         nk_draw_list_push_command(list, nk_null_rect, texture);
-    } else {
+    }
+    else
+    {
         struct nk_draw_command *prev = nk_draw_list_command_last(list);
-        if (prev->elem_count == 0) {
+        if (prev->elem_count == 0)
             prev->texture = texture;
-        #ifdef NK_INCLUDE_COMMAND_USERDATA
-            prev->userdata = list->userdata;
-        #endif
-    } else if (prev->texture.id != texture.id
-        #ifdef NK_INCLUDE_COMMAND_USERDATA
-            || prev->userdata.id != list->userdata.id
-        #endif
-        ) nk_draw_list_push_command(list, prev->clip_rect, texture);
+        else if (prev->texture.id != texture.id)
+            nk_draw_list_push_command(list, prev->clip_rect, texture);
     }
 }
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-NK_API void
-nk_draw_list_push_userdata(struct nk_draw_list *list, nk_handle userdata)
-{
-    list->userdata = userdata;
-}
-#endif
 NK_INTERN void*
 nk_draw_list_alloc_vertices(struct nk_draw_list *list, nk_size count)
 {
@@ -425,10 +362,6 @@ nk_draw_list_stroke_poly_line(struct nk_draw_list *list, const struct nk_vec2 *p
     count = points_count;
     if (!closed) count = points_count-1;
     thick_line = thickness > 1.0f;
-
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-    nk_draw_list_push_userdata(list, list->userdata);
-#endif
 
     color.a = (nk_byte)((float)color.a * list->config.global_alpha);
     nk_color_fv(&col.r, color);
@@ -661,10 +594,6 @@ nk_draw_list_fill_poly_convex(struct nk_draw_list *list,
     NK_STORAGE const nk_size pnt_size = sizeof(struct nk_vec2);
     NK_ASSERT(list);
     if (!list || points_count < 3) return;
-
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-    nk_draw_list_push_userdata(list, list->userdata);
-#endif
 
     color.a = (nk_byte)((float)color.a * list->config.global_alpha);
     nk_color_fv(&col.r, color);
@@ -956,12 +885,11 @@ nk_draw_list_fill_rect(struct nk_draw_list *list, struct nk_rect rect,
     if (!list || !col.a) return;
 
     if (list->line_AA == NK_ANTI_ALIASING_ON) {
-        nk_draw_list_path_rect_to(list, nk_vec2(rect.x, rect.y),
-            nk_vec2(rect.x + rect.w, rect.y + rect.h), rounding);
+        nk_draw_list_path_rect_to(list, nk_vec2(rect.x, rect.y), nk_vec2(rect.x + rect.w, rect.y + rect.h), rounding);
     } else {
-        nk_draw_list_path_rect_to(list, nk_vec2(rect.x-0.5f, rect.y-0.5f),
-            nk_vec2(rect.x + rect.w, rect.y + rect.h), rounding);
-    } nk_draw_list_path_fill(list,  col);
+        nk_draw_list_path_rect_to(list, nk_vec2(rect.x-0.5f, rect.y-0.5f), nk_vec2(rect.x + rect.w, rect.y + rect.h), rounding);
+    }
+    nk_draw_list_path_fill(list,  col);
 }
 NK_API void
 nk_draw_list_stroke_rect(struct nk_draw_list *list, struct nk_rect rect,
@@ -975,7 +903,8 @@ nk_draw_list_stroke_rect(struct nk_draw_list *list, struct nk_rect rect,
     } else {
         nk_draw_list_path_rect_to(list, nk_vec2(rect.x-0.5f, rect.y-0.5f),
             nk_vec2(rect.x + rect.w, rect.y + rect.h), rounding);
-    } nk_draw_list_path_stroke(list,  col, NK_STROKE_CLOSED, thickness);
+    }
+    nk_draw_list_path_stroke(list,  col, NK_STROKE_CLOSED, thickness);
 }
 NK_API void
 nk_draw_list_fill_rect_multi_color(struct nk_draw_list *list, struct nk_rect rect,
@@ -1179,7 +1108,6 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
     struct nk_buffer *vertices, struct nk_buffer *elements,
     const struct nk_convert_config *config)
 {
-    nk_flags res = NK_CONVERT_SUCCESS;
     const struct nk_command *cmd;
     NK_ASSERT(ctx);
     NK_ASSERT(cmds);
@@ -1191,13 +1119,9 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
     if (!ctx || !cmds || !vertices || !elements || !config || !config->vertex_layout)
         return NK_CONVERT_INVALID_PARAM;
 
-    nk_draw_list_setup(&ctx->draw_list, config, cmds, vertices, elements,
-        config->line_AA, config->shape_AA);
+    nk_draw_list_setup(&ctx->draw_list, config, cmds, vertices, elements, config->line_AA, config->shape_AA);
     nk_foreach(cmd, ctx)
     {
-#ifdef NK_INCLUDE_COMMAND_USERDATA
-        ctx->draw_list.userdata = cmd->userdata;
-#endif
         switch (cmd->type) {
         case NK_COMMAND_NOP: break;
         case NK_COMMAND_SCISSOR: {
@@ -1222,7 +1146,7 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
                 r->color, (float)r->rounding, r->line_thickness);
         } break;
         case NK_COMMAND_RECT_FILLED: {
-            const struct nk_command_rect_filled *r = (const struct nk_command_rect_filled*)cmd;
+            const struct nk_command_rect *r = (const struct nk_command_rect*)cmd;
             nk_draw_list_fill_rect(&ctx->draw_list, nk_rect(r->x, r->y, r->w, r->h),
                 r->color, (float)r->rounding);
         } break;
@@ -1233,29 +1157,13 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
         } break;
         case NK_COMMAND_CIRCLE: {
             const struct nk_command_circle *c = (const struct nk_command_circle*)cmd;
-            nk_draw_list_stroke_circle(&ctx->draw_list, nk_vec2((float)c->x + (float)c->w/2,
-                (float)c->y + (float)c->h/2), (float)c->w/2, c->color,
+            nk_draw_list_stroke_circle(&ctx->draw_list, nk_vec2((float)c->x, (float)c->y), (float)c->r, c->color,
                 config->circle_segment_count, c->line_thickness);
         } break;
         case NK_COMMAND_CIRCLE_FILLED: {
-            const struct nk_command_circle_filled *c = (const struct nk_command_circle_filled *)cmd;
-            nk_draw_list_fill_circle(&ctx->draw_list, nk_vec2((float)c->x + (float)c->w/2,
-                (float)c->y + (float)c->h/2), (float)c->w/2, c->color,
+            const struct nk_command_circle *c = (const struct nk_command_circle*)cmd;
+            nk_draw_list_fill_circle(&ctx->draw_list, nk_vec2((float)c->x, (float)c->y), (float)c->r, c->color,
                 config->circle_segment_count);
-        } break;
-        case NK_COMMAND_ARC: {
-            const struct nk_command_arc *c = (const struct nk_command_arc*)cmd;
-            nk_draw_list_path_line_to(&ctx->draw_list, nk_vec2(c->cx, c->cy));
-            nk_draw_list_path_arc_to(&ctx->draw_list, nk_vec2(c->cx, c->cy), c->r,
-                c->a[0], c->a[1], config->arc_segment_count);
-            nk_draw_list_path_stroke(&ctx->draw_list, c->color, NK_STROKE_CLOSED, c->line_thickness);
-        } break;
-        case NK_COMMAND_ARC_FILLED: {
-            const struct nk_command_arc_filled *c = (const struct nk_command_arc_filled*)cmd;
-            nk_draw_list_path_line_to(&ctx->draw_list, nk_vec2(c->cx, c->cy));
-            nk_draw_list_path_arc_to(&ctx->draw_list, nk_vec2(c->cx, c->cy), c->r,
-                c->a[0], c->a[1], config->arc_segment_count);
-            nk_draw_list_path_fill(&ctx->draw_list, c->color);
         } break;
         case NK_COMMAND_TRIANGLE: {
             const struct nk_command_triangle *t = (const struct nk_command_triangle*)cmd;
@@ -1264,36 +1172,9 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
                 t->line_thickness);
         } break;
         case NK_COMMAND_TRIANGLE_FILLED: {
-            const struct nk_command_triangle_filled *t = (const struct nk_command_triangle_filled*)cmd;
+            const struct nk_command_triangle *t = (const struct nk_command_triangle*)cmd;
             nk_draw_list_fill_triangle(&ctx->draw_list, nk_vec2(t->a.x, t->a.y),
                 nk_vec2(t->b.x, t->b.y), nk_vec2(t->c.x, t->c.y), t->color);
-        } break;
-        case NK_COMMAND_POLYGON: {
-            int i;
-            const struct nk_command_polygon*p = (const struct nk_command_polygon*)cmd;
-            for (i = 0; i < p->point_count; ++i) {
-                struct nk_vec2 pnt = nk_vec2((float)p->points[i].x, (float)p->points[i].y);
-                nk_draw_list_path_line_to(&ctx->draw_list, pnt);
-            }
-            nk_draw_list_path_stroke(&ctx->draw_list, p->color, NK_STROKE_CLOSED, p->line_thickness);
-        } break;
-        case NK_COMMAND_POLYGON_FILLED: {
-            int i;
-            const struct nk_command_polygon_filled *p = (const struct nk_command_polygon_filled*)cmd;
-            for (i = 0; i < p->point_count; ++i) {
-                struct nk_vec2 pnt = nk_vec2((float)p->points[i].x, (float)p->points[i].y);
-                nk_draw_list_path_line_to(&ctx->draw_list, pnt);
-            }
-            nk_draw_list_path_fill(&ctx->draw_list, p->color);
-        } break;
-        case NK_COMMAND_POLYLINE: {
-            int i;
-            const struct nk_command_polyline *p = (const struct nk_command_polyline*)cmd;
-            for (i = 0; i < p->point_count; ++i) {
-                struct nk_vec2 pnt = nk_vec2((float)p->points[i].x, (float)p->points[i].y);
-                nk_draw_list_path_line_to(&ctx->draw_list, pnt);
-            }
-            nk_draw_list_path_stroke(&ctx->draw_list, p->color, NK_STROKE_OPEN, p->line_thickness);
         } break;
         case NK_COMMAND_TEXT: {
             const struct nk_command_text *t = (const struct nk_command_text*)cmd;
@@ -1304,34 +1185,53 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
             const struct nk_command_image *i = (const struct nk_command_image*)cmd;
             nk_draw_list_add_image(&ctx->draw_list, i->img, nk_rect(i->x, i->y, i->w, i->h), i->col);
         } break;
-        case NK_COMMAND_CUSTOM: {
-            const struct nk_command_custom *c = (const struct nk_command_custom*)cmd;
-            c->callback(&ctx->draw_list, c->x, c->y, c->w, c->h, c->callback_data);
-        } break;
         default: break;
         }
     }
+    nk_flags res = NK_CONVERT_SUCCESS;
     res |= (cmds->needed > cmds->allocated + (cmds->memory.size - cmds->size)) ? NK_CONVERT_COMMAND_BUFFER_FULL: 0;
     res |= (vertices->needed > vertices->allocated) ? NK_CONVERT_VERTEX_BUFFER_FULL: 0;
     res |= (elements->needed > elements->allocated) ? NK_CONVERT_ELEMENT_BUFFER_FULL: 0;
     return res;
 }
-NK_API const struct nk_draw_command*
-nk__draw_begin(const struct nk_context *ctx,
-    const struct nk_buffer *buffer)
-{
-    return nk__draw_list_begin(&ctx->draw_list, buffer);
-}
-NK_API const struct nk_draw_command*
-nk__draw_end(const struct nk_context *ctx, const struct nk_buffer *buffer)
-{
-    return nk__draw_list_end(&ctx->draw_list, buffer);
-}
-NK_API const struct nk_draw_command*
-nk__draw_next(const struct nk_draw_command *cmd,
-    const struct nk_buffer *buffer, const struct nk_context *ctx)
-{
-    return nk__draw_list_next(cmd, buffer, &ctx->draw_list);
-}
 
 
+NK_API const struct nk_draw_command* nk__draw_begin(const struct nk_context *ctx, const struct nk_buffer *buffer)
+{
+    NK_ASSERT(buffer);
+    NK_ASSERT(ctx);
+    if (!buffer || !ctx)
+        return 0;
+
+    const struct nk_draw_list* list = &ctx->draw_list;
+    nk_byte* memory = (nk_byte*)buffer->memory.ptr;
+    nk_size offset = buffer->memory.size - list->cmd_offset;
+    const struct nk_draw_command* cmd = nk_ptr_add(const struct nk_draw_command, memory, offset);
+    return cmd;
+}
+NK_API const struct nk_draw_command* nk__draw_end(const struct nk_context *ctx, const struct nk_buffer *buffer)
+{
+    NK_ASSERT(buffer);
+    NK_ASSERT(ctx);
+    if (!buffer || !ctx)
+        return 0;
+
+    const struct nk_draw_list* list = &ctx->draw_list;
+    nk_byte* memory = (nk_byte*)buffer->memory.ptr;
+    nk_size offset = buffer->memory.size - list->cmd_offset;
+    const struct nk_draw_command* end = nk_ptr_add(const struct nk_draw_command, memory, offset);
+    end -= (list->cmd_count - 1);
+    return end;
+}
+NK_API const struct nk_draw_command* nk__draw_next(const struct nk_draw_command *cmd, const struct nk_buffer *buffer, const struct nk_context *ctx)
+{
+    const struct nk_draw_command* end;
+    NK_ASSERT(buffer);
+    NK_ASSERT(ctx);
+    if (!cmd || !buffer || !ctx)
+        return 0;
+
+    end = nk__draw_end(ctx, buffer);
+    if (cmd <= end) return 0;
+    return (cmd - 1);
+}

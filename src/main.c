@@ -167,10 +167,9 @@ void onTick(MinimalApp* app, float deltatime)
     }
     nk_end(ctx);
 
+    //calculator(ctx);
     overview(ctx);
     //node_editor(ctx);
-    calculator(ctx);
-    //canvas(ctx);
 
     nk_glfw3_render(&glfw, NK_ANTI_ALIASING_ON);
 }
