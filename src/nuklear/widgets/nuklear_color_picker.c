@@ -87,10 +87,16 @@ nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix,
 
     /* draw hue bar */
     nk_colorf_hsva_fv(hsva, col);
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i < 6; ++i)
+    {
         NK_GLOBAL const struct nk_color hue_colors[] = {
-            {255, 0, 0, 255}, {255,255,0,255}, {0,255,0,255}, {0, 255,255,255},
-            {0,0,255,255}, {255, 0, 255, 255}, {255, 0, 0, 255}
+            {255,   0,   0, 255},
+            {255, 255,   0, 255},
+            {  0, 255,   0, 255},
+            {  0, 255, 255, 255},
+            {  0,   0, 255, 255},
+            {255,   0, 255, 255},
+            {255,   0,   0, 255}
         };
         nk_fill_rect_multi_color(o,
             nk_rect(hue_bar->x, hue_bar->y + (float)i * (hue_bar->h/6.0f) + 0.5f,
@@ -98,8 +104,7 @@ nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix,
                 hue_colors[i+1], hue_colors[i+1]);
     }
     line_y = (float)(int)(hue_bar->y + hsva[0] * matrix->h + 0.5f);
-    nk_stroke_line(o, hue_bar->x-1, line_y, hue_bar->x + hue_bar->w + 2,
-        line_y, 1, nk_rgb(255,255,255));
+    nk_stroke_line(o, hue_bar->x-1, line_y, hue_bar->x + hue_bar->w + 2, line_y, 1, nk_rgb(255,255,255));
 
     /* draw alpha bar */
     if (alpha_bar) {
@@ -107,8 +112,7 @@ nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix,
         line_y = (float)(int)(alpha_bar->y +  (1.0f - alpha) * matrix->h + 0.5f);
 
         nk_fill_rect_multi_color(o, *alpha_bar, white, white, black, black);
-        nk_stroke_line(o, alpha_bar->x-1, line_y, alpha_bar->x + alpha_bar->w + 2,
-            line_y, 1, nk_rgb(255,255,255));
+        nk_stroke_line(o, alpha_bar->x-1, line_y, alpha_bar->x + alpha_bar->w + 2, line_y, 1, nk_rgb(255,255,255));
     }
 
     /* draw color matrix */
@@ -117,14 +121,19 @@ nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix,
     nk_fill_rect_multi_color(o, *matrix, black_trans, black_trans, black, black);
 
     /* draw cross-hair */
-    {struct nk_vec2 p; float S = hsva[1]; float V = hsva[2];
-    p.x = (float)(int)(matrix->x + S * matrix->w);
-    p.y = (float)(int)(matrix->y + (1.0f - V) * matrix->h);
+    {
+    float S = hsva[1];
+    float V = hsva[2];
+    struct nk_vec2 p = {
+        .x = (float)(int)(matrix->x + S * matrix->w),
+        .y = (float)(int)(matrix->y + (1.0f - V) * matrix->h)
+    };
     nk_stroke_line(o, p.x - crosshair_size, p.y, p.x-2, p.y, 1.0f, white);
     nk_stroke_line(o, p.x + crosshair_size + 1, p.y, p.x+3, p.y, 1.0f, white);
     nk_stroke_line(o, p.x, p.y + crosshair_size + 1, p.x, p.y+3, 1.0f, white);
     nk_stroke_line(o, p.x, p.y - crosshair_size, p.x, p.y-2, 1.0f, white);}
 }
+
 NK_LIB nk_bool
 nk_do_color_picker(nk_flags *state,
     struct nk_command_buffer *out, struct nk_colorf *col,

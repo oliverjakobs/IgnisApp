@@ -515,26 +515,32 @@ nk_panel_end(struct nk_context *ctx)
         scaler.w = scrollbar_size.x;
         scaler.h = scrollbar_size.y;
         scaler.y = layout->bounds.y + layout->bounds.h;
+
         if (layout->flags & NK_WINDOW_SCALE_LEFT)
             scaler.x = layout->bounds.x - panel_padding.x * 0.5f;
-        else scaler.x = layout->bounds.x + layout->bounds.w + panel_padding.x;
+        else
+            scaler.x = layout->bounds.x + layout->bounds.w + panel_padding.x;
+
         if (layout->flags & NK_WINDOW_NO_SCROLLBAR)
             scaler.x -= scaler.w;
 
         /* draw scaler */
-        {const struct nk_style_item *item = &style->window.scaler;
+        const struct nk_style_item *item = &style->window.scaler;
         if (item->type == NK_STYLE_ITEM_IMAGE)
+        {
             nk_draw_image(out, scaler, &item->data.image, nk_white);
-        else {
-            if (layout->flags & NK_WINDOW_SCALE_LEFT) {
-                nk_fill_triangle(out, scaler.x, scaler.y, scaler.x,
-                    scaler.y + scaler.h, scaler.x + scaler.w,
-                    scaler.y + scaler.h, item->data.color);
-            } else {
-                nk_fill_triangle(out, scaler.x + scaler.w, scaler.y, scaler.x + scaler.w,
-                    scaler.y + scaler.h, scaler.x, scaler.y + scaler.h, item->data.color);
+        }
+        else
+        {
+            struct nk_vec2 a = nk_vec2(scaler.x + scaler.w, scaler.y);
+            struct nk_vec2 b = nk_vec2(scaler.x, scaler.y + scaler.h);
+            struct nk_vec2 c = nk_vec2(scaler.x + scaler.w, scaler.y + scaler.h);
+            if (layout->flags & NK_WINDOW_SCALE_LEFT)
+            {
+                a.x -= scaler.w;
             }
-        }}
+            nk_fill_triangle(out, a, b, c, item->data.color);
+        }
 
         /* do window scaling */
         if (!(window->flags & NK_WINDOW_ROM))
@@ -578,16 +584,18 @@ nk_panel_end(struct nk_context *ctx)
             }
         }
     }
-    if (!nk_panel_is_sub(layout->type)) {
-        /* window is hidden so clear command buffer  */
-        if (layout->flags & NK_WINDOW_HIDDEN)
+
+    if (!nk_panel_is_sub(layout->type))
+    {
+        if (layout->flags & NK_WINDOW_HIDDEN) /* window is hidden so clear command buffer  */
             nk_command_buffer_reset(&window->buffer);
-        /* window is visible and not tab */
-        else nk_finish(ctx, window);
+        else /* window is visible and not tab */
+            nk_finish(ctx, window);
     }
 
     /* NK_WINDOW_REMOVE_ROM flag was set so remove NK_WINDOW_ROM */
-    if (layout->flags & NK_WINDOW_REMOVE_ROM) {
+    if (layout->flags & NK_WINDOW_REMOVE_ROM)
+    {
         layout->flags &= ~(nk_flags)NK_WINDOW_ROM;
         layout->flags &= ~(nk_flags)NK_WINDOW_REMOVE_ROM;
     }

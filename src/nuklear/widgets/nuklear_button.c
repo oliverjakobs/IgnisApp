@@ -54,7 +54,7 @@ nk_draw_symbol(struct nk_command_buffer *out, enum nk_symbol_type type,
 
         struct nk_vec2 points[3];
         nk_triangle_from_direction(points, content, 0, 0, heading);
-        nk_fill_triangle(out, points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, foreground);
+        nk_fill_triangle(out, points[0], points[1], points[2], foreground);
         break;
     }
     default:
