@@ -123,12 +123,12 @@ void onTick(MinimalApp* app, float deltatime)
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT);
 
-    nk_glfw3_new_frame(&glfw);
+    nk_glfw3_new_frame(&glfw, deltatime);
 
     /* GUI */
     struct nk_context* ctx = &glfw.ctx;
     if (nk_begin(ctx, "Demo", nk_rect(50, 50, 230, 250),
-        NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE |
+        NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_SCROLL_AUTO_HIDE |
         NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE))
     {
         enum { EASY, HARD };
@@ -171,7 +171,7 @@ void onTick(MinimalApp* app, float deltatime)
     overview(ctx);
     //node_editor(ctx);
 
-    nk_glfw3_render(&glfw, NK_ANTI_ALIASING_ON);
+    nk_glfw3_render(&glfw);
 }
 
 int main()

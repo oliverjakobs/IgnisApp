@@ -60,10 +60,7 @@ nk_buffer_init_fixed(struct nk_buffer *b, void *m, nk_size size)
     b->memory.size = size;
     b->size = size;
 }
-NK_LIB void*
-nk_buffer_align(void *unaligned,
-    nk_size align, nk_size *alignment,
-    enum nk_buffer_allocation_type type)
+NK_LIB void* nk_buffer_align(void *unaligned, nk_size align, nk_size *alignment, enum nk_buffer_allocation_type type)
 {
     void *memory = 0;
     switch (type) {
@@ -129,8 +126,7 @@ nk_buffer_realloc(struct nk_buffer *b, nk_size capacity, nk_size *size)
     return temp;
 }
 NK_LIB void*
-nk_buffer_alloc(struct nk_buffer *b, enum nk_buffer_allocation_type type,
-    nk_size size, nk_size align)
+nk_buffer_alloc(struct nk_buffer *b, enum nk_buffer_allocation_type type, nk_size size, nk_size align)
 {
     int full;
     nk_size alignment;
@@ -143,26 +139,24 @@ nk_buffer_alloc(struct nk_buffer *b, enum nk_buffer_allocation_type type,
     b->needed += size;
 
     /* calculate total size with needed alignment + size */
-    if (type == NK_BUFFER_FRONT)
-        unaligned = nk_ptr_add(void, b->memory.ptr, b->allocated);
-    else unaligned = nk_ptr_add(void, b->memory.ptr, b->size - size);
+    if (type == NK_BUFFER_FRONT) unaligned = nk_ptr_add(void, b->memory.ptr, b->allocated);
+    else                         unaligned = nk_ptr_add(void, b->memory.ptr, b->size - size);
     memory = nk_buffer_align(unaligned, align, &alignment, type);
 
     /* check if buffer has enough memory*/
-    if (type == NK_BUFFER_FRONT)
-        full = ((b->allocated + size + alignment) > b->size);
-    else full = ((b->size - NK_MIN(b->size,(size + alignment))) <= b->allocated);
+    if (type == NK_BUFFER_FRONT) full = ((b->allocated + size + alignment) > b->size);
+    else                         full = ((b->size - NK_MIN(b->size,(size + alignment))) <= b->allocated);
 
-    if (full) {
-        nk_size capacity;
-        if (b->type != NK_BUFFER_DYNAMIC)
-            return 0;
+    if (full)
+    {
+        if (b->type != NK_BUFFER_DYNAMIC) return NULL;
+
         NK_ASSERT(b->pool.alloc && b->pool.free);
         if (b->type != NK_BUFFER_DYNAMIC || !b->pool.alloc || !b->pool.free)
             return 0;
 
         /* buffer is full so allocate bigger buffer if dynamic */
-        capacity = (nk_size)((float)b->memory.size * b->grow_factor);
+        nk_size capacity = (nk_size)((float)b->memory.size * b->grow_factor);
         capacity = NK_MAX(capacity, nk_round_up_pow2((nk_uint)(b->allocated + size)));
         b->memory.ptr = nk_buffer_realloc(b, capacity, &b->memory.size);
         if (!b->memory.ptr) return 0;
@@ -173,9 +167,10 @@ nk_buffer_alloc(struct nk_buffer *b, enum nk_buffer_allocation_type type,
         else unaligned = nk_ptr_add(void, b->memory.ptr, b->size - size);
         memory = nk_buffer_align(unaligned, align, &alignment, type);
     }
-    if (type == NK_BUFFER_FRONT)
-        b->allocated += size + alignment;
-    else b->size -= (size + alignment);
+
+    if (type == NK_BUFFER_FRONT) b->allocated += size + alignment;
+    else                         b->size -= (size + alignment);
+
     b->needed += alignment;
     b->calls++;
     return memory;

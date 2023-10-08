@@ -459,13 +459,12 @@ nk_window_is_hovered(struct nk_context *ctx)
     NK_ASSERT(ctx->current);
     if (!ctx || !ctx->current || (ctx->current->flags & NK_WINDOW_HIDDEN))
         return 0;
-    else {
-        struct nk_rect actual_bounds = ctx->current->bounds;
-        if (ctx->begin->flags & NK_WINDOW_MINIMIZED) {
-            actual_bounds.h = ctx->current->layout->header_height;
-        }
-        return nk_input_mouse_hover(&ctx->input, actual_bounds);
-    }
+
+    struct nk_rect bounds = ctx->current->bounds;
+    if (ctx->begin->flags & NK_WINDOW_MINIMIZED)
+        bounds.h = ctx->current->layout->header_height;
+
+    return nk_input_mouse_hover(&ctx->input, bounds);
 }
 NK_API nk_bool
 nk_window_is_any_hovered(struct nk_context *ctx)

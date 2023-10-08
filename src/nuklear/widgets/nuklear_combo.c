@@ -89,10 +89,6 @@ nk_combo_begin_text(struct nk_context *ctx, const char *selected, int len,
             text.background = nk_rgba(0, 0, 0, 0);
             nk_draw_image(&win->buffer, header, &background->data.image, nk_white);
             break;
-        case NK_STYLE_ITEM_NINE_SLICE:
-            text.background = nk_rgba(0, 0, 0, 0);
-            nk_draw_nine_slice(&win->buffer, header, &background->data.slice, nk_white);
-            break;
         case NK_STYLE_ITEM_COLOR:
             text.background = background->data.color;
             nk_fill_rect(&win->buffer, header, style->combo.rounding, background->data.color);
@@ -191,9 +187,6 @@ nk_combo_begin_color(struct nk_context *ctx, struct nk_color color, struct nk_ve
         case NK_STYLE_ITEM_IMAGE:
             nk_draw_image(&win->buffer, header, &background->data.image, nk_white);
             break;
-        case NK_STYLE_ITEM_NINE_SLICE:
-            nk_draw_nine_slice(&win->buffer, header, &background->data.slice, nk_white);
-            break;
         case NK_STYLE_ITEM_COLOR:
             nk_fill_rect(&win->buffer, header, style->combo.rounding, background->data.color);
             nk_stroke_rect(&win->buffer, header, style->combo.rounding, style->combo.border, style->combo.border_color);
@@ -290,10 +283,6 @@ nk_combo_begin_symbol(struct nk_context *ctx, enum nk_symbol_type symbol, struct
             sym_background = nk_rgba(0, 0, 0, 0);
             nk_draw_image(&win->buffer, header, &background->data.image, nk_white);
             break;
-        case NK_STYLE_ITEM_NINE_SLICE:
-            sym_background = nk_rgba(0, 0, 0, 0);
-            nk_draw_nine_slice(&win->buffer, header, &background->data.slice, nk_white);
-            break;
         case NK_STYLE_ITEM_COLOR:
             sym_background = background->data.color;
             nk_fill_rect(&win->buffer, header, style->combo.rounding, background->data.color);
@@ -387,10 +376,6 @@ nk_combo_begin_symbol_text(struct nk_context *ctx, const char *selected, int len
             text.background = nk_rgba(0, 0, 0, 0);
             nk_draw_image(&win->buffer, header, &background->data.image, nk_white);
             break;
-        case NK_STYLE_ITEM_NINE_SLICE:
-            text.background = nk_rgba(0, 0, 0, 0);
-            nk_draw_nine_slice(&win->buffer, header, &background->data.slice, nk_white);
-            break;
         case NK_STYLE_ITEM_COLOR:
             text.background = background->data.color;
             nk_fill_rect(&win->buffer, header, style->combo.rounding, background->data.color);
@@ -479,9 +464,6 @@ nk_combo_begin_image(struct nk_context *ctx, struct nk_image img, struct nk_vec2
     switch (background->type) {
         case NK_STYLE_ITEM_IMAGE:
             nk_draw_image(&win->buffer, header, &background->data.image, nk_white);
-            break;
-        case NK_STYLE_ITEM_NINE_SLICE:
-            nk_draw_nine_slice(&win->buffer, header, &background->data.slice, nk_white);
             break;
         case NK_STYLE_ITEM_COLOR:
             nk_fill_rect(&win->buffer, header, style->combo.rounding, background->data.color);
@@ -577,10 +559,6 @@ nk_combo_begin_image_text(struct nk_context *ctx, const char *selected, int len,
         case NK_STYLE_ITEM_IMAGE:
             text.background = nk_rgba(0, 0, 0, 0);
             nk_draw_image(&win->buffer, header, &background->data.image, nk_white);
-            break;
-        case NK_STYLE_ITEM_NINE_SLICE:
-            text.background = nk_rgba(0, 0, 0, 0);
-            nk_draw_nine_slice(&win->buffer, header, &background->data.slice, nk_white);
             break;
         case NK_STYLE_ITEM_COLOR:
             text.background = background->data.color;

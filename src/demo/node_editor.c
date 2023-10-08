@@ -175,12 +175,13 @@ int node_editor(struct nk_context *ctx)
 
             if (nodedit->show_grid) {
                 /* display grid */
-                float x, y;
                 const float grid_size = 32.0f;
                 const struct nk_color grid_color = nk_rgb(50, 50, 50);
-                for (x = (float)fmod(size.x - nodedit->scrolling.x, grid_size); x < size.w; x += grid_size)
+
+                for (float x = (float)fmod(size.x - nodedit->scrolling.x, grid_size); x < size.w; x += grid_size)
                     nk_stroke_line(canvas, x+size.x, size.y, x+size.x, size.y+size.h, 1.0f, grid_color);
-                for (y = (float)fmod(size.y - nodedit->scrolling.y, grid_size); y < size.h; y += grid_size)
+
+                for (float y = (float)fmod(size.y - nodedit->scrolling.y, grid_size); y < size.h; y += grid_size)
                     nk_stroke_line(canvas, size.x, y+size.y, size.x+size.w, y+size.y, 1.0f, grid_color);
             }
 

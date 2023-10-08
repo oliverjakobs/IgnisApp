@@ -488,7 +488,7 @@ nk_draw_list_path_fill(struct nk_draw_list *list, struct nk_color color)
     struct nk_colorf col_trans = col;
     col_trans.a = 0;
 
-    if (list->config.shape_AA == NK_ANTI_ALIASING_ON)
+    if (list->config.shape_AA)
     {
         nk_size i = 0;
         nk_size i0 = 0;
@@ -505,7 +505,6 @@ nk_draw_list_path_fill(struct nk_draw_list *list, struct nk_color color)
         nk_draw_index* ids = nk_draw_list_alloc_elements(list, idx_count);
 
         nk_size size = 0;
-        struct nk_vec2* normals = 0;
         unsigned int vtx_inner_idx = (unsigned int)(index + 0);
         unsigned int vtx_outer_idx = (unsigned int)(index + 1);
         if (!vtx || !ids) return;
@@ -514,7 +513,7 @@ nk_draw_list_path_fill(struct nk_draw_list *list, struct nk_color color)
         vertex_offset = (nk_size)((nk_byte*)vtx - (nk_byte*)list->vertices->memory.ptr);
         nk_buffer_mark(list->vertices, NK_BUFFER_FRONT);
         size = pnt_size * points_count;
-        normals = (struct nk_vec2*)nk_buffer_alloc(list->vertices, NK_BUFFER_FRONT, size, pnt_align);
+        struct nk_vec2* normals = nk_buffer_alloc(list->vertices, NK_BUFFER_FRONT, size, pnt_align);
         if (!normals) return;
         vtx = (void*)((nk_byte*)list->vertices->memory.ptr + vertex_offset);
 
@@ -624,7 +623,8 @@ nk_draw_list_path_stroke(struct nk_draw_list *list, struct nk_color color, enum 
     col_trans = col;
     col_trans.a = 0;
 
-    if (list->config.line_AA == NK_ANTI_ALIASING_ON) {
+    if (list->config.line_AA)
+    {
         /* ANTI-ALIASED STROKE */
         const float AA_SIZE = 1.0f;
         NK_STORAGE const nk_size pnt_align = NK_ALIGNOF(struct nk_vec2);
@@ -917,13 +917,6 @@ nk_draw_list_add_image(struct nk_draw_list *list, struct nk_image texture,
     struct nk_vec2 uv0 = nk_vec2(0.0f, 0.0f);
     struct nk_vec2 uv1 = nk_vec2(1.0f, 1.0f);
 
-    if (nk_image_is_subimage(&texture)) /* add region inside of the texture  */
-    {
-        uv0.x = (float)texture.region[0] / (float)texture.w;
-        uv0.y = (float)texture.region[1] / (float)texture.h;
-        uv1.x = (float)(texture.region[0] + texture.region[2]) / (float)texture.w;
-        uv1.y = (float)(texture.region[1] + texture.region[3]) / (float)texture.h;
-    }
     nk_draw_list_push_rect_uv(list, rect, uv0, uv1, color);
 }
 
@@ -934,9 +927,7 @@ nk_draw_list_add_text(struct nk_draw_list *list, const struct nk_user_font *font
 {
     float x = 0;
     int text_len = 0;
-    nk_rune unicode = 0;
     nk_rune next = 0;
-    int glyph_len = 0;
     int next_glyph_len = 0;
     struct nk_user_font_glyph g;
 
@@ -945,7 +936,9 @@ nk_draw_list_add_text(struct nk_draw_list *list, const struct nk_user_font *font
 
     nk_draw_list_push_image(list, font->texture);
     x = rect.x;
-    glyph_len = nk_utf_decode(text, &unicode, len);
+
+    nk_rune unicode = 0;
+    int glyph_len = nk_utf_decode(text, &unicode, len);
     if (!glyph_len) return;
 
     /* draw every glyph image */
@@ -1008,7 +1001,7 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
             struct nk_vec2 a = nk_vec2(l->begin.x, l->begin.y);
             struct nk_vec2 b = nk_vec2(l->end.x, l->end.y);
 
-            if (config->line_AA != NK_ANTI_ALIASING_ON)
+            if (!config->line_AA)
             {
                 a.x -= 0.5f; a.y -= 0.5f;
                 b.x -= 0.5f; b.y -= 0.5f;
@@ -1037,7 +1030,7 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
             struct nk_vec2 a = nk_vec2(r->x, r->y);
             struct nk_vec2 b = nk_vec2(r->x + r->w, r->y + r->h);
 
-            if (config->line_AA != NK_ANTI_ALIASING_ON)
+            if (!config->line_AA)
             {
                 a.x -= 0.5f; a.y -= 0.5f;
             }
@@ -1051,7 +1044,7 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
             struct nk_vec2 a = nk_vec2(r->x, r->y);
             struct nk_vec2 b = nk_vec2(r->x + r->w, r->y + r->h);
 
-            if (config->line_AA != NK_ANTI_ALIASING_ON)
+            if (!config->line_AA)
             {
                 a.x -= 0.5f; a.y -= 0.5f;
             }

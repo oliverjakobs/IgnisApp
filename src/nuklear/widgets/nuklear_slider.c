@@ -92,9 +92,6 @@ nk_draw_slider(struct nk_command_buffer *out, nk_flags state,
         case NK_STYLE_ITEM_IMAGE:
             nk_draw_image(out, *bounds, &background->data.image, nk_white);
             break;
-        case NK_STYLE_ITEM_NINE_SLICE:
-            nk_draw_nine_slice(out, *bounds, &background->data.slice, nk_white);
-            break;
         case NK_STYLE_ITEM_COLOR:
             nk_fill_rect(out, *bounds, style->rounding, background->data.color);
             nk_stroke_rect(out, *bounds, style->rounding, style->border, style->border_color);

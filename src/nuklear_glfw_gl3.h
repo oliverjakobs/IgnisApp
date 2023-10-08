@@ -52,8 +52,8 @@ struct nk_glfw {
 NK_API struct nk_context*   nk_glfw3_init(struct nk_glfw* glfw, MinimalWindow* win);
 NK_API void                 nk_glfw3_shutdown(struct nk_glfw* glfw);
 NK_API void                 nk_glfw3_load_font_atlas(struct nk_glfw* glfw);
-NK_API void                 nk_glfw3_new_frame(struct nk_glfw* glfw);
-NK_API void                 nk_glfw3_render(struct nk_glfw* glfw, enum nk_anti_aliasing AA);
+NK_API void                 nk_glfw3_new_frame(struct nk_glfw* glfw, float deltatime);
+NK_API void                 nk_glfw3_render(struct nk_glfw* glfw);
 
 NK_API void                 nk_glfw3_device_destroy(struct nk_glfw_device* dev);
 NK_API void                 nk_glfw3_device_create(struct nk_glfw_device* dev);

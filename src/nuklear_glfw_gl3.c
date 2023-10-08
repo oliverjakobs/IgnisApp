@@ -1,12 +1,6 @@
 #include "nuklear_glfw_gl3.h"
 #include "nuklear/nuklear_internal.h"
 
-struct nk_glfw_vertex {
-    float position[2];
-    float uv[2];
-    nk_byte col[4];
-};
-
 #define NK_SHADER_VERSION "#version 330 core\n"
 
 NK_API void
@@ -172,8 +166,10 @@ nk_glfw3_load_font_atlas(struct nk_glfw* glfw)
 }
 
 NK_API void
-nk_glfw3_new_frame(struct nk_glfw* glfw)
+nk_glfw3_new_frame(struct nk_glfw* glfw, float deltatime)
 {
+    glfw->ctx.delta_time_seconds = deltatime;
+
     struct nk_input* in = &glfw->ctx.input;
 
     nk_input_update_text_unicode(in, glfw->text, glfw->text_len);
@@ -192,7 +188,7 @@ nk_glfw3_new_frame(struct nk_glfw* glfw)
 }
 
 NK_API void
-nk_glfw3_render(struct nk_glfw* glfw, enum nk_anti_aliasing AA)
+nk_glfw3_render(struct nk_glfw* glfw)
 {
     struct nk_glfw_device* dev = &glfw->ogl;
 
@@ -206,23 +202,23 @@ nk_glfw3_render(struct nk_glfw* glfw, enum nk_anti_aliasing AA)
     {
         /* fill convert configuration */
         static const struct nk_draw_vertex_layout_element vertex_layout[] = {
-            {NK_VERTEX_POSITION, NK_FORMAT_FLOAT,    NK_OFFSETOF(struct nk_glfw_vertex, position)},
-            {NK_VERTEX_COLOR,    NK_FORMAT_R8G8B8A8, NK_OFFSETOF(struct nk_glfw_vertex, col)},
-            {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT,    NK_OFFSETOF(struct nk_glfw_vertex, uv)},
+            {NK_VERTEX_POSITION, NK_FORMAT_FLOAT,    0},
+            {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT,    8},
+            {NK_VERTEX_COLOR,    NK_FORMAT_R8G8B8A8, 16},
             {NK_VERTEX_LAYOUT_END}
         };
 
         struct nk_convert_config config = {
             .vertex_layout = vertex_layout,
-            .vertex_size = sizeof(struct nk_glfw_vertex),
-            .vertex_alignment = NK_ALIGNOF(struct nk_glfw_vertex),
+            .vertex_size = 20,
+            .vertex_alignment = 4,
             .tex_null = dev->tex_null,
             .circle_segment_count = 22,
             .curve_segment_count = 22,
             .arc_segment_count = 22,
             .global_alpha = 1.0f,
-            .shape_AA = AA,
-            .line_AA = AA
+            .shape_AA = nk_true,
+            .line_AA = nk_true
         };
 
         /* setup buffers to load vertices and elements */

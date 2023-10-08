@@ -198,8 +198,7 @@ struct nk_rect {float x,y,w,h;};
 struct nk_recti {short x,y,w,h;};
 typedef char nk_glyph[NK_UTF_SIZE];
 typedef union {void *ptr; int id;} nk_handle;
-struct nk_image {nk_handle handle; nk_ushort w, h; nk_ushort region[4];};
-struct nk_nine_slice {struct nk_image img; nk_ushort l, t, r, b;};
+struct nk_image {nk_handle handle; nk_ushort w, h;};
 struct nk_cursor {struct nk_image img; struct nk_vec2 size, offset;};
 struct nk_scroll {nk_uint x, y;};
 
@@ -724,7 +723,6 @@ enum nk_buttons {
 /// __nk__draw_end__    | Returns the end of the vertex draw list
 /// __nk_draw_foreach__ | Iterates over each vertex draw command inside the vertex draw list
 */
-enum nk_anti_aliasing {NK_ANTI_ALIASING_OFF, NK_ANTI_ALIASING_ON};
 enum nk_convert_result {
     NK_CONVERT_SUCCESS = 0,
     NK_CONVERT_INVALID_PARAM = 1,
@@ -738,8 +736,8 @@ struct nk_draw_null_texture {
 };
 struct nk_convert_config {
     float global_alpha; /* global alpha value */
-    enum nk_anti_aliasing line_AA; /* line anti-aliasing flag can be turned off if you are tight on memory */
-    enum nk_anti_aliasing shape_AA; /* shape anti-aliasing flag can be turned off if you are tight on memory */
+    nk_bool line_AA; /* line anti-aliasing flag can be turned off if you are tight on memory */
+    nk_bool shape_AA; /* shape anti-aliasing flag can be turned off if you are tight on memory */
     unsigned circle_segment_count; /* number of segments used for circles: default to 22 */
     unsigned arc_segment_count; /* number of segments used for arcs: default to 22 */
     unsigned curve_segment_count; /* number of segments used for curves: default to 22 */
@@ -3291,22 +3289,6 @@ NK_API nk_handle nk_handle_id(int);
 NK_API struct nk_image nk_image_handle(nk_handle);
 NK_API struct nk_image nk_image_ptr(void*);
 NK_API struct nk_image nk_image_id(int);
-NK_API nk_bool nk_image_is_subimage(const struct nk_image* img);
-NK_API struct nk_image nk_subimage_ptr(void*, nk_ushort w, nk_ushort h, struct nk_rect sub_region);
-NK_API struct nk_image nk_subimage_id(int, nk_ushort w, nk_ushort h, struct nk_rect sub_region);
-NK_API struct nk_image nk_subimage_handle(nk_handle, nk_ushort w, nk_ushort h, struct nk_rect sub_region);
-/* =============================================================================
- *
- *                                  9-SLICE
- *
- * ============================================================================= */
-NK_API struct nk_nine_slice nk_nine_slice_handle(nk_handle, nk_ushort l, nk_ushort t, nk_ushort r, nk_ushort b);
-NK_API struct nk_nine_slice nk_nine_slice_ptr(void*, nk_ushort l, nk_ushort t, nk_ushort r, nk_ushort b);
-NK_API struct nk_nine_slice nk_nine_slice_id(int, nk_ushort l, nk_ushort t, nk_ushort r, nk_ushort b);
-NK_API int nk_nine_slice_is_sub9slice(const struct nk_nine_slice* img);
-NK_API struct nk_nine_slice nk_sub9slice_ptr(void*, nk_ushort w, nk_ushort h, struct nk_rect sub_region, nk_ushort l, nk_ushort t, nk_ushort r, nk_ushort b);
-NK_API struct nk_nine_slice nk_sub9slice_id(int, nk_ushort w, nk_ushort h, struct nk_rect sub_region, nk_ushort l, nk_ushort t, nk_ushort r, nk_ushort b);
-NK_API struct nk_nine_slice nk_sub9slice_handle(nk_handle, nk_ushort w, nk_ushort h, struct nk_rect sub_region, nk_ushort l, nk_ushort t, nk_ushort r, nk_ushort b);
 /* =============================================================================
  *
  *                                  MATH
@@ -3516,14 +3498,10 @@ typedef void(*nk_query_font_glyph_f)(nk_handle handle, float font_height,
                                     nk_rune codepoint, nk_rune next_codepoint);
 
 struct nk_user_font_glyph {
-    struct nk_vec2 uv[2];
-    /* texture coordinates */
-    struct nk_vec2 offset;
-    /* offset between top left and glyph */
-    float width, height;
-    /* size of the glyph  */
-    float xadvance;
-    /* offset to the next glyph */
+    struct nk_vec2 uv[2];   /* texture coordinates */
+    struct nk_vec2 offset;  /* offset between top left and glyph */
+    float width, height;    /* size of the glyph */
+    float xadvance;         /* offset to the next glyph */
 };
 
 struct nk_user_font {
@@ -3982,7 +3960,6 @@ NK_API void nk_fill_triangle(struct nk_command_buffer*, struct nk_vec2 a, struct
 
 /* misc */
 NK_API void nk_draw_image(struct nk_command_buffer*, struct nk_rect, const struct nk_image*, struct nk_color);
-NK_API void nk_draw_nine_slice(struct nk_command_buffer*, struct nk_rect, const struct nk_nine_slice*, struct nk_color);
 NK_API void nk_draw_text(struct nk_command_buffer*, struct nk_rect, const char *text, int len, const struct nk_user_font*, struct nk_color, struct nk_color);
 NK_API void nk_push_scissor(struct nk_command_buffer*, struct nk_rect);
 
@@ -4052,8 +4029,8 @@ typedef nk_ushort nk_draw_index;
 
 enum nk_draw_vertex_layout_attribute {
     NK_VERTEX_POSITION,
-    NK_VERTEX_COLOR,
     NK_VERTEX_TEXCOORD,
+    NK_VERTEX_COLOR,
     NK_VERTEX_ATTRIBUTE_COUNT
 };
 
@@ -4147,14 +4124,12 @@ NK_API void nk_draw_list_add_text(struct nk_draw_list*, const struct nk_user_fon
  * ===============================================================*/
 enum nk_style_item_type {
     NK_STYLE_ITEM_COLOR,
-    NK_STYLE_ITEM_IMAGE,
-    NK_STYLE_ITEM_NINE_SLICE
+    NK_STYLE_ITEM_IMAGE
 };
 
 union nk_style_item_data {
     struct nk_color color;
     struct nk_image image;
-    struct nk_nine_slice slice;
 };
 
 struct nk_style_item {
@@ -4582,7 +4557,6 @@ struct nk_style {
 
 NK_API struct nk_style_item nk_style_item_color(struct nk_color);
 NK_API struct nk_style_item nk_style_item_image(struct nk_image img);
-NK_API struct nk_style_item nk_style_item_nine_slice(struct nk_nine_slice slice);
 NK_API struct nk_style_item nk_style_item_hide(void);
 
 /*==============================================================

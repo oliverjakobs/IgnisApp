@@ -204,14 +204,11 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
         /* draw header background */
         header.h += 1.0f;
 
-        switch(background->type) {
+        switch(background->type)
+        {
             case NK_STYLE_ITEM_IMAGE:
                 text.background = nk_rgba(0,0,0,0);
                 nk_draw_image(&win->buffer, header, &background->data.image, nk_white);
-                break;
-            case NK_STYLE_ITEM_NINE_SLICE:
-                text.background = nk_rgba(0, 0, 0, 0);
-                nk_draw_nine_slice(&win->buffer, header, &background->data.slice, nk_white);
                 break;
             case NK_STYLE_ITEM_COLOR:
                 text.background = background->data.color;
@@ -281,19 +278,19 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
     }
 
     /* draw window background */
-    if (!(layout->flags & NK_WINDOW_MINIMIZED) && !(layout->flags & NK_WINDOW_DYNAMIC)) {
-        struct nk_rect body;
-        body.x = win->bounds.x;
-        body.w = win->bounds.w;
-        body.y = (win->bounds.y + layout->header_height);
-        body.h = (win->bounds.h - layout->header_height);
+    if (!(layout->flags & NK_WINDOW_MINIMIZED) && !(layout->flags & NK_WINDOW_DYNAMIC))
+    {
+        struct nk_rect body = {
+            .x = win->bounds.x,
+            .y = (win->bounds.y + layout->header_height),
+            .w = win->bounds.w,
+            .h = (win->bounds.h - layout->header_height)
+        };
 
-        switch(style->window.fixed_background.type) {
+        switch(style->window.fixed_background.type)
+        {
             case NK_STYLE_ITEM_IMAGE:
                 nk_draw_image(out, body, &style->window.fixed_background.data.image, nk_white);
-                break;
-            case NK_STYLE_ITEM_NINE_SLICE:
-                nk_draw_nine_slice(out, body, &style->window.fixed_background.data.slice, nk_white);
                 break;
             case NK_STYLE_ITEM_COLOR:
                 nk_fill_rect(out, body, 0, style->window.fixed_background.data.color);
@@ -482,11 +479,10 @@ nk_panel_end(struct nk_context *ctx)
     /* hide scroll if no user input */
     if (window->flags & NK_WINDOW_SCROLL_AUTO_HIDE)
     {
-        int has_input = nk_input_mouse_moved(&ctx->input) || ctx->input.scroll_delta.y != 0;
-        int is_window_hovered = nk_window_is_hovered(ctx);
-        int any_item_active = (ctx->last_widget_state & NK_WIDGET_STATE_MODIFIED);
+        nk_bool has_input = nk_input_mouse_moved(&ctx->input) || ctx->input.scroll_delta.y != 0;
+        nk_bool hovered = nk_window_is_hovered(ctx);
 
-        if ((!has_input && is_window_hovered) || (!is_window_hovered && !any_item_active))
+        if ((!has_input && hovered) || !hovered)
             window->scrollbar_hiding_timer += ctx->delta_time_seconds;
         else
             window->scrollbar_hiding_timer = 0;
