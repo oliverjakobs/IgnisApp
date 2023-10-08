@@ -1419,21 +1419,6 @@ NK_API nk_bool nk_window_is_active(struct nk_context*, const char*);
 /// Returns `true(1)` if any window is hovered or `false(0)` otherwise
 */
 NK_API nk_bool nk_window_is_any_hovered(struct nk_context*);
-/*/// #### nk_item_is_any_active
-/// Returns if the any window is being hovered or any widget is currently active.
-/// Can be used to decide if input should be processed by UI or your specific input handling.
-/// Example could be UI and 3D camera to move inside a 3D space.
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// nk_bool nk_item_is_any_active(struct nk_context*);
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///
-/// Parameter   | Description
-/// ------------|-----------------------------------------------------------
-/// __ctx__     | Must point to an previously initialized `nk_context` struct
-///
-/// Returns `true(1)` if any window is hovered or any item is active or `false(0)` otherwise
-*/
-NK_API nk_bool nk_item_is_any_active(struct nk_context*);
 /*/// #### nk_window_set_bounds
 /// Updates position and size of window with passed in name
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
@@ -4893,7 +4878,6 @@ struct nk_context {
     struct nk_style style;
     struct nk_buffer memory;
     struct nk_clipboard clip;
-    nk_flags last_widget_state;
     enum nk_button_behavior button_behavior;
     struct nk_configuration_stacks stacks;
     float delta_time_seconds;

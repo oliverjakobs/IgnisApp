@@ -198,7 +198,6 @@ nk_selectable_text(struct nk_context *ctx, const char *str, int len,
     const struct nk_input *in;
     const struct nk_style *style;
 
-    enum nk_widget_layout_states state;
     struct nk_rect bounds;
 
     NK_ASSERT(ctx);
@@ -212,11 +211,12 @@ nk_selectable_text(struct nk_context *ctx, const char *str, int len,
     layout = win->layout;
     style = &ctx->style;
 
-    state = nk_widget(&bounds, ctx);
-    if (!state) return 0;
-    in = (state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    return nk_do_selectable(&ctx->last_widget_state, &win->buffer, bounds,
-                str, len, align, value, &style->selectable, in, style->font);
+    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    if (!layout_state) return 0;
+    in = (layout_state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    return nk_do_selectable(&state, &win->buffer, bounds, str, len, align, value, &style->selectable, in, style->font);
 }
 NK_API nk_bool
 nk_selectable_image_text(struct nk_context *ctx, struct nk_image img,
@@ -227,7 +227,6 @@ nk_selectable_image_text(struct nk_context *ctx, struct nk_image img,
     const struct nk_input *in;
     const struct nk_style *style;
 
-    enum nk_widget_layout_states state;
     struct nk_rect bounds;
 
     NK_ASSERT(ctx);
@@ -241,11 +240,12 @@ nk_selectable_image_text(struct nk_context *ctx, struct nk_image img,
     layout = win->layout;
     style = &ctx->style;
 
-    state = nk_widget(&bounds, ctx);
-    if (!state) return 0;
-    in = (state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    return nk_do_selectable_image(&ctx->last_widget_state, &win->buffer, bounds,
-                str, len, align, value, &img, &style->selectable, in, style->font);
+    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    if (!layout_state) return 0;
+    in = (layout_state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    return nk_do_selectable_image(&state, &win->buffer, bounds, str, len, align, value, &img, &style->selectable, in, style->font);
 }
 NK_API nk_bool
 nk_selectable_symbol_text(struct nk_context *ctx, enum nk_symbol_type sym,
@@ -256,7 +256,6 @@ nk_selectable_symbol_text(struct nk_context *ctx, enum nk_symbol_type sym,
     const struct nk_input *in;
     const struct nk_style *style;
 
-    enum nk_widget_layout_states state;
     struct nk_rect bounds;
 
     NK_ASSERT(ctx);
@@ -270,11 +269,12 @@ nk_selectable_symbol_text(struct nk_context *ctx, enum nk_symbol_type sym,
     layout = win->layout;
     style = &ctx->style;
 
-    state = nk_widget(&bounds, ctx);
-    if (!state) return 0;
-    in = (state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    return nk_do_selectable_symbol(&ctx->last_widget_state, &win->buffer, bounds,
-                str, len, align, value, sym, &style->selectable, in, style->font);
+    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    if (!layout_state) return 0;
+    in = (layout_state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    return nk_do_selectable_symbol(&state, &win->buffer, bounds, str, len, align, value, sym, &style->selectable, in, style->font);
 }
 NK_API nk_bool
 nk_selectable_symbol_label(struct nk_context *ctx, enum nk_symbol_type sym,

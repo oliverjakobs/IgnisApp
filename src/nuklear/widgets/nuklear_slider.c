@@ -209,7 +209,6 @@ nk_slider_float(struct nk_context *ctx, float min_value, float *value, float max
     int ret = 0;
     float old_value;
     struct nk_rect bounds;
-    enum nk_widget_layout_states state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -222,13 +221,13 @@ nk_slider_float(struct nk_context *ctx, float min_value, float *value, float max
     style = &ctx->style;
     layout = win->layout;
 
-    state = nk_widget(&bounds, ctx);
-    if (!state) return ret;
+    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    if (!layout_state) return ret;
     in = (/*state == NK_WIDGET_ROM || */ layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     old_value = *value;
-    *value = nk_do_slider(&ctx->last_widget_state, &win->buffer, bounds, min_value,
-                old_value, max_value, value_step, &style->slider, in, style->font);
+    nk_flags state = 0;
+    *value = nk_do_slider(&state, &win->buffer, bounds, min_value, old_value, max_value, value_step, &style->slider, in, style->font);
     return (old_value > *value || old_value < *value);
 }
 NK_API float

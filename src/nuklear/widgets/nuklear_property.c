@@ -327,21 +327,7 @@ nk_property(struct nk_context *ctx, const char *name, struct nk_property_variant
     struct nk_rect bounds;
     enum nk_widget_layout_states s;
 
-    int *state = 0;
-    nk_hash hash = 0;
-    char *buffer = 0;
-    int *len = 0;
-    int *cursor = 0;
-    int *select_begin = 0;
-    int *select_end = 0;
-    int old_state;
 
-    char dummy_buffer[NK_MAX_NUMBER_BUFFER];
-    int dummy_state = NK_PROPERTY_DEFAULT;
-    int dummy_length = 0;
-    int dummy_cursor = 0;
-    int dummy_select_begin = 0;
-    int dummy_select_end = 0;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -356,34 +342,45 @@ nk_property(struct nk_context *ctx, const char *name, struct nk_property_variant
     if (!s) return;
 
     /* calculate hash from name */
-    if (name[0] == '#') {
+    nk_hash hash = 0;
+    if (name[0] == '#')
+    {
         hash = nk_murmur_hash(name, (int)nk_strlen(name), win->property.seq++);
         name++; /* special number hash */
     } else hash = nk_murmur_hash(name, (int)nk_strlen(name), 42);
 
     /* check if property is currently hot item */
-    if (win->property.active && hash == win->property.name) {
+    int dummy_state = NK_PROPERTY_DEFAULT;
+    char dummy_buffer[NK_MAX_NUMBER_BUFFER];
+    int dummy_length = 0;
+    int dummy_cursor = 0;
+    int dummy_select_begin = 0;
+    int dummy_select_end = 0;
+
+    int* state = &dummy_state;
+    char* buffer = dummy_buffer;
+    int* len = &dummy_length;
+    int* cursor = &dummy_cursor;
+    int* select_begin = &dummy_select_begin;
+    int* select_end = &dummy_select_end;
+
+    if (win->property.active && hash == win->property.name)
+    {
         buffer = win->property.buffer;
         len = &win->property.length;
         cursor = &win->property.cursor;
         state = &win->property.state;
         select_begin = &win->property.select_start;
         select_end = &win->property.select_end;
-    } else {
-        buffer = dummy_buffer;
-        len = &dummy_length;
-        cursor = &dummy_cursor;
-        state = &dummy_state;
-        select_begin =  &dummy_select_begin;
-        select_end = &dummy_select_end;
     }
 
     /* execute property widget */
-    old_state = *state;
+    int old_state = *state;
     ctx->text_edit.clip = ctx->clip;
-    in = ((s == NK_WIDGET_ROM && !win->property.active) ||
-        layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    nk_do_property(&ctx->last_widget_state, &win->buffer, bounds, name,
+    in = ((s == NK_WIDGET_ROM && !win->property.active) || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags ws = 0;
+    nk_do_property(&ws, &win->buffer, bounds, name,
         variant, inc_per_pixel, buffer, len, state, cursor, select_begin,
         select_end, &style->property, filter, in, style->font, &ctx->text_edit,
         ctx->button_behavior);

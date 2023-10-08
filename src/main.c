@@ -167,7 +167,7 @@ void onTick(MinimalApp* app, float deltatime)
     }
     nk_end(ctx);
 
-    //calculator(ctx);
+    calculator(ctx);
     overview(ctx);
     //node_editor(ctx);
 

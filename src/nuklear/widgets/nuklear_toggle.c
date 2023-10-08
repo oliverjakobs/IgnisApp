@@ -167,21 +167,14 @@ nk_do_toggle(nk_flags *state,
         style->draw_end(out, style->userdata);
     return (was_active != *active);
 }
-/*----------------------------------------------------------------
- *
- *                          CHECKBOX
- *
- * --------------------------------------------------------------*/
-NK_API nk_bool
-nk_check_text(struct nk_context *ctx, const char *text, int len, nk_bool active)
+nk_bool nk_toggle_text(struct nk_context* ctx, enum nk_toggle_type type, const char* text, int len, nk_bool active)
 {
-    struct nk_window *win;
-    struct nk_panel *layout;
-    const struct nk_input *in;
-    const struct nk_style *style;
+    struct nk_window* win;
+    struct nk_panel* layout;
+    const struct nk_input* in;
+    const struct nk_style* style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -193,12 +186,24 @@ nk_check_text(struct nk_context *ctx, const char *text, int len, nk_bool active)
     style = &ctx->style;
     layout = win->layout;
 
-    state = nk_widget(&bounds, ctx);
-    if (!state) return active;
-    in = (state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    nk_do_toggle(&ctx->last_widget_state, &win->buffer, bounds, &active,
-        text, len, NK_TOGGLE_CHECK, &style->checkbox, in, style->font);
+    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    if (!layout_state) return active;
+    in = (layout_state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    nk_do_toggle(&state, &win->buffer, bounds, &active, text, len, type, &style->checkbox, in, style->font);
     return active;
+}
+
+/*----------------------------------------------------------------
+ *
+ *                          CHECKBOX
+ *
+ * --------------------------------------------------------------*/
+NK_API nk_bool
+nk_check_text(struct nk_context *ctx, const char *text, int len, nk_bool active)
+{
+    return nk_toggle_text(ctx, NK_TOGGLE_CHECK, text, len, active);
 }
 NK_API unsigned int
 nk_check_flags_text(struct nk_context *ctx, const char *text, int len,
@@ -268,42 +273,18 @@ NK_API nk_bool nk_checkbox_flags_label(struct nk_context *ctx, const char *label
  *
  * --------------------------------------------------------------*/
 NK_API nk_bool
-nk_option_text(struct nk_context *ctx, const char *text, int len, nk_bool is_active)
+nk_option_text(struct nk_context *ctx, const char *text, int len, nk_bool active)
 {
-    struct nk_window *win;
-    struct nk_panel *layout;
-    const struct nk_input *in;
-    const struct nk_style *style;
-
-    struct nk_rect bounds;
-    enum nk_widget_layout_states state;
-
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout)
-        return is_active;
-
-    win = ctx->current;
-    style = &ctx->style;
-    layout = win->layout;
-
-    state = nk_widget(&bounds, ctx);
-    if (!state) return (int)state;
-    in = (state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    nk_do_toggle(&ctx->last_widget_state, &win->buffer, bounds, &is_active,
-        text, len, NK_TOGGLE_OPTION, &style->option, in, style->font);
-    return is_active;
+    return nk_toggle_text(ctx, NK_TOGGLE_OPTION, text, len, active);
 }
 NK_API nk_bool
 nk_radio_text(struct nk_context *ctx, const char *text, int len, nk_bool *active)
 {
-    int old_value;
     NK_ASSERT(ctx);
     NK_ASSERT(text);
     NK_ASSERT(active);
     if (!ctx || !text || !active) return 0;
-    old_value = *active;
+    nk_bool old_value = *active;
     *active = nk_option_text(ctx, text, len, old_value);
     return old_value != *active;
 }

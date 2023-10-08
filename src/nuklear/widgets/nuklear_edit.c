@@ -756,8 +756,6 @@ nk_edit_buffer(struct nk_context *ctx, nk_flags flags,
     struct nk_window *win;
     struct nk_style *style;
     struct nk_input *in;
-
-    enum nk_widget_layout_states state;
     struct nk_rect bounds;
 
     nk_flags ret_flags = 0;
@@ -774,8 +772,8 @@ nk_edit_buffer(struct nk_context *ctx, nk_flags flags,
 
     win = ctx->current;
     style = &ctx->style;
-    state = nk_widget(&bounds, ctx);
-    if (!state) return state;
+    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    if (!layout_state) return layout_state;
     in = (win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     /* check if edit is currently hot item */
@@ -796,11 +794,13 @@ nk_edit_buffer(struct nk_context *ctx, nk_flags flags,
     filter = (!filter) ? nk_filter_default: filter;
     prev_state = (unsigned char)edit->active;
     in = (flags & NK_EDIT_READ_ONLY) ? 0: in;
-    ret_flags = nk_do_edit(&ctx->last_widget_state, &win->buffer, bounds, flags,
-                    filter, edit, &style->edit, in, style->font);
 
-    if (ctx->last_widget_state & NK_WIDGET_STATE_HOVER)
+    nk_flags state = 0;
+    ret_flags = nk_do_edit(&state, &win->buffer, bounds, flags, filter, edit, &style->edit, in, style->font);
+
+    if (state & NK_WIDGET_STATE_HOVER)
         ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_TEXT];
+
     if (edit->active && prev_state != edit->active) {
         /* current edit is now hot */
         win->edit.active = nk_true;
@@ -808,7 +808,8 @@ nk_edit_buffer(struct nk_context *ctx, nk_flags flags,
     } else if (prev_state && !edit->active) {
         /* current edit is now cold */
         win->edit.active = nk_false;
-    } return ret_flags;
+    }
+    return ret_flags;
 }
 NK_API nk_flags
 nk_edit_string_zero_terminated(struct nk_context *ctx, nk_flags flags,

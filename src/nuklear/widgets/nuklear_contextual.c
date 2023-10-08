@@ -74,7 +74,6 @@ nk_contextual_item_text(struct nk_context *ctx, const char *text, int len,
     const struct nk_style *style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -84,12 +83,14 @@ nk_contextual_item_text(struct nk_context *ctx, const char *text, int len,
 
     win = ctx->current;
     style = &ctx->style;
-    state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
-    if (!state) return nk_false;
+    enum nk_widget_layout_states layout_state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
+    if (!layout_state) return nk_false;
 
-    in = (state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    if (nk_do_button_text(&ctx->last_widget_state, &win->buffer, bounds,
-        text, len, alignment, NK_BUTTON_DEFAULT, &style->contextual_button, in, style->font)) {
+    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    if (nk_do_button_text(&state, &win->buffer, bounds, text, len, alignment, NK_BUTTON_DEFAULT, &style->contextual_button, in, style->font))
+    {
         nk_contextual_close(ctx);
         return nk_true;
     }
@@ -109,7 +110,6 @@ nk_contextual_item_image_text(struct nk_context *ctx, struct nk_image img,
     const struct nk_style *style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -119,12 +119,13 @@ nk_contextual_item_image_text(struct nk_context *ctx, struct nk_image img,
 
     win = ctx->current;
     style = &ctx->style;
-    state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
-    if (!state) return nk_false;
+    enum nk_widget_layout_states layout_state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
+    if (!layout_state) return nk_false;
+    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
-    in = (state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    if (nk_do_button_text_image(&ctx->last_widget_state, &win->buffer, bounds,
-        img, text, len, align, NK_BUTTON_DEFAULT, &style->contextual_button, style->font, in)){
+    nk_flags state = 0;
+    if (nk_do_button_text_image(&state, &win->buffer, bounds, img, text, len, align, NK_BUTTON_DEFAULT, &style->contextual_button, style->font, in))
+    {
         nk_contextual_close(ctx);
         return nk_true;
     }
@@ -145,7 +146,6 @@ nk_contextual_item_symbol_text(struct nk_context *ctx, enum nk_symbol_type symbo
     const struct nk_style *style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -155,11 +155,12 @@ nk_contextual_item_symbol_text(struct nk_context *ctx, enum nk_symbol_type symbo
 
     win = ctx->current;
     style = &ctx->style;
-    state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
-    if (!state) return nk_false;
+    enum nk_widget_layout_states layout_state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
+    if (!layout_state) return nk_false;
+    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
-    in = (state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    if (nk_do_button_text_symbol(&ctx->last_widget_state, &win->buffer, bounds,
+    nk_flags state = 0;
+    if (nk_do_button_text_symbol(&state, &win->buffer, bounds,
         symbol, text, len, align, NK_BUTTON_DEFAULT, &style->contextual_button, style->font, in)) {
         nk_contextual_close(ctx);
         return nk_true;
@@ -167,8 +168,7 @@ nk_contextual_item_symbol_text(struct nk_context *ctx, enum nk_symbol_type symbo
     return nk_false;
 }
 NK_API nk_bool
-nk_contextual_item_symbol_label(struct nk_context *ctx, enum nk_symbol_type symbol,
-    const char *text, nk_flags align)
+nk_contextual_item_symbol_label(struct nk_context *ctx, enum nk_symbol_type symbol, const char *text, nk_flags align)
 {
     return nk_contextual_item_symbol_text(ctx, symbol, text, nk_strlen(text), align);
 }

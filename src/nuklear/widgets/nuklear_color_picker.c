@@ -180,16 +180,16 @@ nk_do_color_picker(nk_flags *state,
     nk_draw_color_picker(out, &matrix, &hue_bar, (fmt == NK_RGBA) ? &alpha_bar:0, *col);
     return ret;
 }
+
 NK_API nk_bool
-nk_color_pick(struct nk_context * ctx, struct nk_colorf *color,
-    enum nk_color_format fmt)
+nk_color_pick(struct nk_context *ctx, struct nk_colorf *color, enum nk_color_format fmt)
 {
     struct nk_window *win;
     struct nk_panel *layout;
     const struct nk_style *config;
     const struct nk_input *in;
 
-    enum nk_widget_layout_states state;
+    ;
     struct nk_rect bounds;
 
     NK_ASSERT(ctx);
@@ -202,15 +202,16 @@ nk_color_pick(struct nk_context * ctx, struct nk_colorf *color,
     win = ctx->current;
     config = &ctx->style;
     layout = win->layout;
-    state = nk_widget(&bounds, ctx);
-    if (!state) return 0;
-    in = (state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    return nk_do_color_picker(&ctx->last_widget_state, &win->buffer, color, fmt, bounds,
-                nk_vec2(0,0), in, config->font);
+    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    if (!layout_state) return 0;
+    in = (layout_state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    return nk_do_color_picker(&state, &win->buffer, color, fmt, bounds, nk_vec2(0,0), in, config->font);
 }
+
 NK_API struct nk_colorf
-nk_color_picker(struct nk_context *ctx, struct nk_colorf color,
-    enum nk_color_format fmt)
+nk_color_picker(struct nk_context *ctx, struct nk_colorf color, enum nk_color_format fmt)
 {
     nk_color_pick(ctx, &color, fmt);
     return color;

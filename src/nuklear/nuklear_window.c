@@ -494,13 +494,6 @@ nk_window_is_any_hovered(struct nk_context *ctx)
     return 0;
 }
 NK_API nk_bool
-nk_item_is_any_active(struct nk_context *ctx)
-{
-    int any_hovered = nk_window_is_any_hovered(ctx);
-    int any_active = (ctx->last_widget_state & NK_WIDGET_STATE_MODIFIED);
-    return any_hovered || any_active;
-}
-NK_API nk_bool
 nk_window_is_collapsed(struct nk_context *ctx, const char *name)
 {
     int title_len;

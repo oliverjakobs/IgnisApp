@@ -117,7 +117,6 @@ nk_menu_begin_text(struct nk_context *ctx, const char *title, int len,
     const struct nk_input *in;
     struct nk_rect header;
     int is_clicked = nk_false;
-    nk_flags state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -126,10 +125,12 @@ nk_menu_begin_text(struct nk_context *ctx, const char *title, int len,
         return 0;
 
     win = ctx->current;
-    state = nk_widget(&header, ctx);
-    if (!state) return 0;
-    in = (state == NK_WIDGET_ROM || win->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    if (nk_do_button_text(&ctx->last_widget_state, &win->buffer, header,
+    enum nk_widget_layout_states layout_state = nk_widget(&header, ctx);
+    if (!layout_state) return 0;
+    in = (layout_state == NK_WIDGET_ROM || win->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    if (nk_do_button_text(&state, &win->buffer, header,
         title, len, align, NK_BUTTON_DEFAULT, &ctx->style.menu_button, in, ctx->style.font))
         is_clicked = nk_true;
     return nk_menu_begin(ctx, win, title, is_clicked, header, size);
@@ -147,7 +148,6 @@ nk_menu_begin_image(struct nk_context *ctx, const char *id, struct nk_image img,
     struct nk_rect header;
     const struct nk_input *in;
     int is_clicked = nk_false;
-    nk_flags state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -156,10 +156,12 @@ nk_menu_begin_image(struct nk_context *ctx, const char *id, struct nk_image img,
         return 0;
 
     win = ctx->current;
-    state = nk_widget(&header, ctx);
-    if (!state) return 0;
-    in = (state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    if (nk_do_button_image(&ctx->last_widget_state, &win->buffer, header,
+    enum nk_widget_layout_states layout_state = nk_widget(&header, ctx);
+    if (!layout_state) return 0;
+    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    if (nk_do_button_image(&state, &win->buffer, header,
         img, NK_BUTTON_DEFAULT, &ctx->style.menu_button, in))
         is_clicked = nk_true;
     return nk_menu_begin(ctx, win, id, is_clicked, header, size);
@@ -172,7 +174,6 @@ nk_menu_begin_symbol(struct nk_context *ctx, const char *id,
     const struct nk_input *in;
     struct nk_rect header;
     int is_clicked = nk_false;
-    nk_flags state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -181,10 +182,12 @@ nk_menu_begin_symbol(struct nk_context *ctx, const char *id,
         return 0;
 
     win = ctx->current;
-    state = nk_widget(&header, ctx);
-    if (!state) return 0;
-    in = (state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    if (nk_do_button_symbol(&ctx->last_widget_state,  &win->buffer, header,
+    enum nk_widget_layout_states layout_state = nk_widget(&header, ctx);
+    if (!layout_state) return 0;
+    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    if (nk_do_button_symbol(&state,  &win->buffer, header,
         sym, NK_BUTTON_DEFAULT, &ctx->style.menu_button, in, ctx->style.font))
         is_clicked = nk_true;
     return nk_menu_begin(ctx, win, id, is_clicked, header, size);
@@ -197,7 +200,6 @@ nk_menu_begin_image_text(struct nk_context *ctx, const char *title, int len,
     struct nk_rect header;
     const struct nk_input *in;
     int is_clicked = nk_false;
-    nk_flags state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -206,10 +208,12 @@ nk_menu_begin_image_text(struct nk_context *ctx, const char *title, int len,
         return 0;
 
     win = ctx->current;
-    state = nk_widget(&header, ctx);
-    if (!state) return 0;
-    in = (state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    if (nk_do_button_text_image(&ctx->last_widget_state, &win->buffer,
+    enum nk_widget_layout_states layout_state = nk_widget(&header, ctx);
+    if (!layout_state) return 0;
+    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    if (nk_do_button_text_image(&state, &win->buffer,
         header, img, title, len, align, NK_BUTTON_DEFAULT, &ctx->style.menu_button,
         ctx->style.font, in))
         is_clicked = nk_true;
@@ -229,7 +233,6 @@ nk_menu_begin_symbol_text(struct nk_context *ctx, const char *title, int len,
     struct nk_rect header;
     const struct nk_input *in;
     int is_clicked = nk_false;
-    nk_flags state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -238,13 +241,15 @@ nk_menu_begin_symbol_text(struct nk_context *ctx, const char *title, int len,
         return 0;
 
     win = ctx->current;
-    state = nk_widget(&header, ctx);
-    if (!state) return 0;
+    enum nk_widget_layout_states layout_state = nk_widget(&header, ctx);
+    if (!layout_state) return 0;
 
-    in = (state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    if (nk_do_button_text_symbol(&ctx->last_widget_state, &win->buffer,
-        header, sym, title, len, align, NK_BUTTON_DEFAULT, &ctx->style.menu_button,
-        ctx->style.font, in)) is_clicked = nk_true;
+    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+
+    nk_flags state = 0;
+    if (nk_do_button_text_symbol(&state, &win->buffer, header, sym, title, len, align, NK_BUTTON_DEFAULT, &ctx->style.menu_button, ctx->style.font, in)) 
+        is_clicked = nk_true;
+
     return nk_menu_begin(ctx, win, title, is_clicked, header, size);
 }
 NK_API nk_bool
