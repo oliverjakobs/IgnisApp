@@ -158,11 +158,12 @@ nk_do_toggle(nk_flags *state,
     /* draw selector */
     if (style->draw_begin)
         style->draw_begin(out, style->userdata);
-    if (type == NK_TOGGLE_CHECK) {
+
+    if (type == NK_TOGGLE_CHECK)
         nk_draw_checkbox(out, *state, style, *active, &label, &select, &cursor, str, len, font);
-    } else {
+    else
         nk_draw_option(out, *state, style, *active, &label, &select, &cursor, str, len, font);
-    }
+
     if (style->draw_end)
         style->draw_end(out, style->userdata);
     return (was_active != *active);

@@ -336,7 +336,7 @@ int overview(struct nk_context* ctx)
                  */
                 static float chart_selection = 8.0f;
                 static int current_weapon = 0;
-                static int check_values[5];
+                static int check_values[5] = {0};
                 static float position[3];
                 static struct nk_color combo_color = { 130, 50, 50, 255 };
                 static struct nk_colorf combo_color2 = { 0.509f, 0.705f, 0.2f, 1.0f };
@@ -368,10 +368,8 @@ int overview(struct nk_context* ctx)
                 if (nk_combo_begin_color(ctx, nk_rgb_cf(combo_color2), nk_vec2(200, 400))) {
                     enum color_mode { COL_RGB, COL_HSV };
                     static int col_mode = COL_RGB;
-#ifndef DEMO_DO_NOT_USE_COLOR_PICKER
                     nk_layout_row_dynamic(ctx, 120, 1);
                     combo_color2 = nk_color_picker(ctx, combo_color2, NK_RGBA);
-#endif
 
                     nk_layout_row_dynamic(ctx, 25, 2);
                     col_mode = nk_option_label(ctx, "RGB", col_mode == COL_RGB) ? COL_RGB : col_mode;

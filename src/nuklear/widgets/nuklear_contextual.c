@@ -7,8 +7,7 @@
  *
  * ===============================================================*/
 NK_API nk_bool
-nk_contextual_begin(struct nk_context *ctx, nk_flags flags, struct nk_vec2 size,
-    struct nk_rect trigger_bounds)
+nk_contextual_begin(struct nk_context *ctx, nk_flags flags, struct nk_vec2 size, struct nk_rect trigger_bounds)
 {
     struct nk_window *win;
     struct nk_window *popup;
@@ -66,8 +65,7 @@ nk_contextual_begin(struct nk_context *ctx, nk_flags flags, struct nk_vec2 size,
     return ret;
 }
 NK_API nk_bool
-nk_contextual_item_text(struct nk_context *ctx, const char *text, int len,
-    nk_flags alignment)
+nk_contextual_item_text(struct nk_context *ctx, const char *text, int len, nk_flags alignment)
 {
     struct nk_window *win;
     const struct nk_input *in;
@@ -102,8 +100,7 @@ nk_contextual_item_label(struct nk_context *ctx, const char *label, nk_flags ali
     return nk_contextual_item_text(ctx, label, nk_strlen(label), align);
 }
 NK_API nk_bool
-nk_contextual_item_image_text(struct nk_context *ctx, struct nk_image img,
-    const char *text, int len, nk_flags align)
+nk_contextual_item_image_text(struct nk_context *ctx, struct nk_image img, const char *text, int len, nk_flags align)
 {
     struct nk_window *win;
     const struct nk_input *in;
@@ -132,14 +129,12 @@ nk_contextual_item_image_text(struct nk_context *ctx, struct nk_image img,
     return nk_false;
 }
 NK_API nk_bool
-nk_contextual_item_image_label(struct nk_context *ctx, struct nk_image img,
-    const char *label, nk_flags align)
+nk_contextual_item_image_label(struct nk_context *ctx, struct nk_image img, const char *label, nk_flags align)
 {
     return nk_contextual_item_image_text(ctx, img, label, nk_strlen(label), align);
 }
 NK_API nk_bool
-nk_contextual_item_symbol_text(struct nk_context *ctx, enum nk_symbol_type symbol,
-    const char *text, int len, nk_flags align)
+nk_contextual_item_symbol_text(struct nk_context *ctx, enum nk_symbol_type symbol, const char *text, int len, nk_flags align)
 {
     struct nk_window *win;
     const struct nk_input *in;
