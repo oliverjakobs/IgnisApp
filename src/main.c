@@ -169,7 +169,7 @@ void onTick(MinimalApp* app, float deltatime)
 
     calculator(ctx);
     overview(ctx);
-    //node_editor(ctx);
+    node_editor(ctx);
 
     nk_glfw3_render(&glfw);
 }

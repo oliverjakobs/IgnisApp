@@ -290,3 +290,18 @@ nk_label_colored_wrap(struct nk_context *ctx, const char *str, struct nk_color c
     nk_text_wrap_colored(ctx, str, nk_strlen(str), color);
 }
 
+
+NK_API void nk_label_color(struct nk_context *ctx, struct nk_color color)
+{
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    if (!ctx || !ctx->current)
+        return 0;
+
+    struct nk_rect bounds;
+    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+
+
+    nk_fill_rect(&ctx->current->buffer, bounds, 0.0f, color);
+}
+

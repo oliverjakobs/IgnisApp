@@ -168,11 +168,11 @@ int overview(struct nk_context* ctx)
                 nk_layout_row_static(ctx, 30, 100, 3);
                 if (nk_button_label(ctx, "Button"))
                     fprintf(stdout, "Button pressed!\n");
-                nk_button_set_behavior(ctx, NK_BUTTON_REPEATER);
+                nk_button_push_behavior(ctx, NK_BUTTON_REPEATER);
                 if (nk_button_label(ctx, "Repeater"))
                     fprintf(stdout, "Repeater is being pressed!\n");
-                nk_button_set_behavior(ctx, NK_BUTTON_DEFAULT);
-                nk_button_color(ctx, nk_rgb(0, 0, 255));
+                nk_button_pop_behavior(ctx);
+                nk_label_color(ctx, nk_rgb(0, 0, 255));
 
                 nk_layout_row_static(ctx, 25, 25, 8);
                 nk_button_symbol(ctx, NK_SYMBOL_CIRCLE_SOLID);
@@ -734,7 +734,7 @@ int overview(struct nk_context* ctx)
             nk_label(ctx, "Right Click here:", NK_TEXT_LEFT);
             nk_layout_row_push(ctx, 50);
             bounds = nk_widget_bounds(ctx);
-            nk_button_color(ctx, color);
+            nk_label_color(ctx, color);
             nk_layout_row_end(ctx);
 
             if (nk_contextual_begin(ctx, 0, nk_vec2(350, 60), bounds)) {

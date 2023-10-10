@@ -121,7 +121,7 @@ extern "C" {
     #include <stdbool.h>
     #define NK_BOOL bool
   #else
-    #define NK_BOOL int /* could be char, use int for drop-in replacement backwards compatibility */
+    #define NK_BOOL unsigned int /* could be char, use int for drop-in replacement backwards compatibility */
   #endif
 #endif
 
@@ -2670,6 +2670,7 @@ NK_API void nk_text_colored(struct nk_context*, const char*, int, nk_flags, stru
 NK_API void nk_text_wrap(struct nk_context*, const char*, int);
 NK_API void nk_text_wrap_colored(struct nk_context*, const char*, int, struct nk_color);
 NK_API void nk_label(struct nk_context*, const char*, nk_flags align);
+NK_API void nk_label_color(struct nk_context*, struct nk_color);
 NK_API void nk_label_colored(struct nk_context*, const char*, nk_flags align, struct nk_color);
 NK_API void nk_label_wrap(struct nk_context*, const char*);
 NK_API void nk_label_colored_wrap(struct nk_context*, const char*, struct nk_color);
@@ -2697,22 +2698,18 @@ NK_API void nk_value_color_hex(struct nk_context*, const char *prefix, struct nk
  * ============================================================================= */
 NK_API nk_bool nk_button_text(struct nk_context*, const char *title, int len);
 NK_API nk_bool nk_button_label(struct nk_context*, const char *title);
-NK_API nk_bool nk_button_color(struct nk_context*, struct nk_color);
 NK_API nk_bool nk_button_symbol(struct nk_context*, enum nk_symbol_type);
 NK_API nk_bool nk_button_image(struct nk_context*, struct nk_image img);
+
 NK_API nk_bool nk_button_symbol_label(struct nk_context*, enum nk_symbol_type, const char*, nk_flags text_alignment);
 NK_API nk_bool nk_button_symbol_text(struct nk_context*, enum nk_symbol_type, const char*, int, nk_flags alignment);
+
 NK_API nk_bool nk_button_image_label(struct nk_context*, struct nk_image img, const char*, nk_flags text_alignment);
 NK_API nk_bool nk_button_image_text(struct nk_context*, struct nk_image img, const char*, int, nk_flags alignment);
-NK_API nk_bool nk_button_text_styled(struct nk_context*, const struct nk_style_button*, const char *title, int len);
-NK_API nk_bool nk_button_label_styled(struct nk_context*, const struct nk_style_button*, const char *title);
-NK_API nk_bool nk_button_symbol_styled(struct nk_context*, const struct nk_style_button*, enum nk_symbol_type);
-NK_API nk_bool nk_button_image_styled(struct nk_context*, const struct nk_style_button*, struct nk_image img);
-NK_API nk_bool nk_button_symbol_text_styled(struct nk_context*,const struct nk_style_button*, enum nk_symbol_type, const char*, int, nk_flags alignment);
-NK_API nk_bool nk_button_symbol_label_styled(struct nk_context *ctx, const struct nk_style_button *style, enum nk_symbol_type symbol, const char *title, nk_flags align);
+
 NK_API nk_bool nk_button_image_label_styled(struct nk_context*,const struct nk_style_button*, struct nk_image img, const char*, nk_flags text_alignment);
 NK_API nk_bool nk_button_image_text_styled(struct nk_context*,const struct nk_style_button*, struct nk_image img, const char*, int, nk_flags alignment);
-NK_API void nk_button_set_behavior(struct nk_context*, enum nk_button_behavior);
+
 NK_API nk_bool nk_button_push_behavior(struct nk_context*, enum nk_button_behavior);
 NK_API nk_bool nk_button_pop_behavior(struct nk_context*);
 /* =============================================================================
