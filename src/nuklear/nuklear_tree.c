@@ -285,11 +285,7 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
     label.w = NK_MIN(header.w - (sym.w + item_spacing.y + style->tab.indent), text_width);
     label.h = style->font->height;
 
-    if (img) {
-        nk_do_selectable_image(&dummy, &win->buffer, label, title, title_len, NK_TEXT_LEFT,
-            selected, img, &style->selectable, in, style->font);
-    } else nk_do_selectable(&dummy, &win->buffer, label, title, title_len, NK_TEXT_LEFT,
-            selected, &style->selectable, in, style->font);
+    nk_do_selectable(&dummy, &win->buffer, label, img, NK_SYMBOL_NONE, title, title_len, NK_TEXT_LEFT, selected, &style->selectable, in, style->font);
     }
     /* increase x-axis cursor widget position pointer */
     if (*state == NK_MAXIMIZED) {
