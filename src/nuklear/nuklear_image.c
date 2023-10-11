@@ -66,8 +66,6 @@ NK_API void nk_image(struct nk_context *ctx, struct nk_image img)
 
 NK_API void nk_image_color(struct nk_context *ctx, struct nk_image img, struct nk_color col)
 {
-    struct nk_window *win;
-
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);

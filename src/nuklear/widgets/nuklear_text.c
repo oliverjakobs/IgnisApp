@@ -296,7 +296,7 @@ NK_API void nk_label_color(struct nk_context *ctx, struct nk_color color)
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     if (!ctx || !ctx->current)
-        return 0;
+        return;
 
     struct nk_rect bounds;
     enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);

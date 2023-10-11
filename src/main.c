@@ -141,8 +141,8 @@ void onTick(MinimalApp* app, float deltatime)
             fprintf(stdout, "button pressed\n");
 
         nk_layout_row_dynamic(ctx, 30, 2);
-        if (nk_option_label(ctx, "easy", op == EASY)) op = EASY;
-        if (nk_option_label(ctx, "hard", op == HARD)) op = HARD;
+        nk_radio_label(ctx, "easy", &op, EASY);
+        nk_radio_label(ctx, "hard", &op, HARD);
 
         nk_layout_row_dynamic(ctx, 25, 1);
         nk_property_int(ctx, "Compression:", 0, &property, 100, 10, 1);
@@ -169,7 +169,7 @@ void onTick(MinimalApp* app, float deltatime)
 
     calculator(ctx);
     overview(ctx);
-    node_editor(ctx);
+    //node_editor(ctx);
 
     nk_glfw3_render(&glfw);
 }

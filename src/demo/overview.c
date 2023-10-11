@@ -212,9 +212,9 @@ int overview(struct nk_context* ctx)
                 nk_checkbox_label(ctx, "Checkbox", &checkbox);
 
                 nk_layout_row_static(ctx, 30, 80, 3);
-                option = nk_option_label(ctx, "optionA", option == A) ? A : option;
-                option = nk_option_label(ctx, "optionB", option == B) ? B : option;
-                option = nk_option_label(ctx, "optionC", option == C) ? C : option;
+                nk_radio_label(ctx, "optionA", &option, A);
+                nk_radio_label(ctx, "optionB", &option, B);
+                nk_radio_label(ctx, "optionC", &option, C);
 
                 nk_layout_row(ctx, NK_STATIC, 30, 2, ratio);
                 nk_labelf(ctx, NK_TEXT_LEFT, "Slider int");
@@ -372,8 +372,8 @@ int overview(struct nk_context* ctx)
                     combo_color2 = nk_color_picker(ctx, combo_color2, NK_RGBA);
 
                     nk_layout_row_dynamic(ctx, 25, 2);
-                    col_mode = nk_option_label(ctx, "RGB", col_mode == COL_RGB) ? COL_RGB : col_mode;
-                    col_mode = nk_option_label(ctx, "HSV", col_mode == COL_HSV) ? COL_HSV : col_mode;
+                    nk_radio_label(ctx, "RGB", &col_mode, COL_RGB);
+                    nk_radio_label(ctx, "HSV", &col_mode, COL_HSV);
 
                     nk_layout_row_dynamic(ctx, 25, 1);
                     if (col_mode == COL_RGB) {
