@@ -83,69 +83,55 @@ nk_draw_progress(struct nk_command_buffer *out, nk_flags state,
 NK_LIB nk_size
 nk_do_progress(nk_flags *state,
     struct nk_command_buffer *out, struct nk_rect bounds,
-    nk_size value, nk_size max, nk_bool modifiable,
+    nk_size value, nk_size max_value, nk_bool modifiable,
     const struct nk_style_progress *style, struct nk_input *in)
 {
-    float prog_scale;
-    nk_size prog_value;
-    struct nk_rect cursor;
-
     NK_ASSERT(style);
     NK_ASSERT(out);
     if (!out || !style) return 0;
 
     /* calculate progressbar cursor */
-    cursor.w = NK_MAX(bounds.w, 2 * style->padding.x + 2 * style->border);
-    cursor.h = NK_MAX(bounds.h, 2 * style->padding.y + 2 * style->border);
-    cursor = nk_pad_rect(bounds, nk_vec2(style->padding.x + style->border, style->padding.y + style->border));
-    prog_scale = (float)value / (float)max;
+    struct nk_rect cursor = {
+        .x = bounds.x + style->padding.x + style->border,
+        .y = bounds.y + style->padding.y + style->border,
+        .w = NK_MAX(bounds.w, 2 * (style->padding.x + style->border)),
+        .h = NK_MAX(bounds.h, 2 * (style->padding.y + style->border))
+    };
+    cursor.w -= 2 * (style->padding.x + style->border);
+    cursor.h -= 2 * (style->padding.y + style->border);
 
     /* update progressbar */
-    prog_value = NK_MIN(value, max);
-    prog_value = nk_progress_behavior(state, in, bounds, cursor,max, prog_value, modifiable);
-    cursor.w = cursor.w * prog_scale;
+    value = NK_CLAMP(0, value, max_value);
+    value = nk_progress_behavior(state, in, bounds, cursor, max_value, value, modifiable);
+
+    cursor.w *= (float)value / (float)max_value;
 
     /* draw progressbar */
     if (style->draw_begin) style->draw_begin(out, style->userdata);
-    nk_draw_progress(out, *state, style, &bounds, &cursor, value, max);
+    nk_draw_progress(out, *state, style, &bounds, &cursor, value, max_value);
     if (style->draw_end) style->draw_end(out, style->userdata);
-    return prog_value;
+
+    return value;
 }
-NK_API nk_bool
-nk_progress(struct nk_context *ctx, nk_size *cur, nk_size max, nk_bool is_modifyable)
+NK_API nk_size
+nk_progress(struct nk_context *ctx, nk_size cur, nk_size max, nk_bool modifyable)
 {
-    struct nk_window *win;
-    struct nk_panel *layout;
-    const struct nk_style *style;
-    struct nk_input *in;
-
-    struct nk_rect bounds;
-    nk_size old_value;
-
     NK_ASSERT(ctx);
-    NK_ASSERT(cur);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout || !cur)
+    if (!ctx || !ctx->current || !ctx->current->layout)
         return 0;
 
-    win = ctx->current;
-    style = &ctx->style;
-    layout = win->layout;
+    struct nk_window* win = ctx->current;
+    const struct nk_style* style = &ctx->style;
+
+    struct nk_rect bounds;
     enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
     if (!layout_state) return 0;
 
-    in = (layout_state == NK_WIDGET_ROM || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-    old_value = *cur;
+    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? NULL : &ctx->input;
 
     nk_flags state = 0;
-    *cur = nk_do_progress(&state, &win->buffer, bounds, *cur, max, is_modifyable, &style->progress, in);
-    return (*cur != old_value);
-}
-NK_API nk_size
-nk_prog(struct nk_context *ctx, nk_size cur, nk_size max, nk_bool modifyable)
-{
-    nk_progress(ctx, &cur, max, modifyable);
-    return cur;
+    return nk_do_progress(&state, &win->buffer, bounds, cur, max, modifyable, &style->progress, in);
 }
 

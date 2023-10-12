@@ -41,8 +41,8 @@ int overview(struct nk_context* ctx)
                     show_menu = nk_false;
                 if (nk_menu_item_label(ctx, "About", NK_TEXT_LEFT))
                     show_app_about = nk_true;
-                nk_progress(ctx, &prog, 100, NK_MODIFIABLE);
-                nk_slider_int(ctx, 0, &slider, 16, 1);
+                prog = nk_progress(ctx, prog, 100, NK_MODIFIABLE);
+                slider = nk_slider_int(ctx, 0, slider, 16, 1);
                 nk_checkbox_label(ctx, "check", &check);
                 nk_menu_end(ctx);
             }
@@ -104,8 +104,8 @@ int overview(struct nk_context* ctx)
             }
             /* menu widgets */
             nk_layout_row_push(ctx, 70);
-            nk_progress(ctx, &mprog, 100, NK_MODIFIABLE);
-            nk_slider_int(ctx, 0, &mslider, 16, 1);
+            mprog = nk_progress(ctx, mprog, 100, NK_MODIFIABLE);
+            mslider = nk_slider_int(ctx, 0, mslider, 16, 1);
             nk_checkbox_label(ctx, "check", &mcheck);
             nk_menubar_end(ctx);
         }
@@ -218,12 +218,12 @@ int overview(struct nk_context* ctx)
 
                 nk_layout_row(ctx, NK_STATIC, 30, 2, ratio);
                 nk_labelf(ctx, NK_TEXT_LEFT, "Slider int");
-                nk_slider_int(ctx, 0, &int_slider, 10, 1);
+                int_slider = nk_slider_int(ctx, 0, int_slider, 10, 1);
 
                 nk_label(ctx, "Slider float", NK_TEXT_LEFT);
-                nk_slider_float(ctx, 0, &float_slider, 5.0, 0.5f);
+                float_slider = nk_slider(ctx, 0, float_slider, 5.0, 0.5f);
                 nk_labelf(ctx, NK_TEXT_LEFT, "Progressbar: %u", (int)prog_value);
-                nk_progress(ctx, &prog_value, 100, NK_MODIFIABLE);
+                prog_value = nk_progress(ctx, prog_value, 100, NK_MODIFIABLE);
 
                 nk_layout_row(ctx, NK_STATIC, 25, 2, ratio);
                 nk_label(ctx, "Property float:", NK_TEXT_LEFT);
@@ -355,13 +355,13 @@ int overview(struct nk_context* ctx)
                     float ratios[] = { 0.15f, 0.85f };
                     nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratios);
                     nk_label(ctx, "R:", NK_TEXT_LEFT);
-                    combo_color.r = (nk_byte)nk_slide_int(ctx, 0, combo_color.r, 255, 5);
+                    combo_color.r = (nk_byte)nk_slider_int(ctx, 0, combo_color.r, 255, 5);
                     nk_label(ctx, "G:", NK_TEXT_LEFT);
-                    combo_color.g = (nk_byte)nk_slide_int(ctx, 0, combo_color.g, 255, 5);
+                    combo_color.g = (nk_byte)nk_slider_int(ctx, 0, combo_color.g, 255, 5);
                     nk_label(ctx, "B:", NK_TEXT_LEFT);
-                    combo_color.b = (nk_byte)nk_slide_int(ctx, 0, combo_color.b, 255, 5);
+                    combo_color.b = (nk_byte)nk_slider_int(ctx, 0, combo_color.b, 255, 5);
                     nk_label(ctx, "A:", NK_TEXT_LEFT);
-                    combo_color.a = (nk_byte)nk_slide_int(ctx, 0, combo_color.a, 255, 5);
+                    combo_color.a = (nk_byte)nk_slider_int(ctx, 0, combo_color.a, 255, 5);
                     nk_combo_end(ctx);
                 }
                 /* complex color combobox */
@@ -398,10 +398,10 @@ int overview(struct nk_context* ctx)
                 sprintf(buffer, "%lu", sum);
                 if (nk_combo_begin_label(ctx, buffer, nk_vec2(200, 200))) {
                     nk_layout_row_dynamic(ctx, 30, 1);
-                    nk_progress(ctx, &prog_a, 100, NK_MODIFIABLE);
-                    nk_progress(ctx, &prog_b, 100, NK_MODIFIABLE);
-                    nk_progress(ctx, &prog_c, 100, NK_MODIFIABLE);
-                    nk_progress(ctx, &prog_d, 100, NK_MODIFIABLE);
+                    prog_a = nk_progress(ctx, prog_a, 100, NK_MODIFIABLE);
+                    prog_b = nk_progress(ctx, prog_b, 100, NK_MODIFIABLE);
+                    prog_c = nk_progress(ctx, prog_c, 100, NK_MODIFIABLE);
+                    prog_d = nk_progress(ctx, prog_d, 100, NK_MODIFIABLE);
                     nk_combo_end(ctx);
                 }
 
@@ -717,8 +717,8 @@ int overview(struct nk_context* ctx)
 
                 nk_layout_row_dynamic(ctx, 25, 1);
                 nk_checkbox_label(ctx, "Menu", &show_menu);
-                nk_progress(ctx, &prog, 100, NK_MODIFIABLE);
-                nk_slider_int(ctx, 0, &slider, 16, 1);
+                prog = nk_progress(ctx, prog, 100, NK_MODIFIABLE);
+                slider = nk_slider_int(ctx, 0, slider, 16, 1);
                 if (nk_contextual_item_label(ctx, "About", NK_TEXT_CENTERED))
                     show_app_about = nk_true;
                 nk_selectable_label(ctx, select[0] ? "Unselect" : "Select", NK_TEXT_LEFT, &select[0]);
@@ -1136,13 +1136,13 @@ int overview(struct nk_context* ctx)
                     /* header */
                     nk_layout_row_static(ctx, 30, 100, 2);
                     nk_label(ctx, "left:", NK_TEXT_LEFT);
-                    nk_slider_float(ctx, 10.0f, &a, 200.0f, 10.0f);
+                    a = nk_slider(ctx, 10.0f, a, 200.0f, 10.0f);
 
                     nk_label(ctx, "middle:", NK_TEXT_LEFT);
-                    nk_slider_float(ctx, 10.0f, &b, 200.0f, 10.0f);
+                    b = nk_slider(ctx, 10.0f, b, 200.0f, 10.0f);
 
                     nk_label(ctx, "right:", NK_TEXT_LEFT);
-                    nk_slider_float(ctx, 10.0f, &c, 200.0f, 10.0f);
+                    c = nk_slider(ctx, 10.0f, c, 200.0f, 10.0f);
 
                     /* tiles */
                     nk_layout_row(ctx, NK_STATIC, 200, 5, row_layout);
@@ -1216,13 +1216,13 @@ int overview(struct nk_context* ctx)
                     /* header */
                     nk_layout_row_static(ctx, 30, 100, 2);
                     nk_label(ctx, "top:", NK_TEXT_LEFT);
-                    nk_slider_float(ctx, 10.0f, &a, 200.0f, 10.0f);
+                    a = nk_slider(ctx, 10.0f, a, 200.0f, 10.0f);
 
                     nk_label(ctx, "middle:", NK_TEXT_LEFT);
-                    nk_slider_float(ctx, 10.0f, &b, 200.0f, 10.0f);
+                    b = nk_slider(ctx, 10.0f, b, 200.0f, 10.0f);
 
                     nk_label(ctx, "bottom:", NK_TEXT_LEFT);
-                    nk_slider_float(ctx, 10.0f, &c, 200.0f, 10.0f);
+                    c = nk_slider(ctx, 10.0f, c, 200.0f, 10.0f);
 
                     /* top space */
                     nk_layout_row_dynamic(ctx, a, 1);

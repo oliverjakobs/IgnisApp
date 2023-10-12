@@ -2736,17 +2736,14 @@ NK_API nk_bool nk_selectable_symbol_label(struct nk_context*,enum nk_symbol_type
  *                                  SLIDER
  *
  * ============================================================================= */
-NK_API float nk_slide_float(struct nk_context*, float min, float val, float max, float step);
-NK_API int nk_slide_int(struct nk_context*, int min, int val, int max, int step);
-NK_API nk_bool nk_slider_float(struct nk_context*, float min, float *val, float max, float step);
-NK_API nk_bool nk_slider_int(struct nk_context*, int min, int *val, int max, int step);
+NK_API float nk_slider(struct nk_context*, float min, float val, float max, float step);
+NK_API int nk_slider_int(struct nk_context*, int min, int val, int max, int step);
 /* =============================================================================
  *
  *                                  PROGRESSBAR
  *
  * ============================================================================= */
-NK_API nk_bool nk_progress(struct nk_context*, nk_size *cur, nk_size max, nk_bool modifyable);
-NK_API nk_size nk_prog(struct nk_context*, nk_size cur, nk_size max, nk_bool modifyable);
+NK_API nk_size nk_progress(struct nk_context*, nk_size cur, nk_size max, nk_bool modifyable);
 
 /* =============================================================================
  *

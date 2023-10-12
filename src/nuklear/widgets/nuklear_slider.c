@@ -183,57 +183,28 @@ nk_do_slider(nk_flags *state,
     return slider_value;
 }
 
-NK_API nk_bool
-nk_slider_float(struct nk_context *ctx, float min_value, float *value, float max_value, float step)
+NK_API float nk_slider(struct nk_context *ctx, float min, float value, float max, float step)
 {
-    struct nk_window *win;
-    struct nk_panel *layout;
-    struct nk_input *in;
-    const struct nk_style *style;
-
-    int ret = 0;
-    float old_value;
-    struct nk_rect bounds;
-
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
-    NK_ASSERT(value);
-    if (!ctx || !ctx->current || !ctx->current->layout || !value)
-        return ret;
+    if (!ctx || !ctx->current || !ctx->current->layout)
+        return 0.0f;
 
-    win = ctx->current;
-    style = &ctx->style;
-    layout = win->layout;
+    struct nk_window* win = ctx->current;
+    const struct nk_style* style = &ctx->style;
 
+    struct nk_rect bounds;
     enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
-    if (!layout_state) return ret;
-    in = (/*state == NK_WIDGET_ROM || */ layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+    if (!layout_state) return 0.0f;
+    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? NULL : &ctx->input;
 
-    old_value = *value;
     nk_flags state = 0;
-    *value = nk_do_slider(&state, &win->buffer, bounds, min_value, old_value, max_value, step, &style->slider, in, style->font);
-    return (old_value > *value || old_value < *value);
+    return nk_do_slider(&state, &win->buffer, bounds, min, value, max, step, &style->slider, in, style->font);
 }
-NK_API float
-nk_slide_float(struct nk_context *ctx, float min, float val, float max, float step)
+
+NK_API int nk_slider_int(struct nk_context *ctx, int min, int val, int max, int step)
 {
-    nk_slider_float(ctx, min, &val, max, step); return val;
-}
-NK_API int
-nk_slide_int(struct nk_context *ctx, int min, int val, int max, int step)
-{
-    float value = (float)val;
-    nk_slider_float(ctx, (float)min, &value, (float)max, (float)step);
-    return (int)value;
-}
-NK_API nk_bool
-nk_slider_int(struct nk_context *ctx, int min, int *val, int max, int step)
-{
-    int ret;
-    float value = (float)*val;
-    ret = nk_slider_float(ctx, (float)min, &value, (float)max, (float)step);
-    *val =  (int)value;
-    return ret;
+    return (int)nk_slider(ctx, (float)min, (float)val, (float)max, (float)step);
 }
 
