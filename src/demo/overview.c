@@ -41,7 +41,7 @@ int overview(struct nk_context* ctx)
                     show_menu = nk_false;
                 if (nk_menu_item_label(ctx, "About", NK_TEXT_LEFT))
                     show_app_about = nk_true;
-                prog = nk_progress(ctx, prog, 100, NK_MODIFIABLE);
+                prog = nk_bar_slider(ctx, prog, 100);
                 slider = nk_slider_int(ctx, 0, slider, 16, 1);
                 nk_checkbox_label(ctx, "check", &check);
                 nk_menu_end(ctx);
@@ -104,7 +104,7 @@ int overview(struct nk_context* ctx)
             }
             /* menu widgets */
             nk_layout_row_push(ctx, 70);
-            mprog = nk_progress(ctx, mprog, 100, NK_MODIFIABLE);
+            mprog = nk_bar_slider(ctx, mprog, 100);
             mslider = nk_slider_int(ctx, 0, mslider, 16, 1);
             nk_checkbox_label(ctx, "check", &mcheck);
             nk_menubar_end(ctx);
@@ -223,7 +223,7 @@ int overview(struct nk_context* ctx)
                 nk_label(ctx, "Slider float", NK_TEXT_LEFT);
                 float_slider = nk_slider(ctx, 0, float_slider, 5.0, 0.5f);
                 nk_labelf(ctx, NK_TEXT_LEFT, "Progressbar: %u", (int)prog_value);
-                prog_value = nk_progress(ctx, prog_value, 100, NK_MODIFIABLE);
+                prog_value = nk_bar_slider(ctx, prog_value, 100);
 
                 nk_layout_row(ctx, NK_STATIC, 25, 2, ratio);
                 nk_label(ctx, "Property float:", NK_TEXT_LEFT);
@@ -398,10 +398,10 @@ int overview(struct nk_context* ctx)
                 sprintf(buffer, "%lu", sum);
                 if (nk_combo_begin_label(ctx, buffer, nk_vec2(200, 200))) {
                     nk_layout_row_dynamic(ctx, 30, 1);
-                    prog_a = nk_progress(ctx, prog_a, 100, NK_MODIFIABLE);
-                    prog_b = nk_progress(ctx, prog_b, 100, NK_MODIFIABLE);
-                    prog_c = nk_progress(ctx, prog_c, 100, NK_MODIFIABLE);
-                    prog_d = nk_progress(ctx, prog_d, 100, NK_MODIFIABLE);
+                    prog_a = nk_bar_slider(ctx, prog_a, 100);
+                    prog_b = nk_bar_slider(ctx, prog_b, 100);
+                    prog_c = nk_bar_slider(ctx, prog_c, 100);
+                    prog_d = nk_bar_slider(ctx, prog_d, 100);
                     nk_combo_end(ctx);
                 }
 
@@ -717,7 +717,7 @@ int overview(struct nk_context* ctx)
 
                 nk_layout_row_dynamic(ctx, 25, 1);
                 nk_checkbox_label(ctx, "Menu", &show_menu);
-                prog = nk_progress(ctx, prog, 100, NK_MODIFIABLE);
+                prog = nk_bar_slider(ctx, prog, 100);
                 slider = nk_slider_int(ctx, 0, slider, 16, 1);
                 if (nk_contextual_item_label(ctx, "About", NK_TEXT_CENTERED))
                     show_app_about = nk_true;

@@ -183,6 +183,17 @@ nk_fill_rect(struct nk_command_buffer *b, struct nk_rect rect, float rounding, s
     nk_command_push_rect(b, NK_COMMAND_RECT_FILLED, rect, rounding, 0.0f, c);
 }
 
+NK_API void 
+nk_fill_rect_border(struct nk_command_buffer *b, struct nk_rect rect, float rounding, struct nk_color color, float border, struct nk_color border_color)
+{
+    NK_ASSERT(b);
+    if (!b || color.a == 0 || rect.w == 0 || rect.h == 0) return;
+    if (b->use_clipping && !nk_clip_rect(rect, b->clip)) return;
+
+    nk_command_push_rect(b, NK_COMMAND_RECT_FILLED, rect, rounding, 0.0f, color);
+    nk_command_push_rect(b, NK_COMMAND_RECT, rect, rounding, border, border_color);
+}
+
 NK_API void
 nk_fill_rect_multi_color(struct nk_command_buffer *b, struct nk_rect rect,
     struct nk_color left, struct nk_color top, struct nk_color right,
@@ -224,6 +235,19 @@ nk_fill_circle(struct nk_command_buffer *b, struct nk_rect r, struct nk_color c)
 
     float radius = r.w / 2;
     nk_command_push_circle(b, NK_COMMAND_CIRCLE_FILLED, nk_vec2(r.x + radius, r.y + radius), radius, 0, c);
+}
+
+NK_API void
+nk_fill_circle_border(struct nk_command_buffer* b, struct nk_rect r, struct nk_color c, float border, struct nk_color border_color)
+{
+    NK_ASSERT(b);
+    if (!b || c.a == 0 || r.w == 0 || r.h == 0) return;
+    if (b->use_clipping && !nk_clip_rect(r, b->clip)) return;
+
+    float radius = r.w / 2;
+    struct nk_vec2 center = nk_vec2(r.x + radius, r.y + radius);
+    nk_command_push_circle(b, NK_COMMAND_CIRCLE_FILLED, center, radius, 0, c);
+    nk_command_push_circle(b, NK_COMMAND_CIRCLE, center, radius, border, border_color);
 }
 
 NK_API void

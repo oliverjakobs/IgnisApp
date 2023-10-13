@@ -99,16 +99,10 @@ nk_draw_button(struct nk_command_buffer *out, const struct nk_rect *bounds, nk_f
     if (state & NK_WIDGET_STATE_HOVER)          background = &style->hover;
     else if (state & NK_WIDGET_STATE_ACTIVED)   background = &style->active;
 
-    switch(background->type)
-    {
-    case NK_STYLE_ITEM_IMAGE:
+    if (background->type == NK_STYLE_ITEM_IMAGE)
         nk_draw_image(out, *bounds, &background->data.image, nk_white);
-        break;
-    case NK_STYLE_ITEM_COLOR:
-        nk_fill_rect(out, *bounds, style->rounding, background->data.color);
-        nk_stroke_rect(out, *bounds, style->rounding, style->border, style->border_color);
-        break;
-    }
+    else
+        nk_fill_rect_border(out, *bounds, style->rounding, background->data.color, style->border, style->border_color);
 
     return background;
 }

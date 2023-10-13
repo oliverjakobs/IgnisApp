@@ -204,7 +204,6 @@ struct nk_scroll {nk_uint x, y;};
 
 enum nk_heading         {NK_UP, NK_RIGHT, NK_DOWN, NK_LEFT};
 enum nk_button_behavior {NK_BUTTON_DEFAULT, NK_BUTTON_REPEATER};
-enum nk_modify          {NK_FIXED = nk_false, NK_MODIFIABLE = nk_true};
 enum nk_orientation     {NK_VERTICAL, NK_HORIZONTAL};
 enum nk_collapse_states {NK_MINIMIZED = nk_false, NK_MAXIMIZED = nk_true};
 enum nk_show_states     {NK_HIDDEN = nk_false, NK_SHOWN = nk_true};
@@ -2738,12 +2737,15 @@ NK_API nk_bool nk_selectable_symbol_label(struct nk_context*,enum nk_symbol_type
  * ============================================================================= */
 NK_API float nk_slider(struct nk_context*, float min, float val, float max, float step);
 NK_API int nk_slider_int(struct nk_context*, int min, int val, int max, int step);
+
+NK_API nk_size nk_bar_slider(struct nk_context*, nk_size cur, nk_size max);
+
+NK_API nk_size nk_progress(struct nk_context*, nk_size cur, nk_size max);
 /* =============================================================================
  *
  *                                  PROGRESSBAR
  *
  * ============================================================================= */
-NK_API nk_size nk_progress(struct nk_context*, nk_size cur, nk_size max, nk_bool modifyable);
 
 /* =============================================================================
  *
@@ -3893,8 +3895,10 @@ NK_API void nk_stroke_triangle(struct nk_command_buffer*, struct nk_vec2 a, stru
 
 /* filled shades */
 NK_API void nk_fill_rect(struct nk_command_buffer*, struct nk_rect, float rounding, struct nk_color);
+NK_API void nk_fill_rect_border(struct nk_command_buffer*, struct nk_rect, float rounding, struct nk_color color, float border, struct nk_color border_color);
 NK_API void nk_fill_rect_multi_color(struct nk_command_buffer*, struct nk_rect, struct nk_color left, struct nk_color top, struct nk_color right, struct nk_color bottom);
 NK_API void nk_fill_circle(struct nk_command_buffer*, struct nk_rect, struct nk_color);
+NK_API void nk_fill_circle_border(struct nk_command_buffer* b, struct nk_rect r, struct nk_color c, float border, struct nk_color border_color);
 NK_API void nk_fill_triangle(struct nk_command_buffer*, struct nk_vec2 a, struct nk_vec2 b, struct nk_vec2 c, struct nk_color);
 
 /* misc */

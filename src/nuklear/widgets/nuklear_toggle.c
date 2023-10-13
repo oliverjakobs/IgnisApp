@@ -60,19 +60,11 @@ nk_draw_toggle(struct nk_command_buffer *out,
 
     /* draw background and cursor */
     if (background->type == NK_STYLE_ITEM_IMAGE)
-    {
         nk_draw_image(out, *selector, &background->data.image, nk_white);
-    }
     else if (type == NK_TOGGLE_CHECK)
-    {
-        nk_fill_rect(out, *selector, 0, style->border_color);
-        nk_fill_rect(out, nk_shrink_rect(*selector, style->border), 0, background->data.color);
-    }
+        nk_fill_rect_border(out, *selector, 0, background->data.color, style->border, style->border_color);
     else if (type == NK_TOGGLE_OPTION)
-    {
-        nk_fill_circle(out, *selector, style->border_color);
-        nk_fill_circle(out, nk_shrink_rect(*selector, style->border), background->data.color);
-    }
+        nk_fill_circle_border(out, *selector, background->data.color, style->border, style->border_color);
 
     if (active)
     {
