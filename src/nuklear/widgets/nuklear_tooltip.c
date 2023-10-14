@@ -11,13 +11,12 @@ NK_API nk_bool nk_tooltip_begin(struct nk_context *ctx, float width)
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0;
+    if (!ctx || !ctx->current || !ctx->current->layout) return nk_false;
 
     /* make sure that no nonblocking popup is currently active */
     struct nk_window* win = ctx->current;
     if (win->popup.win && (win->popup.type & NK_PANEL_SET_NONBLOCK))
-        return 0;
+        return nk_false;
 
     struct nk_vec2 mouse = ctx->input.mouse_pos;
 
@@ -29,7 +28,7 @@ NK_API nk_bool nk_tooltip_begin(struct nk_context *ctx, float width)
     };
 
     nk_flags flags = NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER;
-    int ret = nk_popup_begin(ctx, NK_POPUP_DYNAMIC, "__##Tooltip##__", flags, bounds);
+    nk_bool ret = nk_popup_begin(ctx, NK_POPUP_DYNAMIC, "__##Tooltip##__", flags, bounds);
     
     if (ret) win->layout->flags &= ~(nk_flags)NK_WINDOW_ROM;
 
@@ -55,18 +54,16 @@ NK_API void nk_tooltip(struct nk_context *ctx, const char *text)
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
     NK_ASSERT(text);
-    if (!ctx || !ctx->current || !ctx->current->layout || !text)
-        return;
+    if (!ctx || !ctx->current || !ctx->current->layout || !text) return;
 
     /* fetch configuration data */
-    const struct nk_style* style = &ctx->style;
-    struct nk_vec2 padding = style->window.padding;
-    struct nk_user_font* font = style->font;
+    struct nk_vec2 padding = ctx->style.window.padding;
+    const struct nk_user_font* font = ctx->style.font;
 
     /* calculate size of the text and tooltip */
     int text_len = nk_strlen(text);
-    float text_width = font->width(font->userdata, font->height, text, text_len) + (4 * padding.x);
-    float text_height = (font->height + 2 * padding.y);
+    float text_width = font->width(font->userdata, font->height, text, text_len) + 4 * padding.x;
+    float text_height = font->height + 2 * padding.y;
 
     /* execute tooltip and fill with text */
     if (nk_tooltip_begin(ctx, text_width))

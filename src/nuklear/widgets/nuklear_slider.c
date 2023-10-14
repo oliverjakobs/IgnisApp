@@ -181,9 +181,9 @@ NK_API float nk_slider(struct nk_context *ctx, float min_value, float value, flo
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
-    if (!layout_state) return 0.0f;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? NULL : &ctx->input;
+    enum nk_widget_layout_states layout_state;
+    struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
+    if (!layout_state) return nk_false;
 
     nk_flags state = 0;
     return nk_do_slider(&state, &win->buffer, bounds, min_value, value, max_value, step, &style->slider, in, style->font);
@@ -194,14 +194,13 @@ NK_API int nk_slider_int(struct nk_context *ctx, int min, int val, int max, int 
     return (int)nk_slider(ctx, (float)min, (float)val, (float)max, (float)step);
 }
 
-
 /* ===============================================================
  *
  *                          BAR SLIDER
  *
  * ===============================================================*/
 NK_LIB nk_size
-nk_bar_slider_behavior(nk_flags* state, struct nk_input* in, struct nk_rect bounds, struct nk_rect cursor, nk_size max_value, nk_size value)
+nk_bar_slider_behavior(nk_flags* state, struct nk_input* in, struct nk_rect bounds, struct nk_rect cursor, nk_size value, nk_size max_value)
 {
     nk_widget_state_reset(state);
 
@@ -307,15 +306,13 @@ NK_API nk_size nk_bar_slider(struct nk_context* ctx, nk_size cur, nk_size max)
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
-    if (!layout_state) return 0;
-
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? NULL : &ctx->input;
+    enum nk_widget_layout_states layout_state;
+    struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
+    if (!layout_state) return nk_false;
 
     nk_flags state = 0;
     return nk_do_bar_slider(&state, &win->buffer, bounds, cur, max, &style->progress, in);
 }
-
 
 NK_API nk_size nk_progress(struct nk_context *ctx, nk_size cur, nk_size max)
 {

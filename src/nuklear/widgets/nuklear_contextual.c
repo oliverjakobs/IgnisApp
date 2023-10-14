@@ -64,61 +64,96 @@ nk_contextual_begin(struct nk_context *ctx, nk_flags flags, struct nk_vec2 size,
     }
     return ret;
 }
-NK_API nk_bool
-nk_contextual_item_text(struct nk_context *ctx, const char *text, int len, nk_flags alignment)
+
+NK_API void nk_contextual_close(struct nk_context* ctx)
 {
-    struct nk_window *win;
-    const struct nk_input *in;
-    const struct nk_style *style;
+    nk_popup_close(ctx);
+}
 
-    struct nk_rect bounds;
+NK_API void nk_contextual_end(struct nk_context* ctx)
+{
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    if (!ctx || !ctx->current) return;
 
+    struct nk_window* popup = ctx->current;
+    struct nk_panel* panel = popup->layout;
+    NK_ASSERT(popup->parent);
+    NK_ASSERT(panel->type & NK_PANEL_SET_POPUP);
+
+    if (panel->flags & NK_WINDOW_DYNAMIC)
+    {
+        /* Close behavior
+        This is a bit of a hack solution since we do not know before we end our popup
+        how big it will be. We therefore do not directly know when a
+        click outside the non-blocking popup must close it at that direct frame.
+        Instead it will be closed in the next frame.*/
+        struct nk_rect body = { 0,0,0,0 };
+        if (panel->at_y < (panel->bounds.y + panel->bounds.h))
+        {
+            struct nk_vec2 padding = nk_panel_get_padding(&ctx->style, panel->type);
+            body = panel->bounds;
+            body.y = (panel->at_y + panel->footer_height + panel->border + padding.y + panel->row.height);
+            body.h = (panel->bounds.y + panel->bounds.h) - body.y;
+        }
+        int pressed = nk_input_mouse_pressed(&ctx->input, NK_BUTTON_LEFT);
+        int in_body = nk_input_mouse_hover(&ctx->input, body);
+        if (pressed && in_body)
+            popup->flags |= NK_WINDOW_HIDDEN;
+    }
+
+    if (popup->flags & NK_WINDOW_HIDDEN)
+        popup->seq = 0;
+
+    nk_popup_end(ctx);
+}
+
+NK_API nk_bool
+nk_contextual_item_text(struct nk_context *ctx, const char *text, int len, nk_flags align)
+{
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0;
+    if (!ctx || !ctx->current || !ctx->current->layout) return nk_false;
 
-    win = ctx->current;
-    style = &ctx->style;
-    enum nk_widget_layout_states layout_state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
+    struct nk_window* win = ctx->current;
+    const struct nk_style* style = &ctx->style;
+
+    struct nk_rect bounds;
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
 
-    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-
     nk_flags state = 0;
-    if (nk_do_button_text(&state, &win->buffer, bounds, text, len, alignment, NK_BUTTON_DEFAULT, &style->contextual_button, in, style->font))
+    if (nk_do_button_text(&state, &win->buffer, bounds, text, len, align, NK_BUTTON_DEFAULT, &style->contextual_button, in, style->font))
     {
         nk_contextual_close(ctx);
         return nk_true;
     }
     return nk_false;
 }
+
 NK_API nk_bool
 nk_contextual_item_label(struct nk_context *ctx, const char *label, nk_flags align)
 {
     return nk_contextual_item_text(ctx, label, nk_strlen(label), align);
 }
+
 NK_API nk_bool
 nk_contextual_item_image_text(struct nk_context *ctx, struct nk_image img, const char *text, int len, nk_flags align)
 {
-    struct nk_window *win;
-    const struct nk_input *in;
-    const struct nk_style *style;
-
-    struct nk_rect bounds;
-
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0;
+    if (!ctx || !ctx->current || !ctx->current->layout) return nk_false;
 
-    win = ctx->current;
-    style = &ctx->style;
-    enum nk_widget_layout_states layout_state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
+    struct nk_window* win = ctx->current;
+    const struct nk_style* style = &ctx->style;
+
+    struct nk_rect bounds;
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     nk_flags state = 0;
     if (nk_do_button_text_image(&state, &win->buffer, bounds, img, text, len, align, NK_BUTTON_DEFAULT, &style->contextual_button, style->font, in))
@@ -128,35 +163,32 @@ nk_contextual_item_image_text(struct nk_context *ctx, struct nk_image img, const
     }
     return nk_false;
 }
+
 NK_API nk_bool
 nk_contextual_item_image_label(struct nk_context *ctx, struct nk_image img, const char *label, nk_flags align)
 {
     return nk_contextual_item_image_text(ctx, img, label, nk_strlen(label), align);
 }
+
 NK_API nk_bool
 nk_contextual_item_symbol_text(struct nk_context *ctx, enum nk_symbol_type symbol, const char *text, int len, nk_flags align)
 {
-    struct nk_window *win;
-    const struct nk_input *in;
-    const struct nk_style *style;
-
-    struct nk_rect bounds;
-
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0;
+    if (!ctx || !ctx->current || !ctx->current->layout) return nk_false;
 
-    win = ctx->current;
-    style = &ctx->style;
-    enum nk_widget_layout_states layout_state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
+    struct nk_window* win = ctx->current;
+    const struct nk_style* style = &ctx->style;
+
+    struct nk_rect bounds;
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     nk_flags state = 0;
-    if (nk_do_button_text_symbol(&state, &win->buffer, bounds,
-        symbol, text, len, align, NK_BUTTON_DEFAULT, &style->contextual_button, style->font, in)) {
+    if (nk_do_button_text_symbol(&state, &win->buffer, bounds, symbol, text, len, align, NK_BUTTON_DEFAULT, &style->contextual_button, style->font, in))
+    {
         nk_contextual_close(ctx);
         return nk_true;
     }
@@ -166,51 +198,5 @@ NK_API nk_bool
 nk_contextual_item_symbol_label(struct nk_context *ctx, enum nk_symbol_type symbol, const char *text, nk_flags align)
 {
     return nk_contextual_item_symbol_text(ctx, symbol, text, nk_strlen(text), align);
-}
-NK_API void
-nk_contextual_close(struct nk_context *ctx)
-{
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout) return;
-    nk_popup_close(ctx);
-}
-NK_API void
-nk_contextual_end(struct nk_context *ctx)
-{
-    struct nk_window *popup;
-    struct nk_panel *panel;
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    if (!ctx || !ctx->current) return;
-
-    popup = ctx->current;
-    panel = popup->layout;
-    NK_ASSERT(popup->parent);
-    NK_ASSERT(panel->type & NK_PANEL_SET_POPUP);
-    if (panel->flags & NK_WINDOW_DYNAMIC) {
-        /* Close behavior
-        This is a bit of a hack solution since we do not know before we end our popup
-        how big it will be. We therefore do not directly know when a
-        click outside the non-blocking popup must close it at that direct frame.
-        Instead it will be closed in the next frame.*/
-        struct nk_rect body = {0,0,0,0};
-        if (panel->at_y < (panel->bounds.y + panel->bounds.h)) {
-            struct nk_vec2 padding = nk_panel_get_padding(&ctx->style, panel->type);
-            body = panel->bounds;
-            body.y = (panel->at_y + panel->footer_height + panel->border + padding.y + panel->row.height);
-            body.h = (panel->bounds.y + panel->bounds.h) - body.y;
-        }
-        {int pressed = nk_input_mouse_pressed(&ctx->input, NK_BUTTON_LEFT);
-        int in_body = nk_input_mouse_hover(&ctx->input, body);
-        if (pressed && in_body)
-            popup->flags |= NK_WINDOW_HIDDEN;
-        }
-    }
-    if (popup->flags & NK_WINDOW_HIDDEN)
-        popup->seq = 0;
-    nk_popup_end(ctx);
-    return;
 }
 

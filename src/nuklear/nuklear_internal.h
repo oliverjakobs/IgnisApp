@@ -127,7 +127,7 @@ NK_LIB int nk_string_float_limit(char *string, int prec);
 
 NK_LIB char *nk_dtoa(char *s, double n);
 
-NK_LIB int nk_text_clamp(const struct nk_user_font *font, const char *text, int text_len, float space, int *glyphs, float *text_width, nk_rune *sep_list, int sep_count);
+NK_LIB int nk_text_clamp(const struct nk_user_font *font, const char *text, int text_len, float space, int *glyphs, float *text_width, const nk_rune *sep_list, int sep_count);
 NK_LIB struct nk_vec2 nk_text_calculate_text_bounds(const struct nk_user_font *font, const char *begin, int byte_len, float row_height, const char **remaining, struct nk_vec2 *out_offset, int *glyphs, int op);
 
 NK_LIB int nk_strfmt(char *buf, int buf_size, const char *fmt, va_list args);
@@ -277,9 +277,9 @@ NK_LIB void nk_edit_draw_text(struct nk_command_buffer *out, const struct nk_sty
 NK_LIB nk_flags nk_do_edit(nk_flags *state, struct nk_command_buffer *out, struct nk_rect bounds, nk_flags flags, nk_plugin_filter filter, struct nk_text_edit *edit, const struct nk_style_edit *style, struct nk_input *in, const struct nk_user_font *font);
 
 /* color-picker */
-NK_LIB nk_bool nk_color_picker_behavior(nk_flags *state, const struct nk_rect *bounds, const struct nk_rect *matrix, const struct nk_rect *hue_bar, const struct nk_rect *alpha_bar, struct nk_colorf *color, const struct nk_input *in);
+NK_LIB struct nk_colorf nk_color_picker_behavior(nk_flags *state, const struct nk_rect bounds, const struct nk_rect matrix, const struct nk_rect hue_bar, const struct nk_rect alpha_bar, struct nk_colorf color, const struct nk_input *in);
 NK_LIB void nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix, const struct nk_rect *hue_bar, const struct nk_rect *alpha_bar, struct nk_colorf col);
-NK_LIB nk_bool nk_do_color_picker(nk_flags *state, struct nk_command_buffer *out, struct nk_colorf *col, enum nk_color_format fmt, struct nk_rect bounds, struct nk_vec2 padding, const struct nk_input *in, const struct nk_user_font *font);
+NK_LIB struct nk_colorf nk_do_color_picker(nk_flags *state, struct nk_command_buffer *out, struct nk_colorf col, enum nk_color_format fmt, struct nk_rect bounds, struct nk_vec2 padding, const struct nk_input *in, const struct nk_user_font *font);
 
 /* property */
 enum nk_property_status {

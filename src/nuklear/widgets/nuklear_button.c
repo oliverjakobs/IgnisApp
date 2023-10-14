@@ -164,8 +164,7 @@ nk_do_button_text(nk_flags *state, struct nk_command_buffer *out, struct nk_rect
     NK_ASSERT(out);
     NK_ASSERT(string);
     NK_ASSERT(font);
-    if (!out || !style || !font || !string)
-        return nk_false;
+    if (!out || !style || !font || !string) return nk_false;
 
     struct nk_rect content;
     nk_bool clicked = nk_do_button(state, out, bounds, style, in, behavior, &content);
@@ -415,9 +414,9 @@ NK_API nk_bool nk_button_text(struct nk_context* ctx, const char* title, int len
     const struct nk_style_button* style = &ctx->style.button;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     nk_flags state = 0;
     return nk_do_button_text(&state, &win->buffer, bounds, title, len, style->text_alignment, ctx->button_behavior, style, in, ctx->style.font);
@@ -438,9 +437,9 @@ NK_API nk_bool nk_button_symbol(struct nk_context* ctx, enum nk_symbol_type symb
     const struct nk_style_button* style = &ctx->style.button;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     nk_flags state = 0;
     return nk_do_button_symbol(&state, &win->buffer, bounds, symbol, ctx->button_behavior, style, in, ctx->style.font);
@@ -456,9 +455,9 @@ NK_API nk_bool nk_button_image(struct nk_context *ctx, struct nk_image img)
     const struct nk_style_button* style = &ctx->style.button;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     nk_flags state = 0;
     return nk_do_button_image(&state, &win->buffer, bounds, img, ctx->button_behavior, style, in);
@@ -474,9 +473,9 @@ NK_API nk_bool nk_button_symbol_text(struct nk_context *ctx, enum nk_symbol_type
     const struct nk_style_button* style = &ctx->style.button;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     nk_flags state = 0;
     return nk_do_button_text_symbol(&state, &win->buffer, bounds, symbol, text, len, align, ctx->button_behavior, style, ctx->style.font, in);
@@ -497,9 +496,9 @@ NK_API nk_bool nk_button_image_text(struct nk_context *ctx, struct nk_image img,
     const struct nk_style_button* style = &ctx->style.button;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     nk_flags state = 0;
     return nk_do_button_text_image(&state, &win->buffer, bounds, img, text, len, align, ctx->button_behavior, style, ctx->style.font, in);

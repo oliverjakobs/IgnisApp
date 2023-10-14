@@ -100,9 +100,9 @@ NK_API nk_bool nk_combo_begin_text(struct nk_context *ctx, const char *selected,
     struct nk_style* style = &ctx->style;
 
     struct nk_rect header;
-    enum nk_widget_layout_states layout_state = nk_widget(&header, ctx);
-    if (layout_state == NK_WIDGET_INVALID) return 0;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&header, &layout_state, ctx);
+    if (!layout_state) return nk_false;
 
     nk_flags state = 0;
     nk_bool clicked = nk_button_behavior(&state, header, in, NK_BUTTON_DEFAULT);
@@ -158,9 +158,9 @@ NK_API nk_bool nk_combo_begin_color(struct nk_context *ctx, struct nk_color colo
     struct nk_style* style = &ctx->style;
 
     struct nk_rect header;
-    enum nk_widget_layout_states layout_state = nk_widget(&header, ctx);
-    if (layout_state == NK_WIDGET_INVALID) return 0;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&header, &layout_state, ctx);
+    if (!layout_state) return nk_false;
 
     nk_flags state = 0;
     nk_bool clicked = nk_button_behavior(&state, header, in, NK_BUTTON_DEFAULT);

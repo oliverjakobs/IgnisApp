@@ -693,7 +693,7 @@ nk_file_load(const char* path, nk_size* siz, struct nk_allocator *alloc)
 NK_LIB int
 nk_text_clamp(const struct nk_user_font *font, const char *text,
     int text_len, float space, int *glyphs, float *text_width,
-    nk_rune *sep_list, int sep_count)
+    const nk_rune *sep_list, int sep_count)
 {
     int i = 0;
     int glyph_len = 0;

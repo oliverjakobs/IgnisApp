@@ -6,158 +6,39 @@
  *                              WIDGET
  *
  * ===============================================================*/
-NK_API struct nk_rect
-nk_widget_bounds(struct nk_context *ctx)
+NK_API struct nk_rect nk_widget_bounds(struct nk_context *ctx)
 {
-    struct nk_rect bounds;
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
-    if (!ctx || !ctx->current)
-        return nk_rect(0,0,0,0);
+    if (!ctx || !ctx->current) return nk_rect(0,0,0,0);
+
+    struct nk_rect bounds;
     nk_layout_peek(&bounds, ctx);
     return bounds;
 }
-NK_API struct nk_vec2
-nk_widget_position(struct nk_context *ctx)
+
+NK_API float nk_widget_width(struct nk_context *ctx)  { return nk_widget_bounds(ctx).w; }
+NK_API float nk_widget_height(struct nk_context *ctx) { return nk_widget_bounds(ctx).h; }
+
+NK_API enum nk_widget_layout_states nk_widget(struct nk_rect *bounds, const struct nk_context *ctx)
 {
-    struct nk_rect bounds;
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    if (!ctx || !ctx->current)
-        return nk_vec2(0,0);
-
-    nk_layout_peek(&bounds, ctx);
-    return nk_vec2(bounds.x, bounds.y);
-}
-NK_API struct nk_vec2
-nk_widget_size(struct nk_context *ctx)
-{
-    struct nk_rect bounds;
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    if (!ctx || !ctx->current)
-        return nk_vec2(0,0);
-
-    nk_layout_peek(&bounds, ctx);
-    return nk_vec2(bounds.w, bounds.h);
-}
-NK_API float
-nk_widget_width(struct nk_context *ctx)
-{
-    struct nk_rect bounds;
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    if (!ctx || !ctx->current)
-        return 0;
-
-    nk_layout_peek(&bounds, ctx);
-    return bounds.w;
-}
-NK_API float
-nk_widget_height(struct nk_context *ctx)
-{
-    struct nk_rect bounds;
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    if (!ctx || !ctx->current)
-        return 0;
-
-    nk_layout_peek(&bounds, ctx);
-    return bounds.h;
-}
-NK_API nk_bool
-nk_widget_is_hovered(struct nk_context *ctx)
-{
-    struct nk_rect c, v;
-    struct nk_rect bounds;
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    if (!ctx || !ctx->current || ctx->active != ctx->current)
-        return 0;
-
-    c = ctx->current->layout->clip;
-    c.x = (float)((int)c.x);
-    c.y = (float)((int)c.y);
-    c.w = (float)((int)c.w);
-    c.h = (float)((int)c.h);
-
-    nk_layout_peek(&bounds, ctx);
-    nk_unify(&v, &c, bounds.x, bounds.y, bounds.x + bounds.w, bounds.y + bounds.h);
-    if (!NK_INTERSECT(c.x, c.y, c.w, c.h, bounds.x, bounds.y, bounds.w, bounds.h))
-        return 0;
-    return nk_input_mouse_hover(&ctx->input, bounds);
-}
-NK_API nk_bool
-nk_widget_is_mouse_clicked(struct nk_context *ctx, enum nk_buttons btn)
-{
-    struct nk_rect c, v;
-    struct nk_rect bounds;
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    if (!ctx || !ctx->current || ctx->active != ctx->current)
-        return 0;
-
-    c = ctx->current->layout->clip;
-    c.x = (float)((int)c.x);
-    c.y = (float)((int)c.y);
-    c.w = (float)((int)c.w);
-    c.h = (float)((int)c.h);
-
-    nk_layout_peek(&bounds, ctx);
-    nk_unify(&v, &c, bounds.x, bounds.y, bounds.x + bounds.w, bounds.y + bounds.h);
-    if (!NK_INTERSECT(c.x, c.y, c.w, c.h, bounds.x, bounds.y, bounds.w, bounds.h))
-        return 0;
-    return nk_input_mouse_clicked(&ctx->input, btn, bounds);
-}
-NK_API nk_bool
-nk_widget_has_mouse_click_down(struct nk_context *ctx, enum nk_buttons btn, nk_bool down)
-{
-    struct nk_rect c, v;
-    struct nk_rect bounds;
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    if (!ctx || !ctx->current || ctx->active != ctx->current)
-        return 0;
-
-    c = ctx->current->layout->clip;
-    c.x = (float)((int)c.x);
-    c.y = (float)((int)c.y);
-    c.w = (float)((int)c.w);
-    c.h = (float)((int)c.h);
-
-    nk_layout_peek(&bounds, ctx);
-    nk_unify(&v, &c, bounds.x, bounds.y, bounds.x + bounds.w, bounds.y + bounds.h);
-    if (!NK_INTERSECT(c.x, c.y, c.w, c.h, bounds.x, bounds.y, bounds.w, bounds.h))
-        return 0;
-
-    return nk_input_click_in_rect(&ctx->input, btn, bounds) && (nk_input_mouse_down(&ctx->input, btn) == down);
-}
-NK_API enum nk_widget_layout_states
-nk_widget(struct nk_rect *bounds, const struct nk_context *ctx)
-{
-    struct nk_rect c, v;
-    struct nk_window *win;
-    struct nk_panel *layout;
-    const struct nk_input *in;
-
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
     if (!ctx || !ctx->current || !ctx->current->layout)
         return NK_WIDGET_INVALID;
 
+    struct nk_window* win = ctx->current;
+
     /* allocate space and check if the widget needs to be updated and drawn */
     nk_panel_alloc_space(bounds, ctx);
-    win = ctx->current;
-    layout = win->layout;
-    in = &ctx->input;
-    c = layout->clip;
 
     /*  if one of these triggers you forgot to add an `if` condition around either
         a window, group, popup, combobox or contextual menu `begin` and `end` block.
         Example:
             if (nk_begin(...) {...} nk_end(...); or
             if (nk_group_begin(...) { nk_group_end(...);} */
+    struct nk_panel* layout = win->layout;
     NK_ASSERT(!(layout->flags & NK_WINDOW_MINIMIZED));
     NK_ASSERT(!(layout->flags & NK_WINDOW_HIDDEN));
     NK_ASSERT(!(layout->flags & NK_WINDOW_CLOSED));
@@ -168,47 +49,38 @@ nk_widget(struct nk_rect *bounds, const struct nk_context *ctx)
     bounds->w = (float)((int)bounds->w);
     bounds->h = (float)((int)bounds->h);
 
-    c.x = (float)((int)c.x);
-    c.y = (float)((int)c.y);
-    c.w = (float)((int)c.w);
-    c.h = (float)((int)c.h);
+    struct nk_rect c = {
+        .x = (float)((int)layout->clip.x),
+        .y = (float)((int)layout->clip.y),
+        .w = (float)((int)layout->clip.w),
+        .h = (float)((int)layout->clip.h)
+    };
 
+    struct nk_rect v;
     nk_unify(&v, &c, bounds->x, bounds->y, bounds->x + bounds->w, bounds->y + bounds->h);
+
     if (!NK_INTERSECT(c.x, c.y, c.w, c.h, bounds->x, bounds->y, bounds->w, bounds->h))
         return NK_WIDGET_INVALID;
 
-    struct nk_vec2 pos = in->mouse_pos;
-
+    struct nk_vec2 pos = ctx->input.mouse_pos;
     if (!NK_INBOX(pos.x, pos.y, v.x, v.y, v.w, v.h))
         return NK_WIDGET_ROM;
 
     return NK_WIDGET_VALID;
 }
-NK_API enum nk_widget_layout_states
-nk_widget_fitting(struct nk_rect *bounds, struct nk_context *ctx,
-    struct nk_vec2 item_padding)
+
+NK_API struct nk_input* 
+nk_widget_input(struct nk_rect *bounds, enum nk_widget_layout_states *state, struct nk_context *ctx)
 {
-    /* update the bounds to stand without padding  */
-    enum nk_widget_layout_states state;
-    NK_UNUSED(item_padding);
+    *state = nk_widget(bounds, ctx);
+    if (ctx->current->layout->flags & NK_WINDOW_ROM) return NULL;
+    if (*state == NK_WIDGET_INVALID || *state == NK_WIDGET_ROM) return NULL;
 
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout)
-        return NK_WIDGET_INVALID;
-
-    state = nk_widget(bounds, ctx);
-    return state;
+    return &ctx->input;
 }
-NK_API void
-nk_spacing(struct nk_context *ctx, int cols)
-{
-    struct nk_window *win;
-    struct nk_panel *layout;
-    struct nk_rect none;
-    int i, index, rows;
 
+NK_API void nk_spacing(struct nk_context *ctx, int cols)
+{
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
@@ -216,20 +88,25 @@ nk_spacing(struct nk_context *ctx, int cols)
         return;
 
     /* spacing over row boundaries */
-    win = ctx->current;
-    layout = win->layout;
-    index = (layout->row.index + cols) % layout->row.columns;
-    rows = (layout->row.index + cols) / layout->row.columns;
-    if (rows) {
-        for (i = 0; i < rows; ++i)
+    struct nk_window* win = ctx->current;
+    struct nk_row_layout* row = &win->layout->row;
+    int index = (row->index + cols) % row->columns;
+    int rows = (row->index + cols) / row->columns;
+
+    if (rows)
+    {
+        for (int i = 0; i < rows; ++i)
             nk_panel_alloc_row(ctx, win);
         cols = index;
     }
+
     /* non table layout need to allocate space */
-    if (layout->row.type != NK_LAYOUT_DYNAMIC_FIXED &&
-        layout->row.type != NK_LAYOUT_STATIC_FIXED) {
-        for (i = 0; i < cols; ++i)
+    struct nk_rect none;
+    if (row->type != NK_LAYOUT_DYNAMIC_FIXED && row->type != NK_LAYOUT_STATIC_FIXED)
+    {
+        for (int i = 0; i < cols; ++i)
             nk_panel_alloc_space(&none, ctx);
-    } layout->row.index = index;
+    }
+    row->index = index;
 }
 

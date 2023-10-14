@@ -142,9 +142,9 @@ nk_selectable_text(struct nk_context *ctx, const char *str, int len, nk_flags al
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? NULL : &ctx->input;
 
     nk_flags state = 0;
     return nk_do_selectable(&state, &win->buffer, bounds, NULL, NK_SYMBOL_NONE, str, len, align, value, &style->selectable, in, style->font);
@@ -169,9 +169,9 @@ nk_selectable_symbol_text(struct nk_context *ctx, enum nk_symbol_type sym, const
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? NULL : &ctx->input;
 
     nk_flags state = 0;
     return nk_do_selectable(&state, &win->buffer, bounds, NULL, sym, str, len, align, value, &style->selectable, in, style->font);
@@ -197,9 +197,9 @@ nk_selectable_image_text(struct nk_context* ctx, struct nk_image img, const char
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? NULL : &ctx->input;
 
     nk_flags state = 0;
     return nk_do_selectable(&state, &win->buffer, bounds, &img, NK_SYMBOL_NONE, str, len, align, value, &style->selectable, in, style->font);

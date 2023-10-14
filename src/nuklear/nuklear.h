@@ -2601,22 +2601,6 @@ NK_API void nk_tree_element_pop(struct nk_context*);
 
 /* =============================================================================
  *
- *                                  LIST VIEW
- *
- * ============================================================================= */
-struct nk_list_view {
-/* public: */
-    int begin, end, count;
-/* private: */
-    int total_height;
-    struct nk_context *ctx;
-    nk_uint *scroll_pointer;
-    nk_uint scroll_value;
-};
-NK_API nk_bool nk_list_view_begin(struct nk_context*, struct nk_list_view *out, const char *id, nk_flags, int row_height, int row_count);
-NK_API void nk_list_view_end(struct nk_list_view*);
-/* =============================================================================
- *
  *                                  WIDGET
  *
  * ============================================================================= */
@@ -2635,16 +2619,14 @@ enum nk_widget_states {
     NK_WIDGET_STATE_HOVERED     = NK_WIDGET_STATE_HOVER|NK_WIDGET_STATE_MODIFIED, /* widget is being hovered */
     NK_WIDGET_STATE_ACTIVE      = NK_WIDGET_STATE_ACTIVED|NK_WIDGET_STATE_MODIFIED /* widget is currently activated */
 };
+
 NK_API enum nk_widget_layout_states nk_widget(struct nk_rect*, const struct nk_context*);
-NK_API enum nk_widget_layout_states nk_widget_fitting(struct nk_rect*, struct nk_context*, struct nk_vec2);
+NK_API struct nk_input* nk_widget_input(struct nk_rect*, enum nk_widget_layout_states*, struct nk_context*);
+
 NK_API struct nk_rect nk_widget_bounds(struct nk_context*);
-NK_API struct nk_vec2 nk_widget_position(struct nk_context*);
-NK_API struct nk_vec2 nk_widget_size(struct nk_context*);
 NK_API float nk_widget_width(struct nk_context*);
 NK_API float nk_widget_height(struct nk_context*);
-NK_API nk_bool nk_widget_is_hovered(struct nk_context*);
-NK_API nk_bool nk_widget_is_mouse_clicked(struct nk_context*, enum nk_buttons);
-NK_API nk_bool nk_widget_has_mouse_click_down(struct nk_context*, enum nk_buttons, nk_bool down);
+
 NK_API void nk_spacing(struct nk_context*, int cols);
 /* =============================================================================
  *
@@ -2657,32 +2639,25 @@ enum nk_text_align {
     NK_TEXT_ALIGN_RIGHT       = 0x04,
     NK_TEXT_ALIGN_TOP         = 0x08,
     NK_TEXT_ALIGN_MIDDLE      = 0x10,
-    NK_TEXT_ALIGN_BOTTOM      = 0x20
+    NK_TEXT_ALIGN_BOTTOM      = 0x20,
+    NK_TEXT_ALIGN_WRAP        = 0x40
 };
-enum nk_text_alignment {
-    NK_TEXT_LEFT        = NK_TEXT_ALIGN_MIDDLE|NK_TEXT_ALIGN_LEFT,
-    NK_TEXT_CENTERED    = NK_TEXT_ALIGN_MIDDLE|NK_TEXT_ALIGN_CENTERED,
-    NK_TEXT_RIGHT       = NK_TEXT_ALIGN_MIDDLE|NK_TEXT_ALIGN_RIGHT
-};
-NK_API void nk_text(struct nk_context*, const char*, int, nk_flags);
-NK_API void nk_text_colored(struct nk_context*, const char*, int, nk_flags, struct nk_color);
-NK_API void nk_text_wrap(struct nk_context*, const char*, int);
-NK_API void nk_text_wrap_colored(struct nk_context*, const char*, int, struct nk_color);
-NK_API void nk_label(struct nk_context*, const char*, nk_flags align);
-NK_API void nk_label_color(struct nk_context*, struct nk_color);
-NK_API void nk_label_colored(struct nk_context*, const char*, nk_flags align, struct nk_color);
-NK_API void nk_label_wrap(struct nk_context*, const char*);
-NK_API void nk_label_colored_wrap(struct nk_context*, const char*, struct nk_color);
-NK_API void nk_image(struct nk_context*, struct nk_image);
-NK_API void nk_image_color(struct nk_context*, struct nk_image, struct nk_color);
-NK_API void nk_labelf(struct nk_context*, nk_flags, NK_PRINTF_FORMAT_STRING const char*, ...) NK_PRINTF_VARARG_FUNC(3);
-NK_API void nk_labelf_colored(struct nk_context*, nk_flags, struct nk_color, NK_PRINTF_FORMAT_STRING const char*,...) NK_PRINTF_VARARG_FUNC(4);
-NK_API void nk_labelf_wrap(struct nk_context*, NK_PRINTF_FORMAT_STRING const char*,...) NK_PRINTF_VARARG_FUNC(2);
-NK_API void nk_labelf_colored_wrap(struct nk_context*, struct nk_color, NK_PRINTF_FORMAT_STRING const char*,...) NK_PRINTF_VARARG_FUNC(3);
-NK_API void nk_labelfv(struct nk_context*, nk_flags, NK_PRINTF_FORMAT_STRING const char*, va_list) NK_PRINTF_VALIST_FUNC(3);
-NK_API void nk_labelfv_colored(struct nk_context*, nk_flags, struct nk_color, NK_PRINTF_FORMAT_STRING const char*, va_list) NK_PRINTF_VALIST_FUNC(4);
-NK_API void nk_labelfv_wrap(struct nk_context*, NK_PRINTF_FORMAT_STRING const char*, va_list) NK_PRINTF_VALIST_FUNC(2);
-NK_API void nk_labelfv_colored_wrap(struct nk_context*, struct nk_color, NK_PRINTF_FORMAT_STRING const char*, va_list) NK_PRINTF_VALIST_FUNC(3);
+
+#define NK_TEXT_LEFT      NK_TEXT_ALIGN_MIDDLE | NK_TEXT_ALIGN_LEFT
+#define NK_TEXT_CENTERED  NK_TEXT_ALIGN_MIDDLE | NK_TEXT_ALIGN_CENTERED
+#define NK_TEXT_RIGHT     NK_TEXT_ALIGN_MIDDLE | NK_TEXT_ALIGN_RIGHT
+
+NK_API void nk_text(struct nk_context *ctx, const char *text, int len, nk_flags align);
+NK_API void nk_label(struct nk_context *ctx, const char *text, nk_flags align);
+NK_API void nk_text_colored(struct nk_context *ctx, const char *text, int len, nk_flags align, struct nk_color color);
+NK_API void nk_label_colored(struct nk_context *ctx, const char *text, nk_flags align, struct nk_color color);
+
+NK_API void nk_labelfv(struct nk_context *ctx, nk_flags align, const char *fmt, va_list);
+NK_API void nk_labelf(struct nk_context *ctx, nk_flags align, const char *fmt, ...);
+
+NK_API void nk_labelfv_colored(struct nk_context* ctx, nk_flags align, struct nk_color color, const char *fmt, va_list);
+NK_API void nk_labelf_colored(struct nk_context* ctx, nk_flags align, struct nk_color color, const char *fmt, ...);
+
 NK_API void nk_value_bool(struct nk_context*, const char *prefix, int);
 NK_API void nk_value_int(struct nk_context*, const char *prefix, int);
 NK_API void nk_value_uint(struct nk_context*, const char *prefix, unsigned int);
@@ -2690,6 +2665,10 @@ NK_API void nk_value_float(struct nk_context*, const char *prefix, float);
 NK_API void nk_value_color_byte(struct nk_context*, const char *prefix, struct nk_color);
 NK_API void nk_value_color_float(struct nk_context*, const char *prefix, struct nk_color);
 NK_API void nk_value_color_hex(struct nk_context*, const char *prefix, struct nk_color);
+
+NK_API void nk_image(struct nk_context*, struct nk_image);
+NK_API void nk_image_color(struct nk_context*, struct nk_image, struct nk_color);
+NK_API void nk_label_color(struct nk_context*, struct nk_color);
 /* =============================================================================
  *
  *                                  BUTTON
@@ -2699,10 +2678,10 @@ NK_API nk_bool nk_button_text(struct nk_context*, const char *title, int len);
 NK_API nk_bool nk_button_label(struct nk_context*, const char *title);
 NK_API nk_bool nk_button_symbol(struct nk_context*, enum nk_symbol_type);
 NK_API nk_bool nk_button_image(struct nk_context*, struct nk_image img);
-NK_API nk_bool nk_button_symbol_label(struct nk_context*, enum nk_symbol_type, const char*, nk_flags text_alignment);
-NK_API nk_bool nk_button_symbol_text(struct nk_context*, enum nk_symbol_type, const char*, int, nk_flags alignment);
-NK_API nk_bool nk_button_image_label(struct nk_context*, struct nk_image img, const char*, nk_flags text_alignment);
-NK_API nk_bool nk_button_image_text(struct nk_context*, struct nk_image img, const char*, int, nk_flags alignment);
+NK_API nk_bool nk_button_symbol_label(struct nk_context*, enum nk_symbol_type, const char*, nk_flags align);
+NK_API nk_bool nk_button_symbol_text(struct nk_context*, enum nk_symbol_type, const char*, int, nk_flags align);
+NK_API nk_bool nk_button_image_label(struct nk_context*, struct nk_image img, const char*, nk_flags align);
+NK_API nk_bool nk_button_image_text(struct nk_context*, struct nk_image img, const char*, int, nk_flags align);
 
 NK_API nk_bool nk_button_push_behavior(struct nk_context*, enum nk_button_behavior);
 NK_API nk_bool nk_button_pop_behavior(struct nk_context*);
@@ -2741,19 +2720,13 @@ NK_API int nk_slider_int(struct nk_context*, int min, int val, int max, int step
 NK_API nk_size nk_bar_slider(struct nk_context*, nk_size cur, nk_size max);
 
 NK_API nk_size nk_progress(struct nk_context*, nk_size cur, nk_size max);
-/* =============================================================================
- *
- *                                  PROGRESSBAR
- *
- * ============================================================================= */
 
 /* =============================================================================
  *
  *                                  COLOR PICKER
  *
  * ============================================================================= */
-NK_API struct nk_colorf nk_color_picker(struct nk_context*, struct nk_colorf, enum nk_color_format);
-NK_API nk_bool nk_color_pick(struct nk_context*, struct nk_colorf*, enum nk_color_format);
+NK_API struct nk_colorf nk_color_picker(struct nk_context *ctx, struct nk_colorf color, enum nk_color_format format);
 /* =============================================================================
  *
  *                                  PROPERTIES
@@ -3007,11 +2980,13 @@ NK_API void nk_edit_unfocus(struct nk_context*);
  * ============================================================================= */
 NK_API nk_bool nk_chart_begin(struct nk_context*, enum nk_chart_type, int num, float min, float max);
 NK_API nk_bool nk_chart_begin_colored(struct nk_context*, enum nk_chart_type, struct nk_color, struct nk_color active, int num, float min, float max);
+NK_API void nk_chart_end(struct nk_context*);
+
 NK_API void nk_chart_add_slot(struct nk_context *ctx, const enum nk_chart_type, int count, float min_value, float max_value);
 NK_API void nk_chart_add_slot_colored(struct nk_context *ctx, const enum nk_chart_type, struct nk_color, struct nk_color active, int count, float min_value, float max_value);
 NK_API nk_flags nk_chart_push(struct nk_context*, float);
 NK_API nk_flags nk_chart_push_slot(struct nk_context*, float, int);
-NK_API void nk_chart_end(struct nk_context*);
+
 NK_API void nk_plot(struct nk_context*, enum nk_chart_type, const float *values, int count, int offset);
 NK_API void nk_plot_function(struct nk_context*, enum nk_chart_type, void *userdata, float(*value_getter)(void* user, int index), int count, int offset);
 /* =============================================================================
@@ -3026,16 +3001,28 @@ NK_API void nk_popup_get_scroll(struct nk_context*, nk_uint *offset_x, nk_uint *
 NK_API void nk_popup_set_scroll(struct nk_context*, nk_uint offset_x, nk_uint offset_y);
 /* =============================================================================
  *
+ *                                  CONTEXTUAL
+ *
+ * ============================================================================= */
+NK_API nk_bool nk_contextual_begin(struct nk_context*, nk_flags, struct nk_vec2, struct nk_rect trigger_bounds);
+NK_API void nk_contextual_close(struct nk_context*);
+NK_API void nk_contextual_end(struct nk_context*);
+
+NK_API nk_bool nk_contextual_item_text(struct nk_context*, const char*, int, nk_flags align);
+NK_API nk_bool nk_contextual_item_label(struct nk_context*, const char*, nk_flags align);
+NK_API nk_bool nk_contextual_item_image_text(struct nk_context*, struct nk_image, const char*, int len, nk_flags align);
+NK_API nk_bool nk_contextual_item_image_label(struct nk_context*, struct nk_image, const char*, nk_flags align);
+NK_API nk_bool nk_contextual_item_symbol_text(struct nk_context*, enum nk_symbol_type, const char*, int, nk_flags align);
+NK_API nk_bool nk_contextual_item_symbol_label(struct nk_context*, enum nk_symbol_type, const char*, nk_flags align);
+
+/* =============================================================================
+ *
  *                                  COMBOBOX
  *
  * ============================================================================= */
 NK_API int nk_combo(struct nk_context*, const char **items, int count, int selected, int item_height, struct nk_vec2 size);
 NK_API int nk_combo_separator(struct nk_context*, const char *items_separated_by_separator, int separator, int selected, int count, int item_height, struct nk_vec2 size);
-/* =============================================================================
- *
- *                                  ABSTRACT COMBOBOX
- *
- * ============================================================================= */
+
 NK_API nk_bool nk_combo_begin_text(struct nk_context*, const char *selected, int, struct nk_vec2 size);
 NK_API nk_bool nk_combo_begin_label(struct nk_context*, const char *selected, struct nk_vec2 size);
 NK_API nk_bool nk_combo_begin_color(struct nk_context*, struct nk_color color, struct nk_vec2 size);
@@ -3043,28 +3030,15 @@ NK_API void nk_combo_close(struct nk_context*);
 NK_API void nk_combo_end(struct nk_context*);
 /* =============================================================================
  *
- *                                  CONTEXTUAL
- *
- * ============================================================================= */
-NK_API nk_bool nk_contextual_begin(struct nk_context*, nk_flags, struct nk_vec2, struct nk_rect trigger_bounds);
-NK_API nk_bool nk_contextual_item_text(struct nk_context*, const char*, int,nk_flags align);
-NK_API nk_bool nk_contextual_item_label(struct nk_context*, const char*, nk_flags align);
-NK_API nk_bool nk_contextual_item_image_label(struct nk_context*, struct nk_image, const char*, nk_flags alignment);
-NK_API nk_bool nk_contextual_item_image_text(struct nk_context*, struct nk_image, const char*, int len, nk_flags alignment);
-NK_API nk_bool nk_contextual_item_symbol_label(struct nk_context*, enum nk_symbol_type, const char*, nk_flags alignment);
-NK_API nk_bool nk_contextual_item_symbol_text(struct nk_context*, enum nk_symbol_type, const char*, int, nk_flags alignment);
-NK_API void nk_contextual_close(struct nk_context*);
-NK_API void nk_contextual_end(struct nk_context*);
-/* =============================================================================
- *
  *                                  TOOLTIP
  *
  * ============================================================================= */
-NK_API void nk_tooltip(struct nk_context*, const char*);
-NK_API void nk_tooltipf(struct nk_context*, NK_PRINTF_FORMAT_STRING const char*, ...) NK_PRINTF_VARARG_FUNC(2);
-NK_API void nk_tooltipfv(struct nk_context*, NK_PRINTF_FORMAT_STRING const char*, va_list) NK_PRINTF_VALIST_FUNC(2);
 NK_API nk_bool nk_tooltip_begin(struct nk_context*, float width);
 NK_API void nk_tooltip_end(struct nk_context*);
+
+NK_API void nk_tooltip(struct nk_context*, const char*);
+NK_API void nk_tooltipf(struct nk_context*, const char*, ...);
+NK_API void nk_tooltipfv(struct nk_context*, const char*, va_list);
 /* =============================================================================
  *
  *                                  MENU

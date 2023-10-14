@@ -1,5 +1,5 @@
-#include "nuklear.h"
-#include "nuklear_internal.h"
+#include "../nuklear.h"
+#include "../nuklear_internal.h"
 
 /* ===============================================================
  *
@@ -290,13 +290,6 @@ NK_API nk_bool nk_menu_item_symbol_label(struct nk_context *ctx, enum nk_symbol_
 {
     return nk_contextual_item_symbol_label(ctx, sym, label, align);
 }
-NK_API void nk_menu_close(struct nk_context *ctx)
-{
-    nk_contextual_close(ctx);
-}
-NK_API void
-nk_menu_end(struct nk_context *ctx)
-{
-    nk_contextual_end(ctx);
-}
 
+NK_API void nk_menu_close(struct nk_context *ctx) { nk_contextual_close(ctx); }
+NK_API void nk_menu_end(struct nk_context *ctx)   { nk_contextual_end(ctx); }

@@ -153,12 +153,11 @@ int overview(struct nk_context* ctx)
                 nk_label(ctx, "Label aligned right", NK_TEXT_RIGHT);
                 nk_label_colored(ctx, "Blue text", NK_TEXT_LEFT, nk_rgb(0, 0, 255));
                 nk_label_colored(ctx, "Yellow text", NK_TEXT_LEFT, nk_rgb(255, 255, 0));
-                nk_text(ctx, "Text without /0", 15, NK_TEXT_RIGHT);
 
                 nk_layout_row_static(ctx, 100, 200, 1);
-                nk_label_wrap(ctx, "This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping");
+                nk_label(ctx, "This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping", NK_TEXT_ALIGN_WRAP);
                 nk_layout_row_dynamic(ctx, 100, 1);
-                nk_label_wrap(ctx, "This is another long text to show dynamic window changes on multiline text");
+                nk_label(ctx, "This is another long text to show dynamic window changes on multiline text", NK_TEXT_ALIGN_WRAP);
                 nk_tree_pop(ctx);
             }
 
@@ -222,7 +221,7 @@ int overview(struct nk_context* ctx)
 
                 nk_label(ctx, "Slider float", NK_TEXT_LEFT);
                 float_slider = nk_slider(ctx, 0, float_slider, 5.0, 0.5f);
-                nk_labelf(ctx, NK_TEXT_LEFT, "Progressbar: %u", (int)prog_value);
+                nk_labelf(ctx, NK_TEXT_LEFT, nk_false, "Progressbar: %u", (int)prog_value);
                 prog_value = nk_bar_slider(ctx, prog_value, 100);
 
                 nk_layout_row(ctx, NK_STATIC, 25, 2, ratio);
@@ -288,10 +287,9 @@ int overview(struct nk_context* ctx)
                 }
                 if (nk_tree_push(ctx, NK_TREE_NODE, "Grid", NK_MINIMIZED))
                 {
-                    int i;
                     static int selected[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
                     nk_layout_row_static(ctx, 50, 50, 4);
-                    for (i = 0; i < 16; ++i) {
+                    for (int i = 0; i < 16; ++i) {
                         if (nk_selectable_label(ctx, "Z", NK_TEXT_CENTERED, &selected[i])) {
                             int x = (i % 4), y = i / 4;
                             if (x > 0) selected[i - 1] ^= 1;

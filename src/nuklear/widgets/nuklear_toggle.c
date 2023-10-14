@@ -148,9 +148,9 @@ nk_bool nk_toggle_text(struct nk_context* ctx, enum nk_toggle_type type, const c
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    enum nk_widget_layout_states layout_state;
+    const struct nk_input *in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return nk_false;
-    const struct nk_input* in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 
     nk_flags state = 0;
     return  nk_do_toggle(&state, &win->buffer, bounds, active, text, len, type, &style->checkbox, in, style->font);
