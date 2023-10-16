@@ -71,39 +71,36 @@ nk_property_behavior(nk_flags *ws, const struct nk_input *in,
 NK_LIB void
 nk_draw_property(struct nk_command_buffer *out, const struct nk_style_property *style,
     const struct nk_rect *bounds, const struct nk_rect *label, nk_flags state,
-    const char *name, int len, const struct nk_user_font *font)
+    const char *name, int len, const struct nk_font *font)
 {
-    struct nk_text text;
-    const struct nk_style_item *background;
+    struct nk_style_text text = { 0 };
+    text.alignment = NK_TEXT_CENTERED;
 
     /* select correct background and text color */
+    const struct nk_style_item *background;
     if (state & NK_WIDGET_STATE_ACTIVED) {
         background = &style->active;
-        text.text = style->label_active;
+        text.color = style->label_active;
     } else if (state & NK_WIDGET_STATE_HOVER) {
         background = &style->hover;
-        text.text = style->label_hover;
+        text.color = style->label_hover;
     } else {
         background = &style->normal;
-        text.text = style->label_normal;
+        text.color = style->label_normal;
     }
 
     /* draw background */
     switch(background->type) {
         case NK_STYLE_ITEM_IMAGE:
-            text.background = nk_rgba(0, 0, 0, 0);
-            nk_draw_image(out, *bounds, &background->data.image, nk_white);
+            nk_draw_image(out, *bounds, &background->image, nk_white);
             break;
         case NK_STYLE_ITEM_COLOR:
-            text.background = background->data.color;
-            nk_fill_rect(out, *bounds, style->rounding, background->data.color);
-            nk_stroke_rect(out, *bounds, style->rounding, style->border, background->data.color);
+            nk_fill_rect_border(out, *bounds, style->rounding, background->color, style->border, style->border_color);
             break;
     }
 
     /* draw label */
-    text.padding = nk_vec2(0,0);
-    nk_widget_text(out, *label, name, len, &text, NK_TEXT_CENTERED, font);
+    nk_widget_text(out, *label, name, len, &text, font);
 }
 NK_LIB void
 nk_do_property(nk_flags *ws,
@@ -113,7 +110,7 @@ nk_do_property(nk_flags *ws,
     int *state, int *cursor, int *select_begin, int *select_end,
     const struct nk_style_property *style,
     enum nk_property_filter filter, struct nk_input *in,
-    const struct nk_user_font *font, struct nk_text_edit *text_edit,
+    const struct nk_font *font, struct nk_text_edit *text_edit,
     enum nk_button_behavior behavior)
 {
     const nk_plugin_filter filters[] = {
@@ -198,9 +195,7 @@ nk_do_property(nk_flags *ws,
     nk_property_behavior(ws, in, property, label, edit, empty, state, variant, inc_per_pixel);
 
     /* draw property */
-    if (style->draw_begin) style->draw_begin(out, style->userdata);
     nk_draw_property(out, style, &property, &label, *ws, name, name_len, font);
-    if (style->draw_end) style->draw_end(out, style->userdata);
 
     /* execute right button  */
     if (nk_do_button_symbol(ws, out, left, style->sym_left, behavior, &style->dec_button, in, font)) {

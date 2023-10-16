@@ -171,7 +171,7 @@ struct nk_convert_config;
 struct nk_style_item;
 struct nk_text_edit;
 struct nk_draw_list;
-struct nk_user_font;
+struct nk_font;
 struct nk_panel;
 struct nk_context;
 struct nk_draw_vertex_layout_element;
@@ -227,8 +227,6 @@ struct nk_allocator {
 };
 enum nk_symbol_type {
     NK_SYMBOL_NONE,
-    NK_SYMBOL_X,
-    NK_SYMBOL_UNDERSCORE,
     NK_SYMBOL_CIRCLE_SOLID,
     NK_SYMBOL_CIRCLE_OUTLINE,
     NK_SYMBOL_RECT_SOLID,
@@ -237,8 +235,7 @@ enum nk_symbol_type {
     NK_SYMBOL_TRIANGLE_DOWN,
     NK_SYMBOL_TRIANGLE_LEFT,
     NK_SYMBOL_TRIANGLE_RIGHT,
-    NK_SYMBOL_PLUS,
-    NK_SYMBOL_MINUS,
+    NK_SYMBOL_CHECK,
     NK_SYMBOL_MAX
 };
 /* =============================================================================
@@ -284,7 +281,7 @@ enum nk_symbol_type {
 /// Should be used if you don't want to be bothered with memory management in nuklear.
 ///
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// nk_bool nk_init_default(struct nk_context *ctx, const struct nk_user_font *font);
+/// nk_bool nk_init_default(struct nk_context *ctx, const struct nk_font *font);
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ///
 /// Parameter   | Description
@@ -295,7 +292,7 @@ enum nk_symbol_type {
 /// Returns either `false(0)` on failure or `true(1)` on success.
 ///
 */
-NK_API nk_bool nk_init_default(struct nk_context*, const struct nk_user_font*);
+NK_API nk_bool nk_init_default(struct nk_context*, const struct nk_font*);
 /*/// #### nk_init_fixed
 /// Initializes a `nk_context` struct from single fixed size memory block
 /// Should be used if you want complete control over nuklear's memory management.
@@ -304,7 +301,7 @@ NK_API nk_bool nk_init_default(struct nk_context*, const struct nk_user_font*);
 /// and only the required amount of memory will actually be committed.
 ///
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// nk_bool nk_init_fixed(struct nk_context *ctx, void *memory, nk_size size, const struct nk_user_font *font);
+/// nk_bool nk_init_fixed(struct nk_context *ctx, void *memory, nk_size size, const struct nk_font *font);
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ///
 /// !!! Warning
@@ -319,14 +316,14 @@ NK_API nk_bool nk_init_default(struct nk_context*, const struct nk_user_font*);
 ///
 /// Returns either `false(0)` on failure or `true(1)` on success.
 */
-NK_API nk_bool nk_init_fixed(struct nk_context*, void *memory, nk_size size, const struct nk_user_font*);
+NK_API nk_bool nk_init_fixed(struct nk_context*, void *memory, nk_size size, const struct nk_font*);
 /*/// #### nk_init
 /// Initializes a `nk_context` struct with memory allocation callbacks for nuklear to allocate
 /// memory from. Used internally for `nk_init_default` and provides a kitchen sink allocation
 /// interface to nuklear. Can be useful for cases like monitoring memory consumption.
 ///
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// nk_bool nk_init(struct nk_context *ctx, struct nk_allocator *alloc, const struct nk_user_font *font);
+/// nk_bool nk_init(struct nk_context *ctx, struct nk_allocator *alloc, const struct nk_font *font);
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ///
 /// Parameter   | Description
@@ -337,14 +334,14 @@ NK_API nk_bool nk_init_fixed(struct nk_context*, void *memory, nk_size size, con
 ///
 /// Returns either `false(0)` on failure or `true(1)` on success.
 */
-NK_API nk_bool nk_init(struct nk_context*, struct nk_allocator*, const struct nk_user_font*);
+NK_API nk_bool nk_init(struct nk_context*, struct nk_allocator*, const struct nk_font*);
 /*/// #### nk_init_custom
 /// Initializes a `nk_context` struct from two different either fixed or growing
 /// buffers. The first buffer is for allocating draw commands while the second buffer is
 /// used for allocating windows, panels and state tables.
 ///
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// nk_bool nk_init_custom(struct nk_context *ctx, struct nk_buffer *cmds, struct nk_buffer *pool, const struct nk_user_font *font);
+/// nk_bool nk_init_custom(struct nk_context *ctx, struct nk_buffer *cmds, struct nk_buffer *pool, const struct nk_font *font);
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ///
 /// Parameter   | Description
@@ -356,7 +353,7 @@ NK_API nk_bool nk_init(struct nk_context*, struct nk_allocator*, const struct nk
 ///
 /// Returns either `false(0)` on failure or `true(1)` on success.
 */
-NK_API nk_bool nk_init_custom(struct nk_context*, struct nk_buffer *cmds, struct nk_buffer *pool, const struct nk_user_font*);
+NK_API nk_bool nk_init_custom(struct nk_context*, struct nk_buffer *cmds, struct nk_buffer *pool, const struct nk_font*);
 /*/// #### nk_clear
 /// Resets the context state at the end of the frame. This includes mostly
 /// garbage collector tasks like removing windows or table not called and therefore
@@ -2690,36 +2687,32 @@ NK_API nk_bool nk_button_pop_behavior(struct nk_context*);
  *                                  TOGGLE
  *
  * ============================================================================= */
-NK_API nk_bool nk_checkbox_text(struct nk_context*, const char*, int, nk_bool *active);
-NK_API nk_bool nk_checkbox_label(struct nk_context*, const char*, nk_bool *active);
-NK_API nk_bool nk_checkbox_flags_text(struct nk_context*, const char*, int, nk_flags *flags, nk_flags value);
-NK_API nk_bool nk_checkbox_flags_label(struct nk_context*, const char*, nk_flags*flags, nk_flags value);
+NK_API nk_bool nk_checkbox_text(struct nk_context*, const char*, int, nk_bool active);
+NK_API nk_bool nk_checkbox_label(struct nk_context*, const char*, nk_bool active);
+NK_API nk_flags nk_checkbox_flags_text(struct nk_context*, const char*, int, nk_flags flags, nk_flags value);
+NK_API nk_flags nk_checkbox_flags_label(struct nk_context*, const char*, nk_flags flags, nk_flags value);
 
-NK_API nk_bool nk_radio_text(struct nk_context*, const char*, int, unsigned int* option, unsigned int value);
-NK_API nk_bool nk_radio_label(struct nk_context*, const char*, unsigned int* option, unsigned int value);
+NK_API int nk_radio_text(struct nk_context*, const char*, int, int option, int value);
+NK_API int nk_radio_label(struct nk_context*, const char*, int option, int value);
 /* =============================================================================
  *
  *                                  SELECTABLE
  *
  * ============================================================================= */
-NK_API nk_bool nk_selectable_text(struct nk_context*, const char*, int, nk_flags align, nk_bool *value);
-NK_API nk_bool nk_selectable_label(struct nk_context*, const char*, nk_flags align, nk_bool *value);
-NK_API nk_bool nk_selectable_image_text(struct nk_context*,struct nk_image, const char*, int, nk_flags align, nk_bool *value);
-NK_API nk_bool nk_selectable_image_label(struct nk_context*,struct nk_image,  const char*, nk_flags align, nk_bool *value);
-NK_API nk_bool nk_selectable_symbol_text(struct nk_context*,enum nk_symbol_type, const char*, int, nk_flags align, nk_bool *value);
-NK_API nk_bool nk_selectable_symbol_label(struct nk_context*,enum nk_symbol_type,  const char*, nk_flags align, nk_bool *value);
+NK_API nk_bool nk_selectable_text(struct nk_context*, const char*, int, nk_flags align, nk_bool selected);
+NK_API nk_bool nk_selectable_label(struct nk_context*, const char*, nk_flags align, nk_bool selected);
 
 /* =============================================================================
  *
  *                                  SLIDER
  *
  * ============================================================================= */
-NK_API float nk_slider(struct nk_context*, float min, float val, float max, float step);
-NK_API int nk_slider_int(struct nk_context*, int min, int val, int max, int step);
+NK_API float nk_slider(struct nk_context*, float min, float value, float max, float step);
+NK_API int nk_slider_int(struct nk_context*, int min, int value, int max, int step);
 
-NK_API nk_size nk_bar_slider(struct nk_context*, nk_size cur, nk_size max);
+NK_API nk_size nk_bar_slider(struct nk_context*, nk_size value, nk_size max);
 
-NK_API nk_size nk_progress(struct nk_context*, nk_size cur, nk_size max);
+NK_API nk_size nk_progress(struct nk_context*, nk_size value, nk_size max);
 
 /* =============================================================================
  *
@@ -3113,12 +3106,12 @@ NK_API void nk_style_from_table(struct nk_context*, const struct nk_color*);
 NK_API void nk_style_load_cursor(struct nk_context*, enum nk_style_cursor, const struct nk_cursor*);
 NK_API void nk_style_load_all_cursors(struct nk_context*, struct nk_cursor*);
 NK_API const char* nk_style_get_color_by_name(enum nk_style_colors);
-NK_API void nk_style_set_font(struct nk_context*, const struct nk_user_font*);
+NK_API void nk_style_set_font(struct nk_context*, const struct nk_font*);
 NK_API nk_bool nk_style_set_cursor(struct nk_context*, enum nk_style_cursor);
 NK_API void nk_style_show_cursor(struct nk_context*);
 NK_API void nk_style_hide_cursor(struct nk_context*);
 
-NK_API nk_bool nk_style_push_font(struct nk_context*, const struct nk_user_font*);
+NK_API nk_bool nk_style_push_font(struct nk_context*, const struct nk_font*);
 NK_API nk_bool nk_style_push_float(struct nk_context*, float*, float);
 NK_API nk_bool nk_style_push_vec2(struct nk_context*, struct nk_vec2*, struct nk_vec2);
 NK_API nk_bool nk_style_push_style_item(struct nk_context*, struct nk_style_item*, struct nk_style_item);
@@ -3267,12 +3260,12 @@ NK_API const char* nk_utf_at(const char *buffer, int length, int index, nk_rune 
 /// #### Using your own implementation without vertex buffer output
 /// 
 /// So first up the easiest way to do font handling is by just providing a
-/// `nk_user_font` struct which only requires the height in pixel of the used
+/// `nk_font` struct which only requires the height in pixel of the used
 /// font and a callback to calculate the width of a string. This way of handling
 /// fonts is best fitted for using the normal draw shape command API where you
 /// do all the text drawing yourself and the library does not require any kind
 /// of deeper knowledge about which font handling mechanism you use.
-/// IMPORTANT: the `nk_user_font` pointer provided to nuklear has to persist
+/// IMPORTANT: the `nk_font` pointer provided to nuklear has to persist
 /// over the complete life time! I know this sucks but it is currently the only
 /// way to switch between fonts.
 ///
@@ -3284,7 +3277,7 @@ NK_API const char* nk_utf_at(const char *buffer, int length, int index, nk_rune 
 ///         return text_width;
 ///     }
 ///
-///     struct nk_user_font font;
+///     struct nk_font font;
 ///     font.userdata.ptr = &your_font_class_or_struct;
 ///     font.height = your_font_height;
 ///     font.width = your_text_width_calculation;
@@ -3297,7 +3290,7 @@ NK_API const char* nk_utf_at(const char *buffer, int length, int index, nk_rune 
 /// While the first approach works fine if you don't want to use the optional
 /// vertex buffer output it is not enough if you do. To get font handling working
 /// for these cases you have to provide two additional parameters inside the
-/// `nk_user_font`. First a texture atlas handle used to draw text as subimages
+/// `nk_font`. First a texture atlas handle used to draw text as subimages
 /// of a bigger font atlas texture and a callback to query a character's glyph
 /// information (offset, size, ...). So it is still possible to provide your own
 /// font and use the vertex buffer output.
@@ -3309,7 +3302,7 @@ NK_API const char* nk_utf_at(const char *buffer, int length, int index, nk_rune 
 ///         float text_width = ...;
 ///         return text_width;
 ///     }
-///     void query_your_font_glyph(nk_handle handle, float font_height, struct nk_user_font_glyph *glyph, nk_rune codepoint, nk_rune next_codepoint)
+///     void query_your_font_glyph(nk_handle handle, float font_height, struct nk_font_glyph *glyph, nk_rune codepoint, nk_rune next_codepoint)
 ///     {
 ///         your_font_type *type = handle.ptr;
 ///         glyph.width = ...;
@@ -3323,7 +3316,7 @@ NK_API const char* nk_utf_at(const char *buffer, int length, int index, nk_rune 
 ///         glyph.offset.y = ...;
 ///     }
 /// 
-///     struct nk_user_font font;
+///     struct nk_font font;
 ///     font.userdata.ptr = &your_font_class_or_struct;
 ///     font.height = your_font_height;
 ///     font.width = your_text_width_calculation;
@@ -3334,92 +3327,21 @@ NK_API const char* nk_utf_at(const char *buffer, int length, int index, nk_rune 
 ///     nk_init_default(&ctx, &font);
 /// ```
 ///
-/// #### Nuklear font baker
-/// 
-/// The final approach if you do not have a font handling functionality or don't
-/// want to use it in this library is by using the optional font baker.
-/// The font baker APIs can be used to create a font plus font atlas texture
-/// and can be used with or without the vertex buffer output.
-/// 
-/// It still uses the `nk_user_font` struct and the two different approaches
-/// previously stated still work. The font baker is not located inside
-/// `nk_context` like all other systems since it can be understood as more of
-/// an extension to nuklear and does not really depend on any `nk_context` state.
-/// 
-/// Font baker need to be initialized first by one of the nk_font_atlas_init_xxx
-/// functions. If you don't care about memory just call the default version
-/// `nk_font_atlas_init_default` which will allocate all memory from the standard library.
-/// If you want to control memory allocation but you don't care if the allocated
-/// memory is temporary and therefore can be freed directly after the baking process
-/// is over or permanent you can call `nk_font_atlas_init`.
-/// 
-/// After successfully initializing the font baker you can add Truetype(.ttf) fonts from
-/// different sources like memory or from file by calling one of the `nk_font_atlas_add_xxx`.
-/// functions. Adding font will permanently store each font, font config and ttf memory block(!)
-/// inside the font atlas and allows to reuse the font atlas. If you don't want to reuse
-/// the font baker by for example adding additional fonts you can call
-/// `nk_font_atlas_cleanup` after the baking process is over (after calling nk_font_atlas_end).
-/// 
-/// As soon as you added all fonts you wanted you can now start the baking process
-/// for every selected glyph to image by calling `nk_font_atlas_bake`.
-/// The baking process returns image memory, width and height which can be used to
-/// either create your own image object or upload it to any graphics library.
-/// No matter which case you finally have to call `nk_font_atlas_end` which
-/// will free all temporary memory including the font atlas image so make sure
-/// you created our texture beforehand. `nk_font_atlas_end` requires a handle
-/// to your font texture or object and optionally fills a `struct nk_draw_null_texture`
-/// which can be used for the optional vertex output. If you don't want it just
-/// set the argument to `NULL`.
-/// 
-/// At this point you are done and if you don't want to reuse the font atlas you
-/// can call `nk_font_atlas_cleanup` to free all truetype blobs and configuration
-/// memory. Finally if you don't use the font atlas and any of it's fonts anymore
-/// you need to call `nk_font_atlas_clear` to free all memory still being used.
-/// 
-/// ```c
-///     struct nk_font_atlas atlas;
-///     nk_font_atlas_init_default(&atlas);
-///     nk_font_atlas_begin(&atlas);
-///     nk_font *font = nk_font_atlas_add_from_file(&atlas, "Path/To/Your/TTF_Font.ttf", 13, 0);
-///     nk_font *font2 = nk_font_atlas_add_from_file(&atlas, "Path/To/Your/TTF_Font2.ttf", 16, 0);
-///     const void* img = nk_font_atlas_bake(&atlas, &img_width, &img_height, NK_FONT_ATLAS_RGBA32);
-///     nk_font_atlas_end(&atlas, nk_handle_id(texture), 0);
-/// 
-///     struct nk_context ctx;
-///     nk_init_default(&ctx, &font->handle);
-///     while (1) {
-/// 
-///     }
-///     nk_font_atlas_clear(&atlas);
-/// ```
-/// The font baker API is probably the most complex API inside this library and
-/// I would suggest reading some of my examples `example/` to get a grip on how
-/// to use the font atlas. There are a number of details I left out. For example
-/// how to merge fonts, configure a font with `nk_font_config` to use other languages,
-/// use another texture coordinate format and a lot more:
-///
-/// ```c
-///     struct nk_font_config cfg = nk_font_config(font_pixel_height);
-///     cfg.merge_mode = nk_false or nk_true;
-///     cfg.range = nk_font_korean_glyph_ranges();
-///     cfg.coord_type = NK_COORD_PIXEL;
-///     nk_font *font = nk_font_atlas_add_from_file(&atlas, "Path/To/Your/TTF_Font.ttf", 13, &cfg);
-/// ```
 */
-struct nk_user_font_glyph;
+struct nk_font_glyph;
 typedef float(*nk_text_width_f)(nk_handle, float h, const char*, int len);
 typedef void(*nk_query_font_glyph_f)(nk_handle handle, float font_height,
-                                    struct nk_user_font_glyph *glyph,
+                                    struct nk_font_glyph *glyph,
                                     nk_rune codepoint, nk_rune next_codepoint);
 
-struct nk_user_font_glyph {
+struct nk_font_glyph {
     struct nk_vec2 uv[2];   /* texture coordinates */
     struct nk_vec2 offset;  /* offset between top left and glyph */
     float width, height;    /* size of the glyph */
     float xadvance;         /* offset to the next glyph */
 };
 
-struct nk_user_font {
+struct nk_font {
     nk_handle userdata;
     /* user provided font handle */
     float height;
@@ -3837,9 +3759,8 @@ struct nk_command_image {
 
 struct nk_command_text {
     struct nk_command header;
-    const struct nk_user_font *font;
-    struct nk_color background;
-    struct nk_color foreground;
+    const struct nk_font *font;
+    struct nk_color color;
     short x, y;
     unsigned short w, h;
     float height;
@@ -3877,7 +3798,7 @@ NK_API void nk_fill_triangle(struct nk_command_buffer*, struct nk_vec2 a, struct
 
 /* misc */
 NK_API void nk_draw_image(struct nk_command_buffer*, struct nk_rect, const struct nk_image*, struct nk_color);
-NK_API void nk_draw_text(struct nk_command_buffer*, struct nk_rect, const char *text, int len, const struct nk_user_font*, struct nk_color, struct nk_color);
+NK_API void nk_draw_text(struct nk_command_buffer*, struct nk_rect, const char *text, int len, const struct nk_font*, struct nk_color);
 NK_API void nk_push_scissor(struct nk_command_buffer*, struct nk_rect);
 
 /* ===============================================================
@@ -4030,8 +3951,7 @@ NK_API void nk_draw_list_path_stroke(struct nk_draw_list*, struct nk_color, nk_b
 /* misc */
 NK_API void nk_draw_list_fill_rect_multi_color(struct nk_draw_list*, struct nk_rect rect, struct nk_color left, struct nk_color top, struct nk_color right, struct nk_color bottom);
 NK_API void nk_draw_list_add_image(struct nk_draw_list*, struct nk_image texture, struct nk_rect rect, struct nk_color);
-NK_API void nk_draw_list_add_text(struct nk_draw_list*, const struct nk_user_font*, struct nk_rect, const char *text, int len, float font_height, struct nk_color);
-
+NK_API void nk_draw_list_add_text(struct nk_draw_list*, const struct nk_font*, struct nk_rect, const char *text, int len, float font_height, struct nk_color);
 
 
 /* ===============================================================
@@ -4044,19 +3964,18 @@ enum nk_style_item_type {
     NK_STYLE_ITEM_IMAGE
 };
 
-union nk_style_item_data {
-    struct nk_color color;
-    struct nk_image image;
-};
-
 struct nk_style_item {
     enum nk_style_item_type type;
-    union nk_style_item_data data;
+    union {
+        struct nk_color color;
+        struct nk_image image;
+    };
 };
 
 struct nk_style_text {
     struct nk_color color;
     struct nk_vec2 padding;
+    nk_flags alignment;
 };
 
 struct nk_style_button {
@@ -4067,7 +3986,6 @@ struct nk_style_button {
     struct nk_color border_color;
 
     /* text */
-    struct nk_color text_background;
     struct nk_color text_normal;
     struct nk_color text_hover;
     struct nk_color text_active;
@@ -4079,11 +3997,6 @@ struct nk_style_button {
     struct nk_vec2 padding;
     struct nk_vec2 image_padding;
     struct nk_vec2 touch_padding;
-
-    /* optional user callbacks */
-    nk_handle userdata;
-    void(*draw_begin)(struct nk_command_buffer*, nk_handle userdata);
-    void(*draw_end)(struct nk_command_buffer*, nk_handle userdata);
 };
 
 struct nk_style_toggle {
@@ -4101,7 +4014,6 @@ struct nk_style_toggle {
     struct nk_color text_normal;
     struct nk_color text_hover;
     struct nk_color text_active;
-    struct nk_color text_background;
     nk_flags text_alignment;
 
     /* properties */
@@ -4109,11 +4021,6 @@ struct nk_style_toggle {
     struct nk_vec2 touch_padding;
     float spacing;
     float border;
-
-    /* optional user callbacks */
-    nk_handle userdata;
-    void(*draw_begin)(struct nk_command_buffer*, nk_handle);
-    void(*draw_end)(struct nk_command_buffer*, nk_handle);
 };
 
 struct nk_style_selectable {
@@ -4136,7 +4043,6 @@ struct nk_style_selectable {
     struct nk_color text_normal_active;
     struct nk_color text_hover_active;
     struct nk_color text_pressed_active;
-    struct nk_color text_background;
     nk_flags text_alignment;
 
     /* properties */
@@ -4144,11 +4050,6 @@ struct nk_style_selectable {
     struct nk_vec2 padding;
     struct nk_vec2 touch_padding;
     struct nk_vec2 image_padding;
-
-    /* optional user callbacks */
-    nk_handle userdata;
-    void(*draw_begin)(struct nk_command_buffer*, nk_handle);
-    void(*draw_end)(struct nk_command_buffer*, nk_handle);
 };
 
 struct nk_style_slider {
@@ -4183,11 +4084,6 @@ struct nk_style_slider {
     struct nk_style_button dec_button;
     enum nk_symbol_type inc_symbol;
     enum nk_symbol_type dec_symbol;
-
-    /* optional user callbacks */
-    nk_handle userdata;
-    void(*draw_begin)(struct nk_command_buffer*, nk_handle);
-    void(*draw_end)(struct nk_command_buffer*, nk_handle);
 };
 
 struct nk_style_progress {
@@ -4209,11 +4105,6 @@ struct nk_style_progress {
     float cursor_border;
     float cursor_rounding;
     struct nk_vec2 padding;
-
-    /* optional user callbacks */
-    nk_handle userdata;
-    void(*draw_begin)(struct nk_command_buffer*, nk_handle);
-    void(*draw_end)(struct nk_command_buffer*, nk_handle);
 };
 
 struct nk_style_scrollbar {
@@ -4242,11 +4133,6 @@ struct nk_style_scrollbar {
     struct nk_style_button dec_button;
     enum nk_symbol_type inc_symbol;
     enum nk_symbol_type dec_symbol;
-
-    /* optional user callbacks */
-    nk_handle userdata;
-    void(*draw_begin)(struct nk_command_buffer*, nk_handle);
-    void(*draw_end)(struct nk_command_buffer*, nk_handle);
 };
 
 struct nk_style_edit {
@@ -4307,11 +4193,6 @@ struct nk_style_property {
     struct nk_style_edit edit;
     struct nk_style_button inc_button;
     struct nk_style_button dec_button;
-
-    /* optional user callbacks */
-    nk_handle userdata;
-    void(*draw_begin)(struct nk_command_buffer*, nk_handle);
-    void(*draw_end)(struct nk_command_buffer*, nk_handle);
 };
 
 struct nk_style_chart {
@@ -4393,9 +4274,6 @@ struct nk_style_window_header {
     /* button */
     struct nk_style_button close_button;
     struct nk_style_button minimize_button;
-    enum nk_symbol_type close_symbol;
-    enum nk_symbol_type minimize_symbol;
-    enum nk_symbol_type maximize_symbol;
 
     /* title */
     struct nk_color label_normal;
@@ -4447,7 +4325,7 @@ struct nk_style_window {
 };
 
 struct nk_style {
-    const struct nk_user_font *font;
+    const struct nk_font *font;
     const struct nk_cursor *cursors[NK_CURSOR_COUNT];
     const struct nk_cursor *cursor_active;
     struct nk_cursor *cursor_last;
@@ -4740,7 +4618,7 @@ NK_CONFIGURATION_STACK_TYPE(nk ,float, float);
 NK_CONFIGURATION_STACK_TYPE(struct nk, vec2, vec2);
 NK_CONFIGURATION_STACK_TYPE(nk ,flags, flags);
 NK_CONFIGURATION_STACK_TYPE(struct nk, color, color);
-NK_CONFIGURATION_STACK_TYPE(const struct nk, user_font, user_font*);
+NK_CONFIGURATION_STACK_TYPE(const struct nk, font, font*);
 NK_CONFIGURATION_STACK_TYPE(enum nk, button_behavior, button_behavior);
 
 NK_CONFIG_STACK(style_item, NK_STYLE_ITEM_STACK_SIZE);
@@ -4748,7 +4626,7 @@ NK_CONFIG_STACK(float, NK_FLOAT_STACK_SIZE);
 NK_CONFIG_STACK(vec2, NK_VECTOR_STACK_SIZE);
 NK_CONFIG_STACK(flags, NK_FLAGS_STACK_SIZE);
 NK_CONFIG_STACK(color, NK_COLOR_STACK_SIZE);
-NK_CONFIG_STACK(user_font, NK_FONT_STACK_SIZE);
+NK_CONFIG_STACK(font, NK_FONT_STACK_SIZE);
 NK_CONFIG_STACK(button_behavior, NK_BUTTON_BEHAVIOR_STACK_SIZE);
 
 struct nk_configuration_stacks {
@@ -4757,7 +4635,7 @@ struct nk_configuration_stacks {
     struct nk_config_stack_vec2 vectors;
     struct nk_config_stack_flags flags;
     struct nk_config_stack_color colors;
-    struct nk_config_stack_user_font fonts;
+    struct nk_config_stack_font fonts;
     struct nk_config_stack_button_behavior button_behaviors;
 };
 

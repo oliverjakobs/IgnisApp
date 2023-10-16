@@ -91,9 +91,9 @@ nk_draw_slider(struct nk_command_buffer *out, nk_flags state,
 
     /* draw background */
     if (background->type == NK_STYLE_ITEM_IMAGE)
-        nk_draw_image(out, *bounds, &background->data.image, nk_white);
+        nk_draw_image(out, *bounds, &background->image, nk_white);
     else
-        nk_fill_rect_border(out, *bounds, style->rounding, background->data.color, style->border, style->border_color);
+        nk_fill_rect_border(out, *bounds, style->rounding, background->color, style->border, style->border_color);
 
     /* draw slider bar */
     nk_fill_rect(out, bar, style->rounding, bar_color);
@@ -101,15 +101,15 @@ nk_draw_slider(struct nk_command_buffer *out, nk_flags state,
 
     /* draw cursor */
     if (cursor_style->type == NK_STYLE_ITEM_IMAGE)
-        nk_draw_image(out, *cursor, &cursor_style->data.image, nk_white);
+        nk_draw_image(out, *cursor, &cursor_style->image, nk_white);
     else
-        nk_fill_circle(out, *cursor, cursor_style->data.color);
+        nk_fill_circle(out, *cursor, cursor_style->color);
 }
 
 NK_LIB float
 nk_do_slider(nk_flags *state, struct nk_command_buffer *out, struct nk_rect bounds,
     float min_value, float value, float max_value, float step, const struct nk_style_slider *style, 
-    struct nk_input *in, const struct nk_user_font *font)
+    struct nk_input *in, const struct nk_font *font)
 {
     NK_ASSERT(style);
     NK_ASSERT(out);
@@ -162,9 +162,7 @@ nk_do_slider(nk_flags *state, struct nk_command_buffer *out, struct nk_rect boun
         value = nk_slider_behavior(state, &cursor, in, bounds, min_value, value, max_value, step);
 
     /* draw slider */
-    if (style->draw_begin) style->draw_begin(out, style->userdata);
     nk_draw_slider(out, *state, style, &bounds, &cursor);
-    if (style->draw_end) style->draw_end(out, style->userdata);
 
     return value;
 }
@@ -174,8 +172,7 @@ NK_API float nk_slider(struct nk_context *ctx, float min_value, float value, flo
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0.0f;
+    if (!ctx || !ctx->current || !ctx->current->layout) return value;
 
     struct nk_window* win = ctx->current;
     const struct nk_style* style = &ctx->style;
@@ -183,7 +180,7 @@ NK_API float nk_slider(struct nk_context *ctx, float min_value, float value, flo
     struct nk_rect bounds;
     enum nk_widget_layout_states layout_state;
     struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
-    if (!layout_state) return nk_false;
+    if (!layout_state) return value;
 
     nk_flags state = 0;
     return nk_do_slider(&state, &win->buffer, bounds, min_value, value, max_value, step, &style->slider, in, style->font);
@@ -250,15 +247,15 @@ nk_draw_bar_slider(struct nk_command_buffer* out, nk_flags state,
 
     /* draw background */
     if (background->type == NK_STYLE_ITEM_IMAGE)
-        nk_draw_image(out, *bounds, &background->data.image, nk_white);
+        nk_draw_image(out, *bounds, &background->image, nk_white);
     else
-        nk_fill_rect_border(out, *bounds, style->rounding, background->data.color, style->border, style->border_color);
+        nk_fill_rect_border(out, *bounds, style->rounding, background->color, style->border, style->border_color);
 
     /* draw cursor */
     if (cursor_style->type == NK_STYLE_ITEM_IMAGE)
-        nk_draw_image(out, *cursor, &cursor_style->data.image, nk_white);
+        nk_draw_image(out, *cursor, &cursor_style->image, nk_white);
     else
-        nk_fill_rect_border(out, *cursor, style->rounding, cursor_style->data.color, style->border, style->border_color);
+        nk_fill_rect_border(out, *cursor, style->rounding, cursor_style->color, style->border, style->border_color);
 }
 
 NK_LIB nk_size
@@ -267,7 +264,7 @@ nk_do_bar_slider(nk_flags* state, struct nk_command_buffer* out, struct nk_rect 
 {
     NK_ASSERT(style);
     NK_ASSERT(out);
-    if (!out || !style) return 0;
+    if (!out || !style) return value;
 
     /* calculate progressbar cursor */
     struct nk_rect cursor = {
@@ -287,20 +284,18 @@ nk_do_bar_slider(nk_flags* state, struct nk_command_buffer* out, struct nk_rect 
     cursor.w *= (float)value / (float)max_value;
 
     /* draw progressbar */
-    if (style->draw_begin) style->draw_begin(out, style->userdata);
     nk_draw_bar_slider(out, *state, style, &bounds, &cursor);
-    if (style->draw_end) style->draw_end(out, style->userdata);
 
     return value;
 }
 
-NK_API nk_size nk_bar_slider(struct nk_context* ctx, nk_size cur, nk_size max)
+NK_API nk_size nk_bar_slider(struct nk_context* ctx, nk_size value, nk_size max)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
     if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0;
+        return value;
 
     struct nk_window* win = ctx->current;
     const struct nk_style* style = &ctx->style;
@@ -308,27 +303,27 @@ NK_API nk_size nk_bar_slider(struct nk_context* ctx, nk_size cur, nk_size max)
     struct nk_rect bounds;
     enum nk_widget_layout_states layout_state;
     struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
-    if (!layout_state) return nk_false;
+    if (!layout_state) return value;
 
     nk_flags state = 0;
-    return nk_do_bar_slider(&state, &win->buffer, bounds, cur, max, &style->progress, in);
+    return nk_do_bar_slider(&state, &win->buffer, bounds, value, max, &style->progress, in);
 }
 
-NK_API nk_size nk_progress(struct nk_context *ctx, nk_size cur, nk_size max)
+NK_API nk_size nk_progress(struct nk_context *ctx, nk_size value, nk_size max)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
     if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0;
+        return value;
 
     struct nk_window* win = ctx->current;
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
     enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
-    if (!layout_state) return 0;
+    if (!layout_state) return value;
 
     nk_flags state = 0;
-    return nk_do_bar_slider(&state, &win->buffer, bounds, cur, max, &style->progress, NULL);
+    return nk_do_bar_slider(&state, &win->buffer, bounds, value, max, &style->progress, NULL);
 }

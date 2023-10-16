@@ -7,7 +7,7 @@
  *
  * ===============================================================*/
 NK_INTERN void
-nk_setup(struct nk_context *ctx, const struct nk_user_font *font)
+nk_setup(struct nk_context *ctx, const struct nk_font *font)
 {
     NK_ASSERT(ctx);
     if (!ctx) return;
@@ -18,7 +18,7 @@ nk_setup(struct nk_context *ctx, const struct nk_user_font *font)
     nk_draw_list_init(&ctx->draw_list);
 }
 NK_API nk_bool
-nk_init_default(struct nk_context *ctx, const struct nk_user_font *font)
+nk_init_default(struct nk_context *ctx, const struct nk_font *font)
 {
     struct nk_allocator alloc;
     alloc.userdata.ptr = 0;
@@ -28,7 +28,7 @@ nk_init_default(struct nk_context *ctx, const struct nk_user_font *font)
 }
 NK_API nk_bool
 nk_init_fixed(struct nk_context *ctx, void *memory, nk_size size,
-    const struct nk_user_font *font)
+    const struct nk_font *font)
 {
     NK_ASSERT(memory);
     if (!memory) return 0;
@@ -39,7 +39,7 @@ nk_init_fixed(struct nk_context *ctx, void *memory, nk_size size,
 }
 NK_API nk_bool
 nk_init_custom(struct nk_context *ctx, struct nk_buffer *cmds,
-    struct nk_buffer *pool, const struct nk_user_font *font)
+    struct nk_buffer *pool, const struct nk_font *font)
 {
     NK_ASSERT(cmds);
     NK_ASSERT(pool);
@@ -60,7 +60,7 @@ nk_init_custom(struct nk_context *ctx, struct nk_buffer *cmds,
 }
 NK_API nk_bool
 nk_init(struct nk_context *ctx, struct nk_allocator *alloc,
-    const struct nk_user_font *font)
+    const struct nk_font *font)
 {
     NK_ASSERT(alloc);
     if (!alloc) return 0;

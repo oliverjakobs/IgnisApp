@@ -32,7 +32,7 @@ NK_INTERN void nk_textedit_makeundo_replace(struct nk_text_edit*, int, int, int)
 
 NK_INTERN float
 nk_textedit_get_width(const struct nk_text_edit *edit, int line_start, int char_id,
-    const struct nk_user_font *font)
+    const struct nk_font *font)
 {
     int len = 0;
     nk_rune unicode = 0;
@@ -41,7 +41,7 @@ nk_textedit_get_width(const struct nk_text_edit *edit, int line_start, int char_
 }
 NK_INTERN void
 nk_textedit_layout_row(struct nk_text_edit_row *r, struct nk_text_edit *edit,
-    int line_start_id, float row_height, const struct nk_user_font *font)
+    int line_start_id, float row_height, const struct nk_font *font)
 {
     int l;
     int glyphs = 0;
@@ -62,7 +62,7 @@ nk_textedit_layout_row(struct nk_text_edit_row *r, struct nk_text_edit *edit,
 }
 NK_INTERN int
 nk_textedit_locate_coord(struct nk_text_edit *edit, float x, float y,
-    const struct nk_user_font *font, float row_height)
+    const struct nk_font *font, float row_height)
 {
     struct nk_text_edit_row r;
     int n = edit->string.len;
@@ -122,7 +122,7 @@ nk_textedit_locate_coord(struct nk_text_edit *edit, float x, float y,
 }
 NK_LIB void
 nk_textedit_click(struct nk_text_edit *state, float x, float y,
-    const struct nk_user_font *font, float row_height)
+    const struct nk_font *font, float row_height)
 {
     /* API click: on mouse down, move the cursor to the clicked location,
      * and reset the selection */
@@ -133,7 +133,7 @@ nk_textedit_click(struct nk_text_edit *state, float x, float y,
 }
 NK_LIB void
 nk_textedit_drag(struct nk_text_edit *state, float x, float y,
-    const struct nk_user_font *font, float row_height)
+    const struct nk_font *font, float row_height)
 {
     /* API drag: on mouse drag, move the cursor and selection endpoint
      * to the clicked location */
@@ -144,7 +144,7 @@ nk_textedit_drag(struct nk_text_edit *state, float x, float y,
 }
 NK_INTERN void
 nk_textedit_find_charpos(struct nk_text_find *find, struct nk_text_edit *state,
-    int n, int single_line, const struct nk_user_font *font, float row_height)
+    int n, int single_line, const struct nk_font *font, float row_height)
 {
     /* find the x/y location of a character, and remember info about the previous
      * row in case we get a move-up event (for page up, we'll have to rescan) */
@@ -405,7 +405,7 @@ nk_textedit_text(struct nk_text_edit *state, const char *text, int total_len)
 }
 NK_LIB void
 nk_textedit_key(struct nk_text_edit *state, enum nk_keys key, int shift_mod,
-    const struct nk_user_font *font, float row_height)
+    const struct nk_font *font, float row_height)
 {
 retry:
     switch (key)

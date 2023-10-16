@@ -81,6 +81,94 @@ NK_LIB struct nk_color nk_panel_get_border_color(const struct nk_style *style, e
 NK_LIB nk_bool nk_panel_is_sub(enum nk_panel_type type)       { return (type & NK_PANEL_SET_SUB); }
 NK_LIB nk_bool nk_panel_is_nonblock(enum nk_panel_type type)  { return (type & NK_PANEL_SET_NONBLOCK); }
 
+static void nk_panel_do_titlebar(nk_flags* state, struct nk_command_buffer* out, struct nk_rect bounds, const char* title, nk_bool active, const struct nk_input* in, const struct nk_style_window_header* style, const struct nk_font* font)
+{
+    struct nk_style_text text;
+    text.padding = style->label_padding;
+    text.alignment = NK_TEXT_LEFT;
+
+    /* select correct header background and text color */
+    const struct nk_style_item* background = NULL;
+    if (active)
+    {
+        background = &style->active;
+        text.color = style->label_active;
+    }
+    else if (nk_input_mouse_hover(in, bounds))
+    {
+        background = &style->hover;
+        text.color = style->label_hover;
+    }
+    else
+    {
+        background = &style->normal;
+        text.color = style->label_normal;
+    }
+
+    /* draw header background */
+    bounds.h += 1.0f;
+
+    switch (background->type)
+    {
+    case NK_STYLE_ITEM_IMAGE:
+        nk_draw_image(out, bounds, &background->image, nk_white);
+        break;
+    case NK_STYLE_ITEM_COLOR:
+        nk_fill_rect(out, bounds, 0, background->color);
+        break;
+    }
+
+    // add padding
+    bounds.x += style->padding.x;
+    bounds.y += style->padding.y;
+    bounds.w -= 2 * style->padding.x;
+    bounds.h -= 2 * style->padding.y;
+
+    struct nk_rect button = bounds;
+    button.w = button.h;
+
+    /* window close button */
+    if (*state & NK_WINDOW_CLOSABLE)
+    {
+        struct nk_rect button = bounds;
+        button.w = button.h;
+
+        if (style->align == NK_HEADER_RIGHT) button.x = bounds.x + (bounds.w - button.w);
+        else                                 bounds.x += button.w + style->spacing.x;
+        bounds.w -= button.w + style->spacing.x;
+
+        nk_flags ws = 0;
+        char sym = 'x';
+        if (nk_do_button_text(&ws, out, button, &sym, 1, NK_TEXT_CENTERED, NK_BUTTON_DEFAULT, &style->close_button, in, font)
+            && !(*state & NK_WINDOW_ROM))
+        {
+            *state |= NK_WINDOW_HIDDEN;
+            *state &= (nk_flags)~NK_WINDOW_MINIMIZED;
+        }
+    }
+
+    /* window minimize button */
+    if (*state & NK_WINDOW_MINIMIZABLE)
+    {
+        if (style->align == NK_HEADER_RIGHT) button.x = bounds.x + (bounds.w - button.w);
+        else                                 bounds.x += button.w + style->spacing.x;
+        bounds.w -= button.w + style->spacing.x;
+
+        nk_flags ws = 0;
+        char sym = (*state & NK_WINDOW_MINIMIZED) ? '+' : '-';
+        if (nk_do_button_text(&ws, out, button, &sym, 1, NK_TEXT_CENTERED, NK_BUTTON_DEFAULT, &style->minimize_button, in, font)
+            && !(*state & NK_WINDOW_ROM))
+        {
+            *state = (*state & NK_WINDOW_MINIMIZED) ?
+            *state & (nk_flags)~NK_WINDOW_MINIMIZED :
+            *state | NK_WINDOW_MINIMIZED;
+        }
+    }
+
+    /* window header title */
+    nk_widget_text(out, bounds, title, nk_strlen(title), &text, font);
+}
+
 NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk_panel_type panel_type)
 {
     NK_ASSERT(ctx);
@@ -98,7 +186,7 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
 
     /* pull state into local stack */
     const struct nk_style* style = &ctx->style;
-    const struct nk_user_font* font = style->font;
+    const struct nk_font* font = style->font;
     struct nk_window* win = ctx->current;
     struct nk_panel* layout = win->layout;
     struct nk_command_buffer* out = &win->buffer;
@@ -142,7 +230,7 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
     layout->flags = win->flags;
     layout->bounds = win->bounds;
     layout->bounds.x += panel_padding.x;
-    layout->bounds.w -= 2*panel_padding.x;
+    layout->bounds.w -= 2 * panel_padding.x;
     if (win->flags & NK_WINDOW_BORDER) {
         layout->border = nk_panel_get_border(style, win->flags, panel_type);
         layout->bounds = nk_shrink_rect(layout->bounds, layout->border);
@@ -172,11 +260,8 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
     /* panel header */
     if (nk_panel_has_header(win->flags, title))
     {
-        struct nk_text text;
-        struct nk_rect header;
-        const struct nk_style_item *background = 0;
-
         /* calculate header bounds */
+        struct nk_rect header;
         header.x = win->bounds.x;
         header.y = win->bounds.y;
         header.w = win->bounds.w;
@@ -188,93 +273,7 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
         layout->bounds.y += header.h;
         layout->bounds.h -= header.h;
         layout->at_y += header.h;
-
-        /* select correct header background and text color */
-        if (ctx->active == win) {
-            background = &style->window.header.active;
-            text.text = style->window.header.label_active;
-        } else if (nk_input_mouse_hover(&ctx->input, header)) {
-            background = &style->window.header.hover;
-            text.text = style->window.header.label_hover;
-        } else {
-            background = &style->window.header.normal;
-            text.text = style->window.header.label_normal;
-        }
-
-        /* draw header background */
-        header.h += 1.0f;
-
-        switch(background->type)
-        {
-            case NK_STYLE_ITEM_IMAGE:
-                text.background = nk_rgba(0,0,0,0);
-                nk_draw_image(&win->buffer, header, &background->data.image, nk_white);
-                break;
-            case NK_STYLE_ITEM_COLOR:
-                text.background = background->data.color;
-                nk_fill_rect(out, header, 0, background->data.color);
-                break;
-        }
-
-        /* window close button */
-        {struct nk_rect button;
-        button.y = header.y + style->window.header.padding.y;
-        button.h = header.h - 2 * style->window.header.padding.y;
-        button.w = button.h;
-        if (win->flags & NK_WINDOW_CLOSABLE) {
-            nk_flags ws = 0;
-            if (style->window.header.align == NK_HEADER_RIGHT) {
-                button.x = (header.w + header.x) - (button.w + style->window.header.padding.x);
-                header.w -= button.w + style->window.header.spacing.x + style->window.header.padding.x;
-            } else {
-                button.x = header.x + style->window.header.padding.x;
-                header.x += button.w + style->window.header.spacing.x + style->window.header.padding.x;
-            }
-
-            if (nk_do_button_symbol(&ws, &win->buffer, button,
-                style->window.header.close_symbol, NK_BUTTON_DEFAULT,
-                &style->window.header.close_button, in, style->font) && !(win->flags & NK_WINDOW_ROM))
-            {
-                layout->flags |= NK_WINDOW_HIDDEN;
-                layout->flags &= (nk_flags)~NK_WINDOW_MINIMIZED;
-            }
-        }
-
-        /* window minimize button */
-        if (win->flags & NK_WINDOW_MINIMIZABLE) {
-            nk_flags ws = 0;
-            if (style->window.header.align == NK_HEADER_RIGHT) {
-                button.x = (header.w + header.x) - button.w;
-                if (!(win->flags & NK_WINDOW_CLOSABLE)) {
-                    button.x -= style->window.header.padding.x;
-                    header.w -= style->window.header.padding.x;
-                }
-                header.w -= button.w + style->window.header.spacing.x;
-            } else {
-                button.x = header.x;
-                header.x += button.w + style->window.header.spacing.x + style->window.header.padding.x;
-            }
-            if (nk_do_button_symbol(&ws, &win->buffer, button, (layout->flags & NK_WINDOW_MINIMIZED)?
-                style->window.header.maximize_symbol: style->window.header.minimize_symbol,
-                NK_BUTTON_DEFAULT, &style->window.header.minimize_button, in, style->font) && !(win->flags & NK_WINDOW_ROM))
-                layout->flags = (layout->flags & NK_WINDOW_MINIMIZED) ?
-                    layout->flags & (nk_flags)~NK_WINDOW_MINIMIZED:
-                    layout->flags | NK_WINDOW_MINIMIZED;
-        }}
-
-        {/* window header title */
-        int text_len = nk_strlen(title);
-        struct nk_rect label = {0,0,0,0};
-        float t = font->width(font->userdata, font->height, title, text_len);
-        text.padding = nk_vec2(0,0);
-
-        label.x = header.x + style->window.header.padding.x;
-        label.x += style->window.header.label_padding.x;
-        label.y = header.y + style->window.header.label_padding.y;
-        label.h = font->height + 2 * style->window.header.label_padding.y;
-        label.w = t + 2 * style->window.header.spacing.x;
-        label.w = NK_CLAMP(0, label.w, header.x + header.w - label.x);
-        nk_widget_text(out, label, (const char*)title, text_len, &text, NK_TEXT_LEFT, font);}
+        nk_panel_do_titlebar(&layout->flags, &win->buffer, header, title, ctx->active == win, in, &style->window.header, style->font);
     }
 
     /* draw window background */
@@ -290,21 +289,18 @@ NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk
         switch(style->window.fixed_background.type)
         {
             case NK_STYLE_ITEM_IMAGE:
-                nk_draw_image(out, body, &style->window.fixed_background.data.image, nk_white);
+                nk_draw_image(out, body, &style->window.fixed_background.image, nk_white);
                 break;
             case NK_STYLE_ITEM_COLOR:
-                nk_fill_rect(out, body, 0, style->window.fixed_background.data.color);
+                nk_fill_rect(out, body, 0, style->window.fixed_background.color);
                 break;
         }
     }
 
     /* set clipping rectangle */
-    {struct nk_rect clip;
-    layout->clip = layout->bounds;
-    nk_unify(&clip, &win->buffer.clip, layout->clip.x, layout->clip.y,
-        layout->clip.x + layout->clip.w, layout->clip.y + layout->clip.h);
-    nk_push_scissor(out, clip);
-    layout->clip = clip;}
+    nk_unify(&layout->clip, &win->buffer.clip, layout->bounds.x, layout->bounds.y,
+        layout->bounds.x + layout->bounds.w, layout->bounds.y + layout->bounds.h);
+    nk_push_scissor(out, layout->clip);
     return !(layout->flags & NK_WINDOW_HIDDEN) && !(layout->flags & NK_WINDOW_MINIMIZED);
 }
 
@@ -524,7 +520,7 @@ nk_panel_end(struct nk_context *ctx)
         const struct nk_style_item *item = &style->window.scaler;
         if (item->type == NK_STYLE_ITEM_IMAGE)
         {
-            nk_draw_image(out, scaler, &item->data.image, nk_white);
+            nk_draw_image(out, scaler, &item->image, nk_white);
         }
         else
         {
@@ -535,7 +531,7 @@ nk_panel_end(struct nk_context *ctx)
             {
                 a.x -= scaler.w;
             }
-            nk_fill_triangle(out, a, b, c, item->data.color);
+            nk_fill_triangle(out, a, b, c, item->color);
         }
 
         /* do window scaling */

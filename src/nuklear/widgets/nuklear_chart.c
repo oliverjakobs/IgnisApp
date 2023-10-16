@@ -49,9 +49,9 @@ nk_chart_begin_colored(struct nk_context *ctx, enum nk_chart_type type,
     /* draw chart background */
     const struct nk_style_item* background = &style->background;
     if (background->type == NK_STYLE_ITEM_IMAGE)
-        nk_draw_image(&win->buffer, bounds, &background->data.image, nk_white);
+        nk_draw_image(&win->buffer, bounds, &background->image, nk_white);
     else
-        nk_fill_rect_border(&win->buffer, bounds, style->rounding, style->background.data.color, style->border, style->border_color);
+        nk_fill_rect_border(&win->buffer, bounds, style->rounding, style->background.color, style->border, style->border_color);
 
     return nk_true;
 }

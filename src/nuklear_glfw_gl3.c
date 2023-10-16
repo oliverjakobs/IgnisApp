@@ -38,17 +38,15 @@ nk_glfw3_device_create(struct nk_glfw_device* dev)
     dev->uniform_proj = ignisGetUniformLocation(dev->prog, "ProjMtx");
 
     /* buffer setup */
-    ignisGenerateVertexArray(&dev->vao, 2);
-
-    ignisLoadArrayBuffer(&dev->vao, 0, MAX_VERTEX_BUFFER, NULL, IGNIS_STREAM_DRAW);
-
     IgnisBufferElement layout[] = {
        { IGNIS_FLOAT, 2, GL_FALSE },
        { IGNIS_FLOAT, 2, GL_FALSE },
        { IGNIS_UINT8, 4, GL_TRUE }
     };
-    ignisSetVertexLayout(&dev->vao, 0, layout, 3);
 
+    ignisGenerateVertexArray(&dev->vao, 2);
+    ignisLoadArrayBuffer(&dev->vao, 0, MAX_VERTEX_BUFFER, NULL, IGNIS_STREAM_DRAW);
+    ignisSetVertexLayout(&dev->vao, 0, layout, 3);
     ignisLoadElementBuffer(&dev->vao, 1, NULL, MAX_ELEMENT_BUFFER, IGNIS_STREAM_DRAW);
 }
 
@@ -56,7 +54,6 @@ NK_API void
 nk_glfw3_device_destroy(struct nk_glfw_device* dev)
 {
     ignisDeleteShader(dev->prog);
-    ignisDeleteTexture2D(&dev->font_tex);
     ignisDeleteVertexArray(&dev->vao);
     nk_buffer_free(&dev->cmds);
 }
@@ -83,7 +80,7 @@ void nk_glfw3_shutdown(struct nk_glfw* glfw)
     nk_glfw3_device_destroy(&glfw->ogl);
 }
 
-static struct nk_user_font user_font;
+static struct nk_font user_font;
 
 float font_text_width(nk_handle handle, float height, const char* text, int len)
 {
@@ -117,7 +114,7 @@ float font_text_width(nk_handle handle, float height, const char* text, int len)
     return text_width;
 }
 
-void font_query_glyph(nk_handle handle, float height, struct nk_user_font_glyph* glyph, nk_rune codepoint, nk_rune next)
+void font_query_glyph(nk_handle handle, float height, struct nk_font_glyph* glyph, nk_rune codepoint, nk_rune next)
 {
     NK_ASSERT(glyph);
     NK_UNUSED(next);

@@ -22,7 +22,7 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
     struct nk_vec2 item_spacing;
     struct nk_rect header = {0,0,0,0};
     struct nk_rect sym = {0,0,0,0};
-    struct nk_text text;
+    struct nk_style_text text;
 
     nk_flags ws = 0;
     enum nk_widget_layout_states widget_state;
@@ -52,15 +52,15 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
 
         switch(background->type) {
             case NK_STYLE_ITEM_IMAGE:
-                nk_draw_image(out, header, &background->data.image, nk_white);
+                nk_draw_image(out, header, &background->image, nk_white);
                 break;
             case NK_STYLE_ITEM_COLOR:
                 nk_fill_rect(out, header, 0, style->tab.border_color);
                 nk_fill_rect(out, nk_shrink_rect(header, style->tab.border),
-                    style->tab.rounding, background->data.color);
+                    style->tab.rounding, background->color);
                 break;
         }
-    } else text.background = style->window.background;
+    }
 
     /* update node state */
     in = (!(layout->flags & NK_WINDOW_ROM)) ? &ctx->input: 0;
@@ -102,10 +102,10 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
     label.y = sym.y;
     label.w = header.w - (sym.w + item_spacing.y + style->tab.indent);
     label.h = style->font->height;
-    text.text = style->tab.text;
+    text.color = style->tab.text;
     text.padding = nk_vec2(0,0);
-    nk_widget_text(out, label, title, nk_strlen(title), &text,
-        NK_TEXT_LEFT, style->font);}
+    text.alignment = NK_TEXT_LEFT;
+    nk_widget_text(out, label, title, nk_strlen(title), &text, style->font);}
 
     /* increase x-axis cursor widget position pointer */
     if (*state == NK_MAXIMIZED) {
@@ -239,12 +239,12 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
 
         switch (background->type) {
             case NK_STYLE_ITEM_IMAGE:
-                nk_draw_image(out, header, &background->data.image, nk_white);
+                nk_draw_image(out, header, &background->image, nk_white);
                 break;
             case NK_STYLE_ITEM_COLOR:
                 nk_fill_rect(out, header, 0, style->tab.border_color);
                 nk_fill_rect(out, nk_shrink_rect(header, style->tab.border),
-                    style->tab.rounding, background->data.color);
+                    style->tab.rounding, background->color);
                 break;
         }
     }
@@ -285,7 +285,7 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
     label.w = NK_MIN(header.w - (sym.w + item_spacing.y + style->tab.indent), text_width);
     label.h = style->font->height;
 
-    nk_do_selectable(&dummy, &win->buffer, label, img, NK_SYMBOL_NONE, title, title_len, NK_TEXT_LEFT, selected, &style->selectable, in, style->font);
+    *selected = nk_do_selectable(&dummy, &win->buffer, label, title, title_len, NK_TEXT_LEFT, *selected, &style->selectable, in, style->font);
     }
     /* increase x-axis cursor widget position pointer */
     if (*state == NK_MAXIMIZED) {
@@ -315,8 +315,8 @@ nk_tree_element_base(struct nk_context *ctx, enum nk_tree_type type,
     if (!state) {
         state = nk_add_value(ctx, win, tree_hash, 0);
         *state = initial_state;
-    } return nk_tree_element_image_push_hashed_base(ctx, type, img, title,
-        nk_strlen(title), (enum nk_collapse_states*)state, selected);
+    } 
+    return nk_tree_element_image_push_hashed_base(ctx, type, img, title, nk_strlen(title), state, selected);
 }
 NK_API nk_bool
 nk_tree_element_push_hashed(struct nk_context *ctx, enum nk_tree_type type,

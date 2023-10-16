@@ -131,7 +131,7 @@ nk_do_color_picker(nk_flags *state,
     struct nk_command_buffer *out, struct nk_colorf color,
     enum nk_color_format fmt, struct nk_rect bounds,
     struct nk_vec2 padding, const struct nk_input *in,
-    const struct nk_user_font *font)
+    const struct nk_font *font)
 {
     NK_ASSERT(out);
     NK_ASSERT(state);

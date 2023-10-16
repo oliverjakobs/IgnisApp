@@ -921,7 +921,7 @@ nk_draw_list_add_image(struct nk_draw_list *list, struct nk_image texture,
 }
 
 NK_API void
-nk_draw_list_add_text(struct nk_draw_list *list, const struct nk_user_font *font,
+nk_draw_list_add_text(struct nk_draw_list *list, const struct nk_font *font,
     struct nk_rect rect, const char *text, int len, float font_height,
     struct nk_color fg)
 {
@@ -929,7 +929,7 @@ nk_draw_list_add_text(struct nk_draw_list *list, const struct nk_user_font *font
     int text_len = 0;
     nk_rune next = 0;
     int next_glyph_len = 0;
-    struct nk_user_font_glyph g;
+    struct nk_font_glyph g;
 
     NK_ASSERT(list);
     if (!list || !len || !text) return;
@@ -1098,7 +1098,7 @@ nk_convert(struct nk_context *ctx, struct nk_buffer *cmds,
         case NK_COMMAND_TEXT: {
             const struct nk_command_text *t = (const struct nk_command_text*)cmd;
             nk_draw_list_add_text(&ctx->draw_list, t->font, nk_rect(t->x, t->y, t->w, t->h),
-                t->string, t->length, t->height, t->foreground);
+                t->string, t->length, t->height, t->color);
         } break;
         case NK_COMMAND_IMAGE: {
             const struct nk_command_image *i = (const struct nk_command_image*)cmd;

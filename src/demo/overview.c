@@ -43,7 +43,7 @@ int overview(struct nk_context* ctx)
                     show_app_about = nk_true;
                 prog = nk_bar_slider(ctx, prog, 100);
                 slider = nk_slider_int(ctx, 0, slider, 16, 1);
-                nk_checkbox_label(ctx, "check", &check);
+                check = nk_checkbox_label(ctx, "check", check);
                 nk_menu_end(ctx);
             }
             /* menu #2 */
@@ -106,7 +106,7 @@ int overview(struct nk_context* ctx)
             nk_layout_row_push(ctx, 70);
             mprog = nk_bar_slider(ctx, mprog, 100);
             mslider = nk_slider_int(ctx, 0, mslider, 16, 1);
-            nk_checkbox_label(ctx, "check", &mcheck);
+            mcheck = nk_checkbox_label(ctx, "check", mcheck);
             nk_menubar_end(ctx);
         }
 
@@ -128,14 +128,14 @@ int overview(struct nk_context* ctx)
         /* window flags */
         if (nk_tree_push(ctx, NK_TREE_TAB, "Window", NK_MINIMIZED)) {
             nk_layout_row_dynamic(ctx, 30, 2);
-            nk_checkbox_label(ctx, "Menu", &show_menu);
-            nk_checkbox_flags_label(ctx, "Titlebar", &window_flags, NK_WINDOW_TITLE);
-            nk_checkbox_flags_label(ctx, "Border", &window_flags, NK_WINDOW_BORDER);
-            nk_checkbox_flags_label(ctx, "Resizable", &window_flags, NK_WINDOW_SCALABLE);
-            nk_checkbox_flags_label(ctx, "Movable", &window_flags, NK_WINDOW_MOVABLE);
-            nk_checkbox_flags_label(ctx, "No Scrollbar", &window_flags, NK_WINDOW_NO_SCROLLBAR);
-            nk_checkbox_flags_label(ctx, "Minimizable", &window_flags, NK_WINDOW_MINIMIZABLE);
-            nk_checkbox_flags_label(ctx, "Scale Left", &window_flags, NK_WINDOW_SCALE_LEFT);
+            show_menu = nk_checkbox_label(ctx, "Menu", show_menu);
+            window_flags = nk_checkbox_flags_label(ctx, "Titlebar",     window_flags, NK_WINDOW_TITLE);
+            window_flags = nk_checkbox_flags_label(ctx, "Border",       window_flags, NK_WINDOW_BORDER);
+            window_flags = nk_checkbox_flags_label(ctx, "Resizable",    window_flags, NK_WINDOW_SCALABLE);
+            window_flags = nk_checkbox_flags_label(ctx, "Movable",      window_flags, NK_WINDOW_MOVABLE);
+            window_flags = nk_checkbox_flags_label(ctx, "No Scrollbar", window_flags, NK_WINDOW_NO_SCROLLBAR);
+            window_flags = nk_checkbox_flags_label(ctx, "Minimizable",  window_flags, NK_WINDOW_MINIMIZABLE);
+            window_flags = nk_checkbox_flags_label(ctx, "Scale Left",   window_flags, NK_WINDOW_SCALE_LEFT);
             nk_tree_pop(ctx);
         }
 
@@ -208,12 +208,12 @@ int overview(struct nk_context* ctx)
                 static const float ratio[] = { 120, 150 };
 
                 nk_layout_row_static(ctx, 30, 100, 1);
-                nk_checkbox_label(ctx, "Checkbox", &checkbox);
+                checkbox = nk_checkbox_label(ctx, "Checkbox", checkbox);
 
                 nk_layout_row_static(ctx, 30, 80, 3);
-                nk_radio_label(ctx, "optionA", &option, A);
-                nk_radio_label(ctx, "optionB", &option, B);
-                nk_radio_label(ctx, "optionC", &option, C);
+                option = nk_radio_label(ctx, "optionA", option, A);
+                option = nk_radio_label(ctx, "optionB", option, B);
+                option = nk_radio_label(ctx, "optionC", option, C);
 
                 nk_layout_row(ctx, NK_STATIC, 30, 2, ratio);
                 nk_labelf(ctx, NK_TEXT_LEFT, "Slider int");
@@ -250,7 +250,7 @@ int overview(struct nk_context* ctx)
             {
                 static int inactive = 1;
                 nk_layout_row_dynamic(ctx, 30, 1);
-                nk_checkbox_label(ctx, "Inactive", &inactive);
+                inactive = nk_checkbox_label(ctx, "Inactive", inactive);
 
                 nk_layout_row_static(ctx, 30, 80, 1);
                 if (inactive) {
@@ -260,7 +260,6 @@ int overview(struct nk_context* ctx)
                     ctx->style.button.hover = nk_style_item_color(nk_rgb(40, 40, 40));
                     ctx->style.button.active = nk_style_item_color(nk_rgb(40, 40, 40));
                     ctx->style.button.border_color = nk_rgb(60, 60, 60);
-                    ctx->style.button.text_background = nk_rgb(60, 60, 60);
                     ctx->style.button.text_normal = nk_rgb(60, 60, 60);
                     ctx->style.button.text_hover = nk_rgb(60, 60, 60);
                     ctx->style.button.text_active = nk_rgb(60, 60, 60);
@@ -278,11 +277,11 @@ int overview(struct nk_context* ctx)
                 {
                     static int selected[4] = { nk_false, nk_false, nk_true, nk_false };
                     nk_layout_row_static(ctx, 18, 100, 1);
-                    nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT, &selected[0]);
-                    nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT, &selected[1]);
+                    selected[0] = nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT, selected[0]);
+                    selected[1] = nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT, selected[1]);
                     nk_label(ctx, "Not Selectable", NK_TEXT_LEFT);
-                    nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT, &selected[2]);
-                    nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT, &selected[3]);
+                    selected[2] = nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT, selected[2]);
+                    selected[3] = nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT, selected[3]);
                     nk_tree_pop(ctx);
                 }
                 if (nk_tree_push(ctx, NK_TREE_NODE, "Grid", NK_MINIMIZED))
@@ -290,7 +289,9 @@ int overview(struct nk_context* ctx)
                     static int selected[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
                     nk_layout_row_static(ctx, 50, 50, 4);
                     for (int i = 0; i < 16; ++i) {
-                        if (nk_selectable_label(ctx, "Z", NK_TEXT_CENTERED, &selected[i])) {
+                        nk_bool last = selected[i];
+                        selected[i] = nk_selectable_label(ctx, "Z", NK_TEXT_CENTERED, selected[i]);
+                        if (selected[i] != last) {
                             int x = (i % 4), y = i / 4;
                             if (x > 0) selected[i - 1] ^= 1;
                             if (x < 3) selected[i + 1] ^= 1;
@@ -370,8 +371,8 @@ int overview(struct nk_context* ctx)
                     combo_color2 = nk_color_picker(ctx, combo_color2, NK_RGBA);
 
                     nk_layout_row_dynamic(ctx, 25, 2);
-                    nk_radio_label(ctx, "RGB", &col_mode, COL_RGB);
-                    nk_radio_label(ctx, "HSV", &col_mode, COL_HSV);
+                    col_mode = nk_radio_label(ctx, "RGB", col_mode, COL_RGB);
+                    col_mode = nk_radio_label(ctx, "HSV", col_mode, COL_HSV);
 
                     nk_layout_row_dynamic(ctx, 25, 1);
                     if (col_mode == COL_RGB) {
@@ -408,10 +409,10 @@ int overview(struct nk_context* ctx)
                 sprintf(buffer, "%lu", sum);
                 if (nk_combo_begin_label(ctx, buffer, nk_vec2(200, 200))) {
                     nk_layout_row_dynamic(ctx, 30, 1);
-                    nk_checkbox_label(ctx, weapons[0], &check_values[0]);
-                    nk_checkbox_label(ctx, weapons[1], &check_values[1]);
-                    nk_checkbox_label(ctx, weapons[2], &check_values[2]);
-                    nk_checkbox_label(ctx, weapons[3], &check_values[3]);
+                    check_values[0] = nk_checkbox_label(ctx, weapons[0], check_values[0]);
+                    check_values[1] = nk_checkbox_label(ctx, weapons[1], check_values[1]);
+                    check_values[2] = nk_checkbox_label(ctx, weapons[2], check_values[2]);
+                    check_values[3] = nk_checkbox_label(ctx, weapons[3], check_values[3]);
                     nk_combo_end(ctx);
                 }
 
@@ -542,13 +543,10 @@ int overview(struct nk_context* ctx)
             if (nk_tree_push(ctx, NK_TREE_NODE, "Input", NK_MINIMIZED))
             {
                 static const float ratio[] = { 120, 150 };
-                static char field_buffer[64];
-                static char text[9][64];
-                static int text_len[9];
+                static char text[8][64];
+                static int text_len[8];
                 static char box_buffer[512];
-                static int field_len;
                 static int box_len;
-                nk_flags active;
 
                 nk_layout_row(ctx, NK_STATIC, 25, 2, ratio);
                 nk_label(ctx, "Default:", NK_TEXT_LEFT);
@@ -561,36 +559,24 @@ int overview(struct nk_context* ctx)
                 nk_edit_string(ctx, NK_EDIT_SIMPLE, text[2], &text_len[2], 64, nk_filter_float);
 
                 nk_label(ctx, "Hex:", NK_TEXT_LEFT);
-                nk_edit_string(ctx, NK_EDIT_SIMPLE, text[4], &text_len[4], 64, nk_filter_hex);
+                nk_edit_string(ctx, NK_EDIT_SIMPLE, text[3], &text_len[3], 64, nk_filter_hex);
 
                 nk_label(ctx, "Octal:", NK_TEXT_LEFT);
-                nk_edit_string(ctx, NK_EDIT_SIMPLE, text[5], &text_len[5], 64, nk_filter_oct);
+                nk_edit_string(ctx, NK_EDIT_SIMPLE, text[4], &text_len[4], 64, nk_filter_oct);
 
                 nk_label(ctx, "Binary:", NK_TEXT_LEFT);
-                nk_edit_string(ctx, NK_EDIT_SIMPLE, text[6], &text_len[6], 64, nk_filter_binary);
-
-                nk_label(ctx, "Password:", NK_TEXT_LEFT);
-                {
-                    int i = 0;
-                    int old_len = text_len[8];
-                    char buffer[64];
-                    for (i = 0; i < text_len[8]; ++i) buffer[i] = '*';
-                    nk_edit_string(ctx, NK_EDIT_FIELD, buffer, &text_len[8], 64, nk_filter_default);
-                    if (old_len < text_len[8])
-                        memcpy(&text[8][old_len], &buffer[old_len], (nk_size)(text_len[8] - old_len));
-                }
+                nk_edit_string(ctx, NK_EDIT_SIMPLE, text[5], &text_len[5], 64, nk_filter_binary);
 
                 nk_label(ctx, "Field:", NK_TEXT_LEFT);
-                nk_edit_string(ctx, NK_EDIT_FIELD, field_buffer, &field_len, 64, nk_filter_default);
+                nk_edit_string(ctx, NK_EDIT_FIELD, text[6], &text_len[6], 64, nk_filter_default);
 
                 nk_label(ctx, "Box:", NK_TEXT_LEFT);
                 nk_layout_row_static(ctx, 180, 278, 1);
                 nk_edit_string(ctx, NK_EDIT_BOX, box_buffer, &box_len, 512, nk_filter_default);
 
                 nk_layout_row(ctx, NK_STATIC, 25, 2, ratio);
-                active = nk_edit_string(ctx, NK_EDIT_FIELD | NK_EDIT_SIG_ENTER, text[7], &text_len[7], 64, nk_filter_ascii);
-                if (nk_button_label(ctx, "Submit") ||
-                    (active & NK_EDIT_COMMITED))
+                nk_flags active = nk_edit_string(ctx, NK_EDIT_FIELD | NK_EDIT_SIG_ENTER, text[7], &text_len[7], 64, nk_filter_ascii);
+                if (nk_button_label(ctx, "Submit") || (active & NK_EDIT_COMMITED))
                 {
                     text[7][text_len[7]] = '\n';
                     text_len[7]++;
@@ -714,15 +700,15 @@ int overview(struct nk_context* ctx)
                 static int slider = 10;
 
                 nk_layout_row_dynamic(ctx, 25, 1);
-                nk_checkbox_label(ctx, "Menu", &show_menu);
+                show_menu = nk_checkbox_label(ctx, "Menu", show_menu);
                 prog = nk_bar_slider(ctx, prog, 100);
                 slider = nk_slider_int(ctx, 0, slider, 16, 1);
                 if (nk_contextual_item_label(ctx, "About", NK_TEXT_CENTERED))
                     show_app_about = nk_true;
-                nk_selectable_label(ctx, select[0] ? "Unselect" : "Select", NK_TEXT_LEFT, &select[0]);
-                nk_selectable_label(ctx, select[1] ? "Unselect" : "Select", NK_TEXT_LEFT, &select[1]);
-                nk_selectable_label(ctx, select[2] ? "Unselect" : "Select", NK_TEXT_LEFT, &select[2]);
-                nk_selectable_label(ctx, select[3] ? "Unselect" : "Select", NK_TEXT_LEFT, &select[3]);
+                select[0] = nk_selectable_label(ctx, select[0] ? "Unselect" : "Select", NK_TEXT_LEFT, select[0]);
+                select[1] = nk_selectable_label(ctx, select[1] ? "Unselect" : "Select", NK_TEXT_LEFT, select[1]);
+                select[2] = nk_selectable_label(ctx, select[2] ? "Unselect" : "Select", NK_TEXT_LEFT, select[2]);
+                select[3] = nk_selectable_label(ctx, select[3] ? "Unselect" : "Select", NK_TEXT_LEFT, select[3]);
                 nk_contextual_end(ctx);
             }
 
@@ -882,9 +868,9 @@ int overview(struct nk_context* ctx)
                 if (group_titlebar) group_flags |= NK_WINDOW_TITLE;
 
                 nk_layout_row_dynamic(ctx, 30, 3);
-                nk_checkbox_label(ctx, "Titlebar", &group_titlebar);
-                nk_checkbox_label(ctx, "Border", &group_border);
-                nk_checkbox_label(ctx, "No Scrollbar", &group_no_scrollbar);
+                group_titlebar = nk_checkbox_label(ctx, "Titlebar", group_titlebar);
+                group_border = nk_checkbox_label(ctx, "Border", group_border);
+                group_no_scrollbar = nk_checkbox_label(ctx, "No Scrollbar", group_no_scrollbar);
 
                 nk_layout_row_begin(ctx, NK_STATIC, 22, 3);
                 nk_layout_row_push(ctx, 50);
@@ -901,7 +887,7 @@ int overview(struct nk_context* ctx)
                     static int selected[16];
                     nk_layout_row_static(ctx, 18, 100, 1);
                     for (i = 0; i < 16; ++i)
-                        nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, &selected[i]);
+                        selected[i] = nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, selected[i]);
                     nk_group_end(ctx);
                 }
                 nk_tree_pop(ctx);
@@ -928,12 +914,12 @@ int overview(struct nk_context* ctx)
                         }
                         nk_layout_row_static(ctx, 18, 100, 1);
                         for (j = 0; j < 4; ++j)
-                            nk_selectable_symbol_label(ctx, NK_SYMBOL_CIRCLE_SOLID, (sel_nodes[j]) ? "Selected" : "Unselected", NK_TEXT_RIGHT, &sel_nodes[j]);
+                            sel_nodes[j] = nk_selectable_label(ctx, (sel_nodes[j]) ? "Selected" : "Unselected", NK_TEXT_RIGHT, sel_nodes[j]);
                         nk_tree_element_pop(ctx);
                     }
                     nk_layout_row_static(ctx, 18, 100, 1);
                     for (i = 1; i < 8; ++i)
-                        nk_selectable_symbol_label(ctx, NK_SYMBOL_CIRCLE_SOLID, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_RIGHT, &selected[i]);
+                        selected[i] = nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_RIGHT, selected[i]);
                     nk_tree_element_pop(ctx);
                 }
                 nk_tree_pop(ctx);
@@ -953,7 +939,7 @@ int overview(struct nk_context* ctx)
                 nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
                 for (i = 0; i < 3; ++i) {
                     /* make sure button perfectly fits text */
-                    const struct nk_user_font* f = ctx->style.font;
+                    const struct nk_font* f = ctx->style.font;
                     float text_width = f->width(f->userdata, f->height, names[i], nk_strlen(names[i]));
                     float widget_width = text_width + 3 * ctx->style.button.padding.x;
                     nk_layout_row_push(ctx, widget_width);
@@ -1053,7 +1039,7 @@ int overview(struct nk_context* ctx)
                     static int selected[32];
                     nk_layout_row_static(ctx, 18, 100, 1);
                     for (i = 0; i < 32; ++i)
-                        nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, &selected[i]);
+                        selected[i] = nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, selected[i]);
                     nk_group_end(ctx);
                 }
 
@@ -1086,7 +1072,7 @@ int overview(struct nk_context* ctx)
                     static int selected[4];
                     nk_layout_row_static(ctx, 18, 100, 1);
                     for (i = 0; i < 4; ++i)
-                        nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, &selected[i]);
+                        selected[i] = nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, selected[i]);
                     nk_group_end(ctx);
                 }
 
@@ -1095,7 +1081,7 @@ int overview(struct nk_context* ctx)
                     static int selected[4];
                     nk_layout_row_static(ctx, 18, 100, 1);
                     for (i = 0; i < 4; ++i)
-                        nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, &selected[i]);
+                        selected[i] = nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, selected[i]);
                     nk_group_end(ctx);
                 }
 
@@ -1104,7 +1090,7 @@ int overview(struct nk_context* ctx)
                     static int selected[4];
                     nk_layout_row_static(ctx, 18, 100, 1);
                     for (i = 0; i < 4; ++i)
-                        nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, &selected[i]);
+                        selected[i] = nk_selectable_label(ctx, (selected[i]) ? "Selected" : "Unselected", NK_TEXT_CENTERED, selected[i]);
                     nk_group_end(ctx);
                 }
                 nk_layout_space_end(ctx);

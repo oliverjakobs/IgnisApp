@@ -691,7 +691,7 @@ nk_file_load(const char* path, nk_size* siz, struct nk_allocator *alloc)
 }
 
 NK_LIB int
-nk_text_clamp(const struct nk_user_font *font, const char *text,
+nk_text_clamp(const struct nk_font *font, const char *text,
     int text_len, float space, int *glyphs, float *text_width,
     const nk_rune *sep_list, int sep_count)
 {
@@ -739,7 +739,7 @@ nk_text_clamp(const struct nk_user_font *font, const char *text,
     }
 }
 NK_LIB struct nk_vec2
-nk_text_calculate_text_bounds(const struct nk_user_font *font,
+nk_text_calculate_text_bounds(const struct nk_font *font,
     const char *begin, int byte_len, float row_height, const char **remaining,
     struct nk_vec2 *out_offset, int *glyphs, int op)
 {

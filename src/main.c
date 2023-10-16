@@ -129,7 +129,7 @@ void onTick(MinimalApp* app, float deltatime)
     struct nk_context* ctx = &glfw.ctx;
     if (nk_begin(ctx, "Demo", nk_rect(50, 50, 230, 250),
         NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_SCROLL_AUTO_HIDE |
-        NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE))
+        NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE | NK_WINDOW_CLOSABLE))
     {
         enum { EASY, HARD };
         static int op = EASY;
@@ -141,8 +141,8 @@ void onTick(MinimalApp* app, float deltatime)
             fprintf(stdout, "button pressed\n");
 
         nk_layout_row_dynamic(ctx, 30, 2);
-        nk_radio_label(ctx, "easy", &op, EASY);
-        nk_radio_label(ctx, "hard", &op, HARD);
+        op = nk_radio_label(ctx, "easy", op, EASY);
+        op = nk_radio_label(ctx, "hard", op, HARD);
 
         nk_layout_row_dynamic(ctx, 25, 1);
         nk_property_int(ctx, "Compression:", 0, &property, 100, 10, 1);

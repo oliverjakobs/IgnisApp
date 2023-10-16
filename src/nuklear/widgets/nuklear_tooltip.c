@@ -58,7 +58,7 @@ NK_API void nk_tooltip(struct nk_context *ctx, const char *text)
 
     /* fetch configuration data */
     struct nk_vec2 padding = ctx->style.window.padding;
-    const struct nk_user_font* font = ctx->style.font;
+    const struct nk_font* font = ctx->style.font;
 
     /* calculate size of the text and tooltip */
     int text_len = nk_strlen(text);

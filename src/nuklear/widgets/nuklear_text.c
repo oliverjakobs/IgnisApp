@@ -8,12 +8,13 @@
  * ===============================================================*/
 NK_LIB void
 nk_widget_text(struct nk_command_buffer *out, struct nk_rect bounds, const char *string, int len,
-    const struct nk_text *text, nk_flags align, const struct nk_user_font *font)
+    const struct nk_style_text *text, const struct nk_font *font)
 {
     NK_ASSERT(out);
     NK_ASSERT(text);
     if (!out || !text) return;
 
+    bounds.w = NK_MAX(bounds.w, 2 * text->padding.x);
     bounds.h = NK_MAX(bounds.h, 2 * text->padding.y);
 
     float text_width = font->width(font->userdata, font->height, string, len);
@@ -25,28 +26,28 @@ nk_widget_text(struct nk_command_buffer *out, struct nk_rect bounds, const char 
     label.h = NK_MIN(font->height, bounds.h - 2.0f * text->padding.y);
 
     /* align in x-axis */
-    if (align & NK_TEXT_ALIGN_CENTERED)
+    if (text->alignment & NK_TEXT_ALIGN_CENTERED)
         label.x += (bounds.w - label.w) * 0.5f;
-    else if (align & NK_TEXT_ALIGN_RIGHT)
+    else if (text->alignment & NK_TEXT_ALIGN_RIGHT)
         label.x += bounds.w - label.w;
 
     /* align in y-axis */
-    if (align & NK_TEXT_ALIGN_MIDDLE)
+    if (text->alignment & NK_TEXT_ALIGN_MIDDLE)
     {
         label.y = bounds.y + bounds.h/2.0f - font->height/2.0f;
         label.h = NK_MAX(bounds.h/2.0f, bounds.h - (bounds.h/2.0f + font->height/2.0f));
     }
-    else if (align & NK_TEXT_ALIGN_BOTTOM)
+    else if (text->alignment & NK_TEXT_ALIGN_BOTTOM)
     {
         label.y = bounds.y + bounds.h - font->height;
         label.h = font->height;
     }
-    nk_draw_text(out, label, string, len, font, text->background, text->text);
+    nk_draw_text(out, label, string, len, font, text->color);
 }
 
 NK_LIB void
 nk_widget_text_wrap(struct nk_command_buffer *o, struct nk_rect b, const char *string, int len,
-    const struct nk_text *t, const struct nk_user_font *f)
+    const struct nk_style_text*t, const struct nk_font *f)
 {
     NK_ASSERT(o);
     NK_ASSERT(t);
@@ -72,7 +73,7 @@ nk_widget_text_wrap(struct nk_command_buffer *o, struct nk_rect b, const char *s
     while (done < len)
     {
         if (!fitting || line.y + line.h >= (b.y + b.h)) break;
-        nk_widget_text(o, line, &string[done], fitting, t, NK_TEXT_LEFT, f);
+        nk_widget_text(o, line, &string[done], fitting, t, f);
         done += fitting;
         line.y += f->height + 2 * t->padding.y;
         fitting = nk_text_clamp(f, &string[done], len - done, line.w, &glyphs, &width, sep, sep_len);
@@ -103,15 +104,14 @@ NK_API void nk_text_colored(struct nk_context *ctx, const char *str, int len, nk
     enum nk_widget_layout_states state = nk_widget(&bounds, ctx);
     if (state == NK_WIDGET_INVALID) return;
 
-    struct nk_text text;
-    text.padding = style->text.padding;
-    text.background = style->window.background;
-    text.text = color;
+    struct nk_style_text text = style->text;
+    text.color = color;
+    text.alignment = align;
 
     if (align & NK_TEXT_ALIGN_WRAP)
         nk_widget_text_wrap(&win->buffer, bounds, str, len, &text, style->font);
     else
-        nk_widget_text(&win->buffer, bounds, str, len, &text, align, style->font);
+        nk_widget_text(&win->buffer, bounds, str, len, &text, style->font);
 }
 
 NK_API void nk_label_colored(struct nk_context* ctx, const char* str, nk_flags align, struct nk_color color)

@@ -110,10 +110,10 @@ nk_draw_scrollbar(struct nk_command_buffer *out, nk_flags state,
     /* draw background */
     switch (background->type) {
         case NK_STYLE_ITEM_IMAGE:
-            nk_draw_image(out, *bounds, &background->data.image, nk_white);
+            nk_draw_image(out, *bounds, &background->image, nk_white);
             break;
         case NK_STYLE_ITEM_COLOR:
-            nk_fill_rect(out, *bounds, style->rounding, background->data.color);
+            nk_fill_rect(out, *bounds, style->rounding, background->color);
             nk_stroke_rect(out, *bounds, style->rounding, style->border, style->border_color);
             break;
     }
@@ -121,10 +121,10 @@ nk_draw_scrollbar(struct nk_command_buffer *out, nk_flags state,
     /* draw cursor */
     switch (cursor->type) {
         case NK_STYLE_ITEM_IMAGE:
-            nk_draw_image(out, *scroll, &cursor->data.image, nk_white);
+            nk_draw_image(out, *scroll, &cursor->image, nk_white);
             break;
         case NK_STYLE_ITEM_COLOR:
-            nk_fill_rect(out, *scroll, style->rounding_cursor, cursor->data.color);
+            nk_fill_rect(out, *scroll, style->rounding_cursor, cursor->color);
             nk_stroke_rect(out, *scroll, style->rounding_cursor, style->border_cursor, style->cursor_border_color);
             break;
     }
@@ -134,7 +134,7 @@ nk_do_scrollbarv(nk_flags *state,
     struct nk_command_buffer *out, struct nk_rect scroll, int has_scrolling,
     float offset, float target, float step, float button_pixel_inc,
     const struct nk_style_scrollbar *style, struct nk_input *in,
-    const struct nk_user_font *font)
+    const struct nk_font *font)
 {
     struct nk_rect empty_north;
     struct nk_rect empty_south;
@@ -213,9 +213,8 @@ nk_do_scrollbarv(nk_flags *state,
     cursor.y = scroll.y + (scroll_off * scroll.h) + style->border_cursor + style->padding.y;
 
     /* draw scrollbar */
-    if (style->draw_begin) style->draw_begin(out, style->userdata);
     nk_draw_scrollbar(out, *state, style, &scroll, &cursor);
-    if (style->draw_end) style->draw_end(out, style->userdata);
+
     return scroll_offset;
 }
 NK_LIB float
@@ -223,7 +222,7 @@ nk_do_scrollbarh(nk_flags *state,
     struct nk_command_buffer *out, struct nk_rect scroll, int has_scrolling,
     float offset, float target, float step, float button_pixel_inc,
     const struct nk_style_scrollbar *style, struct nk_input *in,
-    const struct nk_user_font *font)
+    const struct nk_font *font)
 {
     struct nk_rect cursor;
     struct nk_rect empty_west;
@@ -301,9 +300,7 @@ nk_do_scrollbarh(nk_flags *state,
     cursor.x = scroll.x + (scroll_off * scroll.w);
 
     /* draw scrollbar */
-    if (style->draw_begin) style->draw_begin(out, style->userdata);
     nk_draw_scrollbar(out, *state, style, &scroll, &cursor);
-    if (style->draw_end) style->draw_end(out, style->userdata);
     return scroll_offset;
 }
 

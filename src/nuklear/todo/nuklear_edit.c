@@ -18,49 +18,43 @@ nk_filter_ascii(const struct nk_text_edit *box, nk_rune unicode)
 {
     NK_UNUSED(box);
     if (unicode > 128) return nk_false;
-    else return nk_true;
+    return nk_true;
 }
 NK_API nk_bool
 nk_filter_float(const struct nk_text_edit *box, nk_rune unicode)
 {
     NK_UNUSED(box);
-    if ((unicode < '0' || unicode > '9') && unicode != '.' && unicode != '-')
-        return nk_false;
-    else return nk_true;
+    if ((unicode < '0' || unicode > '9') && unicode != '.' && unicode != '-') return nk_false;
+    return nk_true;
 }
 NK_API nk_bool
 nk_filter_decimal(const struct nk_text_edit *box, nk_rune unicode)
 {
     NK_UNUSED(box);
-    if ((unicode < '0' || unicode > '9') && unicode != '-')
-        return nk_false;
-    else return nk_true;
+    if ((unicode < '0' || unicode > '9') && unicode != '-') return nk_false;
+    return nk_true;
 }
 NK_API nk_bool
 nk_filter_hex(const struct nk_text_edit *box, nk_rune unicode)
 {
     NK_UNUSED(box);
-    if ((unicode < '0' || unicode > '9') &&
-        (unicode < 'a' || unicode > 'f') &&
-        (unicode < 'A' || unicode > 'F'))
+    if ((unicode < '0' || unicode > '9') && (unicode < 'a' || unicode > 'f') && (unicode < 'A' || unicode > 'F'))
         return nk_false;
-    else return nk_true;
+    return nk_true;
 }
 NK_API nk_bool
 nk_filter_oct(const struct nk_text_edit *box, nk_rune unicode)
 {
     NK_UNUSED(box);
-    if (unicode < '0' || unicode > '7')
-        return nk_false;
-    else return nk_true;
+    if (unicode < '0' || unicode > '7') return nk_false;
+    return nk_true;
 }
 NK_API nk_bool
 nk_filter_binary(const struct nk_text_edit *box, nk_rune unicode)
 {
     NK_UNUSED(box);
-    if (unicode != '0' && unicode != '1')
-        return nk_false;
-    else return nk_true;
+    if (unicode != '0' && unicode != '1') return nk_false;
+    return nk_true;
 }
 
 /* ===============================================================
@@ -72,7 +66,7 @@ NK_LIB void
 nk_edit_draw_text(struct nk_command_buffer *out,
     const struct nk_style_edit *style, float pos_x, float pos_y,
     float x_offset, const char *text, int byte_len, float row_height,
-    const struct nk_user_font *font, struct nk_color background,
+    const struct nk_font *font, struct nk_color background,
     struct nk_color foreground, nk_bool is_selected)
 {
     NK_ASSERT(out);
@@ -89,10 +83,9 @@ nk_edit_draw_text(struct nk_command_buffer *out,
     float line_offset = 0;
     int line_count = 0;
 
-    struct nk_text txt;
-    txt.padding = nk_vec2(0,0);
-    txt.background = background;
-    txt.text = foreground;
+    struct nk_style_text txt = { 0 };
+    txt.color = foreground;
+    txt.alignment = NK_TEXT_CENTERED;
 
     glyph_len = nk_utf_decode(text+text_len, &unicode, byte_len-text_len);
     if (!glyph_len) return;
@@ -110,8 +103,7 @@ nk_edit_draw_text(struct nk_command_buffer *out,
 
             if (is_selected) /* selection needs to draw different background color */
                 nk_fill_rect(out, label, 0, background);
-            nk_widget_text(out, label, line, (int)((text + text_len) - line),
-                &txt, NK_TEXT_CENTERED, font);
+            nk_widget_text(out, label, line, (int)((text + text_len) - line), &txt, font);
 
             text_len++;
             line_count++;
@@ -144,15 +136,16 @@ nk_edit_draw_text(struct nk_command_buffer *out,
 
         if (is_selected)
             nk_fill_rect(out, label, 0, background);
-        nk_widget_text(out, label, line, (int)((text + text_len) - line),
-            &txt, NK_TEXT_LEFT, font);
+
+        txt.alignment = NK_TEXT_LEFT;
+        nk_widget_text(out, label, line, (int)((text + text_len) - line), &txt, font);
     }}
 }
 NK_LIB nk_flags
 nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
     struct nk_rect bounds, nk_flags flags, nk_plugin_filter filter,
     struct nk_text_edit *edit, const struct nk_style_edit *style,
-    struct nk_input *in, const struct nk_user_font *font)
+    struct nk_input *in, const struct nk_font *font)
 {
     struct nk_rect area;
     nk_flags ret = 0;
@@ -336,10 +329,10 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         switch(background->type)
         {
             case NK_STYLE_ITEM_IMAGE:
-                nk_draw_image(out, bounds, &background->data.image, nk_white);
+                nk_draw_image(out, bounds, &background->image, nk_white);
                 break;
             case NK_STYLE_ITEM_COLOR:
-                nk_fill_rect(out, bounds, style->rounding, background->data.color);
+                nk_fill_rect(out, bounds, style->rounding, background->color);
                 nk_stroke_rect(out, bounds, style->rounding, style->border, style->border_color);
                 break;
         }
@@ -548,7 +541,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         if (background->type == NK_STYLE_ITEM_IMAGE)
             background_color = nk_rgba(0,0,0,0);
         else
-            background_color = background->data.color;
+            background_color = background->color;
 
 
         if (edit->select_start == edit->select_end) {
@@ -616,7 +609,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
                 /* draw cursor inside text */
                 int glyph_len;
                 struct nk_rect label;
-                struct nk_text txt;
+                struct nk_style_text txt = { 0 };
 
                 nk_rune unicode;
                 NK_ASSERT(cursor_ptr);
@@ -627,11 +620,10 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
                 label.w = font->width(font->userdata, font->height, cursor_ptr, glyph_len);
                 label.h = row_height;
 
-                txt.padding = nk_vec2(0,0);
-                txt.background = cursor_color;;
-                txt.text = cursor_text_color;
+                txt.color = cursor_text_color;
+                txt.alignment = NK_TEXT_LEFT;
                 nk_fill_rect(out, label, 0, cursor_color);
-                nk_widget_text(out, label, cursor_ptr, glyph_len, &txt, NK_TEXT_LEFT, font);
+                nk_widget_text(out, label, cursor_ptr, glyph_len, &txt, font);
             }
         }}
     } else {
@@ -656,7 +648,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         if (background->type == NK_STYLE_ITEM_IMAGE)
             background_color = nk_rgba(0,0,0,0);
         else
-            background_color = background->data.color;
+            background_color = background->color;
         nk_edit_draw_text(out, style, area.x - edit->scrollbar.x,
             area.y - edit->scrollbar.y, 0, begin, l, row_height, font,
             background_color, text_color, nk_false);

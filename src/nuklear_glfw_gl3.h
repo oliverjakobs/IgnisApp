@@ -33,8 +33,6 @@ struct nk_glfw_device {
     IgnisVertexArray vao;
     GLint uniform_tex;
     GLint uniform_proj;
-
-    IgnisTexture2D font_tex;
 };
 
 struct nk_glfw {

@@ -289,12 +289,12 @@ nk_draw_image(struct nk_command_buffer *b, struct nk_rect r, const struct nk_ima
 
 NK_API void
 nk_draw_text(struct nk_command_buffer *b, struct nk_rect r,
-    const char *string, int length, const struct nk_user_font *font,
-    struct nk_color bg, struct nk_color fg)
+    const char *string, int length, const struct nk_font *font,
+    struct nk_color color)
 {
     NK_ASSERT(b);
     NK_ASSERT(font);
-    if (!b || !string || !length || (bg.a == 0 && fg.a == 0)) return;
+    if (!b || !string || !length || color.a == 0) return;
     if (b->use_clipping && !nk_clip_rect(r, b->clip)) return;
 
     /* make sure text fits inside bounds */
@@ -312,8 +312,7 @@ nk_draw_text(struct nk_command_buffer *b, struct nk_rect r,
     cmd->y = (short)r.y;
     cmd->w = (unsigned short)r.w;
     cmd->h = (unsigned short)r.h;
-    cmd->background = bg;
-    cmd->foreground = fg;
+    cmd->color = color;
     cmd->font = font;
     cmd->length = length;
     cmd->height = font->height;
