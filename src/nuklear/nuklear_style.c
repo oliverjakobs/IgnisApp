@@ -117,8 +117,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = table[NK_COLOR_TEXT];
     button->text_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
-    button->image_padding   = nk_vec2(0.0f,0.0f);
-    button->touch_padding   = nk_vec2(0.0f, 0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 1.0f;
     button->rounding        = 4.0f;
@@ -134,7 +132,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = table[NK_COLOR_TEXT];
     button->text_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 0.0f;
@@ -150,7 +147,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = table[NK_COLOR_TEXT];
     button->text_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 1.0f;
@@ -242,7 +238,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = nk_rgb(175,175,175);
     button->text_active     = nk_rgb(175,175,175);
     button->padding         = nk_vec2(8.0f,8.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 1.0f;
     button->rounding        = 0.0f;
@@ -296,7 +291,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = nk_rgb(175,175,175);
     button->text_active     = nk_rgb(175,175,175);
     button->padding         = nk_vec2(4.0f,4.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 1.0f;
     button->rounding        = 0.0f;
@@ -357,7 +351,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = table[NK_COLOR_TEXT];
     button->text_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(0.0f,0.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 0.0f;
@@ -426,7 +419,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = table[NK_COLOR_TEXT];
     button->text_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 0.0f;
@@ -455,7 +447,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = table[NK_COLOR_TEXT];
     button->text_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 0.0f;
@@ -472,7 +463,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = table[NK_COLOR_TEXT];
     button->text_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 0.0f;
@@ -502,7 +492,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = table[NK_COLOR_TEXT];
     button->text_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(0.0f,0.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 0.0f;
@@ -518,7 +507,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     button->text_hover      = table[NK_COLOR_TEXT];
     button->text_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(0.0f,0.0f);
-    button->touch_padding   = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 0.0f;

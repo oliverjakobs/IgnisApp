@@ -130,12 +130,12 @@ nk_do_slider(nk_flags *state, struct nk_command_buffer *out, struct nk_rect boun
 
         /* decrement button */
         nk_flags ws;
-        if (nk_do_button_symbol(&ws, out, button, style->dec_symbol, NK_BUTTON_DEFAULT, &style->dec_button, in, font))
+        if (nk_do_button_symbol(&ws, out, button, style->dec_symbol, NK_BUTTON_DEFAULT, &style->dec_button, in))
             value -= step;
 
         /* increment button */
         button.x = (bounds.x + bounds.w) - button.w;
-        if (nk_do_button_symbol(&ws, out, button, style->inc_symbol, NK_BUTTON_DEFAULT, &style->inc_button, in, font))
+        if (nk_do_button_symbol(&ws, out, button, style->inc_symbol, NK_BUTTON_DEFAULT, &style->inc_button, in))
             value += step;
 
         bounds.x += button.w + style->spacing.x;
@@ -178,7 +178,7 @@ NK_API float nk_slider(struct nk_context *ctx, float min_value, float value, flo
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state;
+    nk_widget_layout_state layout_state;
     struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return value;
 
@@ -301,7 +301,7 @@ NK_API nk_size nk_bar_slider(struct nk_context* ctx, nk_size value, nk_size max)
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state;
+    nk_widget_layout_state layout_state;
     struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return value;
 
@@ -321,7 +321,7 @@ NK_API nk_size nk_progress(struct nk_context *ctx, nk_size value, nk_size max)
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    nk_widget_layout_state layout_state = nk_widget(&bounds, ctx);
     if (!layout_state) return value;
 
     nk_flags state = 0;

@@ -198,7 +198,7 @@ nk_do_property(nk_flags *ws,
     nk_draw_property(out, style, &property, &label, *ws, name, name_len, font);
 
     /* execute right button  */
-    if (nk_do_button_symbol(ws, out, left, style->sym_left, behavior, &style->dec_button, in, font)) {
+    if (nk_do_button_symbol(ws, out, left, style->sym_left, behavior, &style->dec_button, in)) {
         switch (variant->kind) {
         default: break;
         case NK_PROPERTY_INT:
@@ -210,7 +210,7 @@ nk_do_property(nk_flags *ws,
         }
     }
     /* execute left button  */
-    if (nk_do_button_symbol(ws, out, right, style->sym_right, behavior, &style->inc_button, in, font)) {
+    if (nk_do_button_symbol(ws, out, right, style->sym_right, behavior, &style->inc_button, in)) {
         switch (variant->kind) {
         default: break;
         case NK_PROPERTY_INT:
@@ -320,7 +320,7 @@ nk_property(struct nk_context *ctx, const char *name, struct nk_property_variant
     const struct nk_style *style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states s;
+    nk_widget_layout_state s;
 
 
 

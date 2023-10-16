@@ -170,13 +170,13 @@ nk_do_scrollbarv(nk_flags *state,
         /* decrement button */
         button.y = scroll.y;
         if (nk_do_button_symbol(&ws, out, button, style->dec_symbol,
-            NK_BUTTON_REPEATER, &style->dec_button, in, font))
+            NK_BUTTON_REPEATER, &style->dec_button, in))
             offset = offset - scroll_step;
 
         /* increment button */
         button.y = scroll.y + scroll.h - button.h;
         if (nk_do_button_symbol(&ws, out, button, style->inc_symbol,
-            NK_BUTTON_REPEATER, &style->inc_button, in, font))
+            NK_BUTTON_REPEATER, &style->inc_button, in))
             offset = offset + scroll_step;
 
         scroll.y = scroll.y + button.h;
@@ -257,13 +257,13 @@ nk_do_scrollbarh(nk_flags *state,
         /* decrement button */
         button.x = scroll.x;
         if (nk_do_button_symbol(&ws, out, button, style->dec_symbol,
-            NK_BUTTON_REPEATER, &style->dec_button, in, font))
+            NK_BUTTON_REPEATER, &style->dec_button, in))
             offset = offset - scroll_step;
 
         /* increment button */
         button.x = scroll.x + scroll.w - button.w;
         if (nk_do_button_symbol(&ws, out, button, style->inc_symbol,
-            NK_BUTTON_REPEATER, &style->inc_button, in, font))
+            NK_BUTTON_REPEATER, &style->inc_button, in))
             offset = offset + scroll_step;
 
         scroll.x = scroll.x + button.w;

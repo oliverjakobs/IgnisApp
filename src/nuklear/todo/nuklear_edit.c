@@ -764,7 +764,7 @@ nk_edit_buffer(struct nk_context *ctx, nk_flags flags,
 
     win = ctx->current;
     style = &ctx->style;
-    enum nk_widget_layout_states layout_state = nk_widget(&bounds, ctx);
+    nk_widget_layout_state layout_state = nk_widget(&bounds, ctx);
     if (!layout_state) return layout_state;
     in = (win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
 

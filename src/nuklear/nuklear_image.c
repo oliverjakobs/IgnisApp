@@ -51,29 +51,3 @@ NK_API struct nk_image nk_image_id(int id)
     return s;
 }
 
-NK_API void nk_image(struct nk_context *ctx, struct nk_image img)
-{
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout) return;
-
-    struct nk_rect bounds = { 0 };
-    if (!nk_widget(&bounds, ctx)) return;
-
-    nk_draw_image(&ctx->current->buffer, bounds, &img, nk_white);
-}
-
-NK_API void nk_image_color(struct nk_context *ctx, struct nk_image img, struct nk_color col)
-{
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout) return;
-
-    struct nk_rect bounds = { 0 };
-    if (!nk_widget(&bounds, ctx)) return;
-
-    nk_draw_image(&ctx->current->buffer, bounds, &img, col);
-}
-

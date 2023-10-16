@@ -16,7 +16,7 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
     struct nk_command_buffer *out;
     const struct nk_input *in;
     const struct nk_style_button *button;
-    enum nk_symbol_type symbol;
+    nk_symbol symbol;
     float row_height;
 
     struct nk_vec2 item_spacing;
@@ -25,7 +25,7 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
     struct nk_style_text text;
 
     nk_flags ws = 0;
-    enum nk_widget_layout_states widget_state;
+    nk_widget_layout_state widget_state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -82,11 +82,10 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
     }
 
     {/* draw triangle button */
-    sym.w = sym.h = style->font->height;
-    sym.y = header.y + style->tab.padding.y;
     sym.x = header.x + style->tab.padding.x;
-    nk_do_button_symbol(&ws, &win->buffer, sym, symbol, NK_BUTTON_DEFAULT,
-        button, 0, style->font);
+    sym.y = header.y + style->tab.padding.y;
+    sym.w = sym.h = style->font->height;
+    nk_draw_button_symbol(&win->buffer, sym, ws, button, symbol);
 
     if (img) {
         /* draw optional image icon */
@@ -199,7 +198,7 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
     struct nk_command_buffer *out;
     const struct nk_input *in;
     const struct nk_style_button *button;
-    enum nk_symbol_type symbol;
+    nk_symbol symbol;
     float row_height;
     struct nk_vec2 padding;
 
@@ -211,7 +210,7 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
     struct nk_rect sym = {0,0,0,0};
 
     nk_flags ws = 0;
-    enum nk_widget_layout_states widget_state;
+    nk_widget_layout_state widget_state;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -268,7 +267,7 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
     sym.w = sym.h = style->font->height;
     sym.y = header.y + style->tab.padding.y;
     sym.x = header.x + style->tab.padding.x;
-    if (nk_do_button_symbol(&ws, &win->buffer, sym, symbol, NK_BUTTON_DEFAULT, button, in, style->font))
+    if (nk_do_button_symbol(&ws, &win->buffer, sym, symbol, NK_BUTTON_DEFAULT, button, in))
         *state = (*state == NK_MAXIMIZED) ? NK_MINIMIZED : NK_MAXIMIZED;}
 
     /* draw label */

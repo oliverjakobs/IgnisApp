@@ -179,7 +179,7 @@ nk_color_picker(struct nk_context *ctx, struct nk_colorf color, enum nk_color_fo
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state;
+    nk_widget_layout_state layout_state;
     const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return color;
 

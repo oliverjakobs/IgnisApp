@@ -57,12 +57,12 @@ static const struct nk_style_item* nk_combo_draw_background(struct nk_command_bu
     return background;
 }
 
-static nk_bool nk_combo_draw_button(struct nk_command_buffer* out, struct nk_rect bounds, nk_flags state, nk_bool clicked, struct nk_style_combo* style, struct nk_font* font)
+static nk_bool nk_combo_draw_button(struct nk_command_buffer* out, struct nk_rect bounds, nk_flags state, nk_bool clicked, struct nk_style_combo* style)
 {
-    enum nk_symbol_type sym = NK_SYMBOL_NONE;
-    if (state & NK_WIDGET_STATE_HOVER)  sym = style->sym_hover;
-    else if (clicked)                   sym = style->sym_active;
-    else                                sym = style->sym_normal;
+    nk_symbol sym = NK_SYMBOL_NONE;
+    if (state & NK_WIDGET_STATE_ACTIVED)    sym = style->sym_active;
+    else if (state & NK_WIDGET_STATE_HOVER) sym = style->sym_hover;
+    else                                    sym = style->sym_normal;
 
     /* represents whether or not the combo's button symbol should be drawn */
     if (sym == NK_SYMBOL_NONE) return nk_false;
@@ -75,15 +75,8 @@ static nk_bool nk_combo_draw_button(struct nk_command_buffer* out, struct nk_rec
         .h = button.w
     };
 
-    struct nk_rect content = {
-        .x = button.x + style->button.padding.x,
-        .y = button.y + style->button.padding.y,
-        .w = button.w - 2 * style->button.padding.x,
-        .h = button.h - 2 * style->button.padding.y,
-    };
-
     /* draw open/close button */
-    nk_draw_button_symbol(out, &button, &content, state, &style->button, sym, font);
+    nk_draw_button_symbol(out, button, state, &style->button, sym);
     return nk_true;
 }
 
@@ -99,7 +92,7 @@ NK_API nk_bool nk_combo_begin_text(struct nk_context *ctx, const char *selected,
     struct nk_style_combo* style = &ctx->style.combo;
 
     struct nk_rect header;
-    enum nk_widget_layout_states layout_state;
+    nk_widget_layout_state layout_state;
     const struct nk_input* in = nk_widget_input(&header, &layout_state, ctx);
     if (!layout_state) return nk_false;
 
@@ -124,7 +117,7 @@ NK_API nk_bool nk_combo_begin_text(struct nk_context *ctx, const char *selected,
         .h = header.h - 2 * style->content_padding.y,
     };
 
-    if (nk_combo_draw_button(&win->buffer, header, state, clicked, style, ctx->style.font))
+    if (nk_combo_draw_button(&win->buffer, header, state, clicked, style))
     {
         float x = (header.x + header.w - header.h) - style->button_padding.x;
         label.w = x - (style->content_padding.x + style->spacing.x) - label.x;
@@ -151,7 +144,7 @@ NK_API nk_bool nk_combo_begin_color(struct nk_context *ctx, struct nk_color colo
     struct nk_style_combo* style = &ctx->style.combo;
 
     struct nk_rect header;
-    enum nk_widget_layout_states layout_state;
+    nk_widget_layout_state layout_state;
     const struct nk_input* in = nk_widget_input(&header, &layout_state, ctx);
     if (!layout_state) return nk_false;
 
@@ -168,7 +161,7 @@ NK_API nk_bool nk_combo_begin_color(struct nk_context *ctx, struct nk_color colo
         .h = header.h - 4 * style->content_padding.y,
     };
 
-    if (nk_combo_draw_button(&win->buffer, header, state, clicked, style, ctx->style.font))
+    if (nk_combo_draw_button(&win->buffer, header, state, clicked, style))
     {
         float x = (header.x + header.w - header.h) - style->button_padding.x;
         bounds.w = x - (style->content_padding.x + style->spacing.x) - bounds.x;

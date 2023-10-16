@@ -151,8 +151,6 @@ int overview(struct nk_context* ctx)
                 nk_label(ctx, "Label aligned left", NK_TEXT_LEFT);
                 nk_label(ctx, "Label aligned centered", NK_TEXT_CENTERED);
                 nk_label(ctx, "Label aligned right", NK_TEXT_RIGHT);
-                nk_label_colored(ctx, "Blue text", NK_TEXT_LEFT, nk_rgb(0, 0, 255));
-                nk_label_colored(ctx, "Yellow text", NK_TEXT_LEFT, nk_rgb(255, 255, 0));
 
                 nk_layout_row_static(ctx, 100, 200, 1);
                 nk_label(ctx, "This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping", NK_TEXT_ALIGN_WRAP);
@@ -164,14 +162,13 @@ int overview(struct nk_context* ctx)
             if (nk_tree_push(ctx, NK_TREE_NODE, "Button", NK_MINIMIZED))
             {
                 /* Buttons Widgets */
-                nk_layout_row_static(ctx, 30, 100, 3);
+                nk_layout_row_static(ctx, 30, 100, 2);
                 if (nk_button_label(ctx, "Button"))
                     fprintf(stdout, "Button pressed!\n");
                 nk_button_push_behavior(ctx, NK_BUTTON_REPEATER);
                 if (nk_button_label(ctx, "Repeater"))
                     fprintf(stdout, "Repeater is being pressed!\n");
                 nk_button_pop_behavior(ctx);
-                nk_label_color(ctx, nk_rgb(0, 0, 255));
 
                 nk_layout_row_static(ctx, 25, 25, 8);
                 nk_button_symbol(ctx, NK_SYMBOL_CIRCLE_SOLID);

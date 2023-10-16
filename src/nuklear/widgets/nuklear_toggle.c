@@ -141,7 +141,7 @@ nk_bool nk_toggle_text(struct nk_context* ctx, enum nk_toggle_type type, const c
     const struct nk_style* style = &ctx->style;
 
     struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state;
+    nk_widget_layout_state layout_state;
     const struct nk_input *in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return active;
 

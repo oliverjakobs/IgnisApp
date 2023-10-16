@@ -141,32 +141,6 @@ NK_API nk_bool nk_menu_begin_label(struct nk_context *ctx,
     return nk_menu_begin_text(ctx, text, nk_strlen(text), align, size);
 }
 NK_API nk_bool
-nk_menu_begin_image(struct nk_context *ctx, const char *id, struct nk_image img,
-    struct nk_vec2 size)
-{
-    struct nk_window *win;
-    struct nk_rect header;
-    const struct nk_input *in;
-    int is_clicked = nk_false;
-
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0;
-
-    win = ctx->current;
-    enum nk_widget_layout_states layout_state = nk_widget(&header, ctx);
-    if (!layout_state) return 0;
-    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-
-    nk_flags state = 0;
-    if (nk_do_button_image(&state, &win->buffer, header,
-        img, NK_BUTTON_DEFAULT, &ctx->style.menu_button, in))
-        is_clicked = nk_true;
-    return nk_menu_begin(ctx, win, id, is_clicked, header, size);
-}
-NK_API nk_bool
 nk_menu_begin_symbol(struct nk_context *ctx, const char *id,
     enum nk_symbol_type sym, struct nk_vec2 size)
 {
@@ -188,42 +162,9 @@ nk_menu_begin_symbol(struct nk_context *ctx, const char *id,
 
     nk_flags state = 0;
     if (nk_do_button_symbol(&state,  &win->buffer, header,
-        sym, NK_BUTTON_DEFAULT, &ctx->style.menu_button, in, ctx->style.font))
+        sym, NK_BUTTON_DEFAULT, &ctx->style.menu_button, in))
         is_clicked = nk_true;
     return nk_menu_begin(ctx, win, id, is_clicked, header, size);
-}
-NK_API nk_bool
-nk_menu_begin_image_text(struct nk_context *ctx, const char *title, int len,
-    nk_flags align, struct nk_image img, struct nk_vec2 size)
-{
-    struct nk_window *win;
-    struct nk_rect header;
-    const struct nk_input *in;
-    int is_clicked = nk_false;
-
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0;
-
-    win = ctx->current;
-    enum nk_widget_layout_states layout_state = nk_widget(&header, ctx);
-    if (!layout_state) return 0;
-    in = (layout_state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
-
-    nk_flags state = 0;
-    if (nk_do_button_text_image(&state, &win->buffer,
-        header, img, title, len, align, NK_BUTTON_DEFAULT, &ctx->style.menu_button,
-        ctx->style.font, in))
-        is_clicked = nk_true;
-    return nk_menu_begin(ctx, win, title, is_clicked, header, size);
-}
-NK_API nk_bool
-nk_menu_begin_image_label(struct nk_context *ctx,
-    const char *title, nk_flags align, struct nk_image img, struct nk_vec2 size)
-{
-    return nk_menu_begin_image_text(ctx, title, nk_strlen(title), align, img, size);
 }
 NK_API nk_bool
 nk_menu_begin_symbol_text(struct nk_context *ctx, const char *title, int len,
@@ -267,18 +208,6 @@ NK_API nk_bool
 nk_menu_item_label(struct nk_context *ctx, const char *label, nk_flags align)
 {
     return nk_contextual_item_label(ctx, label, align);
-}
-NK_API nk_bool
-nk_menu_item_image_label(struct nk_context *ctx, struct nk_image img,
-    const char *label, nk_flags align)
-{
-    return nk_contextual_item_image_label(ctx, img, label, align);
-}
-NK_API nk_bool
-nk_menu_item_image_text(struct nk_context *ctx, struct nk_image img,
-    const char *text, int len, nk_flags align)
-{
-    return nk_contextual_item_image_text(ctx, img, text, len, align);
 }
 NK_API nk_bool nk_menu_item_symbol_text(struct nk_context *ctx, enum nk_symbol_type sym,
     const char *text, int len, nk_flags align)

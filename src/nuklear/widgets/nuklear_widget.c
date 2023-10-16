@@ -20,7 +20,7 @@ NK_API struct nk_rect nk_widget_bounds(struct nk_context *ctx)
 NK_API float nk_widget_width(struct nk_context *ctx)  { return nk_widget_bounds(ctx).w; }
 NK_API float nk_widget_height(struct nk_context *ctx) { return nk_widget_bounds(ctx).h; }
 
-NK_API enum nk_widget_layout_states nk_widget(struct nk_rect *bounds, const struct nk_context *ctx)
+NK_API nk_widget_layout_state nk_widget(struct nk_rect *bounds, const struct nk_context *ctx)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -70,7 +70,7 @@ NK_API enum nk_widget_layout_states nk_widget(struct nk_rect *bounds, const stru
 }
 
 NK_API struct nk_input* 
-nk_widget_input(struct nk_rect *bounds, enum nk_widget_layout_states *state, struct nk_context *ctx)
+nk_widget_input(struct nk_rect *bounds, nk_widget_layout_state *state, struct nk_context *ctx)
 {
     *state = nk_widget(bounds, ctx);
     if (ctx->current->layout->flags & NK_WINDOW_ROM) return NULL;
@@ -110,3 +110,27 @@ NK_API void nk_spacing(struct nk_context *ctx, int cols)
     row->index = index;
 }
 
+NK_API void nk_label_image(struct nk_context* ctx, struct nk_image img, struct nk_color col)
+{
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    NK_ASSERT(ctx->current->layout);
+    if (!ctx || !ctx->current || !ctx->current->layout) return;
+
+    struct nk_rect bounds = { 0 };
+    if (!nk_widget(&bounds, ctx)) return;
+
+    nk_draw_image(&ctx->current->buffer, bounds, &img, col);
+}
+
+NK_API void nk_label_color(struct nk_context *ctx, struct nk_color color)
+{
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    if (!ctx || !ctx->current) return;
+
+    struct nk_rect bounds;
+    nk_widget_layout_state layout_state = nk_widget(&bounds, ctx);
+
+    nk_fill_rect(&ctx->current->buffer, bounds, 0.0f, color);
+}

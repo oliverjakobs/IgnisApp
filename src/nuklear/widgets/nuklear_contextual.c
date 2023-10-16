@@ -140,37 +140,6 @@ nk_contextual_item_label(struct nk_context *ctx, const char *label, nk_flags ali
 }
 
 NK_API nk_bool
-nk_contextual_item_image_text(struct nk_context *ctx, struct nk_image img, const char *text, int len, nk_flags align)
-{
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    NK_ASSERT(ctx->current->layout);
-    if (!ctx || !ctx->current || !ctx->current->layout) return nk_false;
-
-    struct nk_window* win = ctx->current;
-    const struct nk_style* style = &ctx->style;
-
-    struct nk_rect bounds;
-    enum nk_widget_layout_states layout_state;
-    const struct nk_input* in = nk_widget_input(&bounds, &layout_state, ctx);
-    if (!layout_state) return nk_false;
-
-    nk_flags state = 0;
-    if (nk_do_button_text_image(&state, &win->buffer, bounds, img, text, len, align, NK_BUTTON_DEFAULT, &style->contextual_button, style->font, in))
-    {
-        nk_contextual_close(ctx);
-        return nk_true;
-    }
-    return nk_false;
-}
-
-NK_API nk_bool
-nk_contextual_item_image_label(struct nk_context *ctx, struct nk_image img, const char *label, nk_flags align)
-{
-    return nk_contextual_item_image_text(ctx, img, label, nk_strlen(label), align);
-}
-
-NK_API nk_bool
 nk_contextual_item_symbol_text(struct nk_context *ctx, enum nk_symbol_type symbol, const char *text, int len, nk_flags align)
 {
     NK_ASSERT(ctx);
