@@ -3561,163 +3561,25 @@ NK_API void nk_draw_list_add_text(struct nk_draw_list*, const struct nk_font*, s
  *                          GUI
  *
  * ===============================================================*/
-enum nk_style_item_type {
-    NK_STYLE_ITEM_COLOR,
-    NK_STYLE_ITEM_IMAGE
-};
 
-struct nk_style_item {
-    enum nk_style_item_type type;
-    union {
-        struct nk_color color;
-        struct nk_image image;
-    };
-};
 
-struct nk_style_text {
-    struct nk_color color;
-    struct nk_vec2 padding;
-    nk_flags alignment;
-};
 
-struct nk_style_button {
-    /* background */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item active;
-    struct nk_color border_color;
 
-    /* text */
-    struct nk_color text_normal;
-    struct nk_color text_hover;
-    struct nk_color text_active;
-    nk_flags text_alignment;
 
-    /* properties */
-    float border;
-    float rounding;
-    struct nk_vec2 padding;
-};
 
-struct nk_style_toggle {
-    /* background */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item active;
-    struct nk_color border_color;
 
-    /* cursor */
-    struct nk_style_item cursor_normal;
-    struct nk_style_item cursor_hover;
-
-    /* text */
-    struct nk_color text_normal;
-    struct nk_color text_hover;
-    struct nk_color text_active;
-    nk_flags text_alignment;
-
-    /* properties */
-    struct nk_vec2 padding;
-    struct nk_vec2 touch_padding;
-    float spacing;
-    float border;
-};
-
-struct nk_style_selectable {
-    /* background (inactive) */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item pressed;
-
-    /* background (active) */
-    struct nk_style_item normal_active;
-    struct nk_style_item hover_active;
-    struct nk_style_item pressed_active;
-
-    /* text color (inactive) */
-    struct nk_color text_normal;
-    struct nk_color text_hover;
-    struct nk_color text_pressed;
-
-    /* text color (active) */
-    struct nk_color text_normal_active;
-    struct nk_color text_hover_active;
-    struct nk_color text_pressed_active;
-    nk_flags text_alignment;
-
-    /* properties */
-    float rounding;
-    struct nk_vec2 padding;
-    struct nk_vec2 touch_padding;
-    struct nk_vec2 image_padding;
-};
-
-struct nk_style_slider {
-    /* background */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item active;
-    struct nk_color border_color;
-
-    /* background bar */
-    struct nk_color bar_normal;
-    struct nk_color bar_hover;
-    struct nk_color bar_active;
-    struct nk_color bar_filled;
-
-    /* cursor */
-    struct nk_style_item cursor_normal;
-    struct nk_style_item cursor_hover;
-    struct nk_style_item cursor_active;
-
-    /* properties */
-    float border;
-    float rounding;
-    float bar_height;
-    struct nk_vec2 padding;
-    struct nk_vec2 spacing;
-    struct nk_vec2 cursor_size;
-
-    /* optional buttons */
-    int show_buttons;
-    struct nk_style_button inc_button;
-    struct nk_style_button dec_button;
-    nk_symbol inc_symbol;
-    nk_symbol dec_symbol;
-};
-
-struct nk_style_progress {
-    /* background */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item active;
-    struct nk_color border_color;
-
-    /* cursor */
-    struct nk_style_item cursor_normal;
-    struct nk_style_item cursor_hover;
-    struct nk_style_item cursor_active;
-    struct nk_color cursor_border_color;
-
-    /* properties */
-    float rounding;
-    float border;
-    float cursor_border;
-    float cursor_rounding;
-    struct nk_vec2 padding;
-};
 
 struct nk_style_scrollbar {
     /* background */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item active;
+    nk_style_item normal;
+    nk_style_item hover;
+    nk_style_item active;
     struct nk_color border_color;
 
     /* cursor */
-    struct nk_style_item cursor_normal;
-    struct nk_style_item cursor_hover;
-    struct nk_style_item cursor_active;
+    nk_style_item cursor_normal;
+    nk_style_item cursor_hover;
+    nk_style_item cursor_active;
     struct nk_color cursor_border_color;
 
     /* properties */
@@ -3737,9 +3599,9 @@ struct nk_style_scrollbar {
 
 struct nk_style_edit {
     /* background */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item active;
+    nk_style_item normal;
+    nk_style_item hover;
+    nk_style_item active;
     struct nk_color border_color;
     struct nk_style_scrollbar scrollbar;
 
@@ -3771,9 +3633,9 @@ struct nk_style_edit {
 
 struct nk_style_property {
     /* background */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item active;
+    nk_style_item normal;
+    nk_style_item hover;
+    nk_style_item active;
     struct nk_color border_color;
 
     /* text */
@@ -3797,7 +3659,7 @@ struct nk_style_property {
 
 struct nk_style_chart {
     /* colors */
-    struct nk_style_item background;
+    nk_style_item background;
     struct nk_color border_color;
     struct nk_color selected_color;
     struct nk_color color;
@@ -3810,9 +3672,9 @@ struct nk_style_chart {
 
 struct nk_style_combo {
     /* background */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item active;
+    nk_style_item normal;
+    nk_style_item hover;
+    nk_style_item active;
     struct nk_color border_color;
 
     /* label */
@@ -3841,7 +3703,7 @@ struct nk_style_combo {
 
 struct nk_style_tab {
     /* background */
-    struct nk_style_item background;
+    nk_style_item background;
     struct nk_color border_color;
     struct nk_color text;
 
@@ -3867,9 +3729,9 @@ enum nk_style_header_align {
 };
 struct nk_style_window_header {
     /* background */
-    struct nk_style_item normal;
-    struct nk_style_item hover;
-    struct nk_style_item active;
+    nk_style_item normal;
+    nk_style_item hover;
+    nk_style_item active;
 
     /* button */
     struct nk_style_button close_button;
@@ -3889,7 +3751,7 @@ struct nk_style_window_header {
 
 struct nk_style_window {
     struct nk_style_window_header header;
-    struct nk_style_item fixed_background;
+    nk_style_item fixed_background;
     struct nk_color background;
 
     struct nk_color border_color;
@@ -3899,7 +3761,7 @@ struct nk_style_window {
     struct nk_color menu_border_color;
     struct nk_color group_border_color;
     struct nk_color tooltip_border_color;
-    struct nk_style_item scaler;
+    nk_style_item scaler;
 
     float border;
     float combo_border;
@@ -3931,7 +3793,7 @@ struct nk_style {
     struct nk_cursor *cursor_last;
     int cursor_visible;
 
-    struct nk_style_text text;
+    nk_style_text text;
     struct nk_style_button button;
     struct nk_style_button contextual_button;
     struct nk_style_button menu_button;
@@ -3950,9 +3812,9 @@ struct nk_style {
     struct nk_style_window window;
 };
 
-NK_API struct nk_style_item nk_style_item_color(struct nk_color);
-NK_API struct nk_style_item nk_style_item_image(struct nk_image img);
-NK_API struct nk_style_item nk_style_item_hide(void);
+NK_API nk_style_item nk_style_item_color(struct nk_color);
+NK_API nk_style_item nk_style_item_image(struct nk_image img);
+NK_API nk_style_item nk_style_item_hide(void);
 
 /*==============================================================
  *                          PANEL
@@ -4213,7 +4075,7 @@ struct nk_window {
     }
 
 #define nk_float float
-NK_CONFIGURATION_STACK_TYPE(struct nk, style_item, style_item);
+NK_CONFIGURATION_STACK_TYPE(nk, style_item, style_item);
 NK_CONFIGURATION_STACK_TYPE(nk ,float, float);
 NK_CONFIGURATION_STACK_TYPE(struct nk, vec2, vec2);
 NK_CONFIGURATION_STACK_TYPE(nk ,flags, flags);

@@ -83,7 +83,7 @@ nk_edit_draw_text(struct nk_command_buffer *out,
     float line_offset = 0;
     int line_count = 0;
 
-    struct nk_style_text txt = { 0 };
+    nk_style_text txt = { 0 };
     txt.color = foreground;
     txt.alignment = NK_TEXT_CENTERED;
 
@@ -321,7 +321,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
 
     {
         /* select background colors/images  */
-        const struct nk_style_item *background = &style->normal;
+        const nk_style_item *background = &style->normal;
         if (*state & NK_WIDGET_STATE_ACTIVED)       background = &style->active;
         else if (*state & NK_WIDGET_STATE_HOVER)    background = &style->hover;
 
@@ -512,7 +512,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         struct nk_color sel_text_color;
         struct nk_color cursor_color;
         struct nk_color cursor_text_color;
-        const struct nk_style_item *background;
+        const nk_style_item *background;
         nk_push_scissor(out, clip);
 
         /* select correct colors to draw */
@@ -609,7 +609,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
                 /* draw cursor inside text */
                 int glyph_len;
                 struct nk_rect label;
-                struct nk_style_text txt = { 0 };
+                nk_style_text txt = { 0 };
 
                 nk_rune unicode;
                 NK_ASSERT(cursor_ptr);
@@ -631,7 +631,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         int l = nk_str_len_char(&edit->string);
         const char *begin = nk_str_get_const(&edit->string);
 
-        const struct nk_style_item *background;
+        const nk_style_item *background;
         struct nk_color background_color;
         struct nk_color text_color;
         nk_push_scissor(out, clip);

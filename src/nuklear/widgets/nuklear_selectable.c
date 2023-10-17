@@ -10,12 +10,12 @@ NK_LIB void
 nk_draw_selectable(struct nk_command_buffer *out, nk_flags state, const struct nk_style_selectable *style,
     nk_bool selected, const struct nk_rect bounds, const char *string, int len, nk_flags align, const struct nk_font *font)
 {
-    struct nk_style_text text;
+    nk_style_text text;
     text.padding = style->padding;
     text.alignment = align;
 
     /* select correct colors/images */
-    const struct nk_style_item* background;
+    const nk_style_item* background;
     if (!selected)
     {
         if (state & NK_WIDGET_STATE_ACTIVED)

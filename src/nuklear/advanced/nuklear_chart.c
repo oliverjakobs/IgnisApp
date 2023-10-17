@@ -47,7 +47,7 @@ nk_chart_begin_colored(struct nk_context *ctx, enum nk_chart_type type,
     slot->range = slot->max - slot->min;
 
     /* draw chart background */
-    const struct nk_style_item* background = &style->background;
+    const nk_style_item* background = &style->background;
     if (background->type == NK_STYLE_ITEM_IMAGE)
         nk_draw_image(&win->buffer, bounds, &background->image, nk_white);
     else

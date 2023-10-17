@@ -73,11 +73,11 @@ nk_draw_property(struct nk_command_buffer *out, const struct nk_style_property *
     const struct nk_rect *bounds, const struct nk_rect *label, nk_flags state,
     const char *name, int len, const struct nk_font *font)
 {
-    struct nk_style_text text = { 0 };
+    nk_style_text text = { 0 };
     text.alignment = NK_TEXT_CENTERED;
 
     /* select correct background and text color */
-    const struct nk_style_item *background;
+    const nk_style_item *background;
     if (state & NK_WIDGET_STATE_ACTIVED) {
         background = &style->active;
         text.color = style->label_active;

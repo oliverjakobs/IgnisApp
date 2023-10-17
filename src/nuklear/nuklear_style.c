@@ -54,35 +54,30 @@ nk_style_get_color_by_name(enum nk_style_colors c)
 {
     return nk_color_names[c];
 }
-NK_API struct nk_style_item
-nk_style_item_color(struct nk_color col)
+
+NK_API nk_style_item nk_style_item_color(struct nk_color col)
 {
-    struct nk_style_item i;
-    i.type = NK_STYLE_ITEM_COLOR;
-    i.color = col;
+    nk_style_item i = { .type = NK_STYLE_ITEM_COLOR, .color = col };
     return i;
 }
-NK_API struct nk_style_item
-nk_style_item_image(struct nk_image img)
+
+NK_API nk_style_item nk_style_item_image(struct nk_image img)
 {
-    struct nk_style_item i;
-    i.type = NK_STYLE_ITEM_IMAGE;
-    i.image = img;
+    nk_style_item i = { .type = NK_STYLE_ITEM_IMAGE, .image = img };
     return i;
 }
-NK_API struct nk_style_item
+
+NK_API nk_style_item
 nk_style_item_hide(void)
 {
-    struct nk_style_item i;
-    i.type = NK_STYLE_ITEM_COLOR;
-    i.color = nk_rgba(0,0,0,0);
+    nk_style_item i = { .type = NK_STYLE_ITEM_COLOR, .color = nk_rgba(0,0,0,0) };
     return i;
 }
 NK_API void
 nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
 {
     struct nk_style *style;
-    struct nk_style_text *text;
+    nk_style_text *text;
     struct nk_style_button *button;
     struct nk_style_toggle *toggle;
     struct nk_style_selectable *select;
@@ -163,7 +158,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     toggle->text_hover      = table[NK_COLOR_TEXT];
     toggle->text_active     = table[NK_COLOR_TEXT];
     toggle->padding         = nk_vec2(2.0f, 2.0f);
-    toggle->touch_padding   = nk_vec2(0,0);
     toggle->border_color    = nk_rgba(0,0,0,0);
     toggle->border          = 0.0f;
     toggle->spacing         = 4;
@@ -180,7 +174,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     toggle->text_hover      = table[NK_COLOR_TEXT];
     toggle->text_active     = table[NK_COLOR_TEXT];
     toggle->padding         = nk_vec2(3.0f, 3.0f);
-    toggle->touch_padding   = nk_vec2(0,0);
     toggle->border_color    = nk_rgba(0,0,0,0);
     toggle->border          = 0.0f;
     toggle->spacing         = 4;
@@ -628,7 +621,7 @@ nk_style_pop_##type(struct nk_context *ctx)\
     *element->address = element->old_value;\
     return 1;\
 }
-NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(struct nk, style_item, style_items)
+NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(nk, style_item, style_items)
 NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(nk,float, floats)
 NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(struct nk, vec2, vectors)
 NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(nk,flags, flags)

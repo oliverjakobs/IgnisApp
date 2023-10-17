@@ -22,7 +22,7 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
     struct nk_vec2 item_spacing;
     struct nk_rect header = {0,0,0,0};
     struct nk_rect sym = {0,0,0,0};
-    struct nk_style_text text;
+    nk_style_text text;
 
     nk_flags ws = 0;
     nk_widget_layout_state widget_state;
@@ -48,7 +48,7 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
 
     widget_state = nk_widget(&header, ctx);
     if (type == NK_TREE_TAB) {
-        const struct nk_style_item *background = &style->tab.background;
+        const nk_style_item *background = &style->tab.background;
 
         switch(background->type) {
             case NK_STYLE_ITEM_IMAGE:
@@ -234,7 +234,7 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
 
     widget_state = nk_widget(&header, ctx);
     if (type == NK_TREE_TAB) {
-        const struct nk_style_item *background = &style->tab.background;
+        const nk_style_item *background = &style->tab.background;
 
         switch (background->type) {
             case NK_STYLE_ITEM_IMAGE:

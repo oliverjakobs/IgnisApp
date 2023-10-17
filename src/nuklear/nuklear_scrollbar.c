@@ -92,8 +92,8 @@ nk_draw_scrollbar(struct nk_command_buffer *out, nk_flags state,
     const struct nk_style_scrollbar *style, const struct nk_rect *bounds,
     const struct nk_rect *scroll)
 {
-    const struct nk_style_item *background;
-    const struct nk_style_item *cursor;
+    const nk_style_item *background;
+    const nk_style_item *cursor;
 
     /* select correct colors/images to draw */
     if (state & NK_WIDGET_STATE_ACTIVED) {

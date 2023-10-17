@@ -39,7 +39,7 @@ NK_INTERN nk_bool nk_combo_begin(struct nk_context *ctx, struct nk_window *win, 
 
 static const struct nk_style_item* nk_combo_draw_background(struct nk_command_buffer* out, struct nk_rect bounds, nk_flags state, struct nk_style_combo* style)
 {
-    const struct nk_style_item* background;
+    const nk_style_item* background;
     if (state & NK_WIDGET_STATE_ACTIVED)    background = &style->active;
     else if (state & NK_WIDGET_STATE_HOVER) background = &style->hover;
     else                                    background = &style->normal;
@@ -103,7 +103,7 @@ NK_API nk_bool nk_combo_begin_text(struct nk_context *ctx, const char *selected,
     const struct nk_style_item* background = nk_combo_draw_background(&win->buffer, header, state, style);
 
     /* print currently selected text item */
-    struct nk_style_text text = { 0 };
+    nk_style_text text = { 0 };
     text.alignment = NK_TEXT_LEFT;
     if (state & NK_WIDGET_STATE_ACTIVED)    text.color = style->label_active;
     else if (state & NK_WIDGET_STATE_HOVER) text.color = style->label_hover;

@@ -52,8 +52,8 @@ nk_draw_slider(struct nk_command_buffer *out, nk_flags state,
 
     /* select correct slider images/colors */
     struct nk_color bar_color;
-    const struct nk_style_item *cursor_style;
-    const struct nk_style_item *background;
+    const nk_style_item *cursor_style;
+    const nk_style_item *background;
     if (state & NK_WIDGET_STATE_ACTIVED)
     {
         background = &style->active;
@@ -225,8 +225,8 @@ NK_LIB void
 nk_draw_bar_slider(struct nk_command_buffer* out, nk_flags state,
     const struct nk_style_progress* style, const struct nk_rect* bounds, const struct nk_rect* cursor)
 {
-    const struct nk_style_item* background;
-    const struct nk_style_item* cursor_style;
+    const nk_style_item* background;
+    const nk_style_item* cursor_style;
 
     /* select correct colors/images to draw */
     if (state & NK_WIDGET_STATE_ACTIVED)

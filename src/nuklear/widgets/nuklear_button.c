@@ -78,7 +78,7 @@ NK_LIB nk_bool nk_button_behavior(nk_flags *state, struct nk_rect r, const struc
 static void
 nk_draw_button_background(nk_command_buffer *out, struct nk_rect bounds, nk_flags state, const struct nk_style_button *style)
 {
-    const struct nk_style_item *background = &style->normal;
+    const nk_style_item *background = &style->normal;
     if (state & NK_WIDGET_STATE_HOVER)          background = &style->hover;
     else if (state & NK_WIDGET_STATE_ACTIVED)   background = &style->active;
 
@@ -94,7 +94,7 @@ nk_draw_button_text(nk_command_buffer* out, struct nk_rect bounds, nk_flags stat
 {
     nk_draw_button_background(out, bounds, state, style);
 
-    struct nk_style_text text = { 0 };
+    nk_style_text text = { 0 };
     text.alignment = text_alignment;
     if (state & NK_WIDGET_STATE_ACTIVED)    text.color = style->text_active;
     else if (state & NK_WIDGET_STATE_HOVER) text.color = style->text_hover;
@@ -132,19 +132,38 @@ nk_draw_button_symbol(nk_command_buffer* out, struct nk_rect bounds, nk_flags st
 }
 
 NK_LIB void
-nk_draw_button_text_symbol(nk_command_buffer* out, struct nk_rect bounds, struct nk_rect label, struct nk_rect icon, nk_flags state,
-    const struct nk_style_button* style, const char* str, int len, nk_symbol sym, const struct nk_font* font)
+nk_draw_button_text_symbol(nk_command_buffer* out, struct nk_rect bounds, nk_flags state, const struct nk_style_button* style,
+    const char* str, int len, nk_symbol symbol, nk_flags align, const struct nk_font* font)
 {
     nk_draw_button_background(out, bounds, state, style);
 
-    struct nk_style_text text = { 0 };
+    nk_style_text text = { 0 };
     text.alignment = style->text_alignment;
     if (state & NK_WIDGET_STATE_ACTIVED)    text.color = style->text_active;
     else if (state & NK_WIDGET_STATE_HOVER) text.color = style->text_hover;
     else                                    text.color = style->text_normal;
 
-    nk_draw_symbol(out, icon, sym, 1, text.color);
-    nk_widget_text(out, label, str, len, &text, font);
+    struct nk_rect content = {
+        .x = bounds.x + style->padding.x + style->rounding + style->border,
+        .y = bounds.y + style->padding.y + style->rounding + style->border,
+        .w = bounds.w - 2 * (style->padding.x + style->rounding + style->border),
+        .h = bounds.h - 2 * (style->padding.y + style->rounding + style->border),
+    };
+
+    struct nk_rect icon = {
+        .x = content.x,
+        .y = content.y + (content.h - font->height) / 2,
+        .w = font->height,
+        .h = font->height
+    };
+
+    content.w -= icon.w;
+
+    if (align & NK_TEXT_ALIGN_RIGHT)  icon.x += content.w;
+    else                              content.x += icon.w;
+
+    nk_draw_symbol(out, icon, symbol, 1, text.color);
+    nk_widget_text(out, content, str, len, &text, font);
 }
 
 NK_LIB nk_bool
@@ -195,48 +214,8 @@ nk_do_button_text_symbol(nk_flags *state, struct nk_command_buffer *out, struct 
 
     nk_bool clicked = nk_button_behavior(state, bounds, in, behavior);
 
-    struct nk_rect content = {
-        .x = bounds.x + style->padding.x + style->rounding + style->border,
-        .y = bounds.y + style->padding.y + style->rounding + style->border,
-        .w = bounds.w - 2 * (style->padding.x + style->rounding + style->border),
-        .h = bounds.h - 2 * (style->padding.y + style->rounding + style->border),
-    };
-
-    struct nk_rect sym = {
-        .x = content.x + 2 * style->padding.x,
-        .y = content.y + (content.h/2) - font->height/2,
-        .w = font->height,
-        .h = font->height
-    };
-
-    if (align & NK_TEXT_ALIGN_LEFT)
-    {
-        float x = (content.x + content.w) - (2 * style->padding.x + sym.w);
-        sym.x = NK_MAX(x, 0);
-    };
-
-    /*
-    struct nk_rect icon = {
-        .x = bounds.x + 2 * style->padding.x,
-        .y = bounds.y + 2 * style->padding.y,
-        .w = bounds.h - 2 * style->padding.y,
-        .h = bounds.h - 2 * style->padding.y
-    };
-
-    if (align & NK_TEXT_ALIGN_LEFT)
-    {
-        float x = (bounds.x + bounds.w) - (2 * style->padding.x + icon.w);
-        icon.x = NK_MAX(x, 0);
-    }
-
-    icon.x += style->image_padding.x;
-    icon.y += style->image_padding.y;
-    icon.w -= 2 * style->image_padding.x;
-    icon.h -= 2 * style->image_padding.y;
-    */
-
     /* draw button */
-    nk_draw_button_text_symbol(out, bounds, content, sym, *state, style, str, len, symbol, font);
+    nk_draw_button_text_symbol(out, bounds, *state, style, str, len, symbol, align, font);
 
     return clicked;
 }

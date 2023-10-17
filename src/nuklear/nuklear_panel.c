@@ -83,12 +83,12 @@ NK_LIB nk_bool nk_panel_is_nonblock(enum nk_panel_type type)  { return (type & N
 
 static void nk_panel_do_titlebar(nk_flags* state, struct nk_command_buffer* out, struct nk_rect bounds, const char* title, nk_bool active, const struct nk_input* in, const struct nk_style_window_header* style, const struct nk_font* font)
 {
-    struct nk_style_text text;
+    nk_style_text text;
     text.padding = style->label_padding;
     text.alignment = NK_TEXT_LEFT;
 
     /* select correct header background and text color */
-    const struct nk_style_item* background = NULL;
+    const nk_style_item* background = NULL;
     if (active)
     {
         background = &style->active;
@@ -517,7 +517,7 @@ nk_panel_end(struct nk_context *ctx)
             scaler.x -= scaler.w;
 
         /* draw scaler */
-        const struct nk_style_item *item = &style->window.scaler;
+        const nk_style_item *item = &style->window.scaler;
         if (item->type == NK_STYLE_ITEM_IMAGE)
         {
             nk_draw_image(out, scaler, &item->image, nk_white);

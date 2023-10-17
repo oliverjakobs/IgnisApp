@@ -181,8 +181,8 @@ int overview(struct nk_context* ctx)
                 nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT);
 
                 nk_layout_row_static(ctx, 30, 100, 2);
-                nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_LEFT, "prev", NK_TEXT_RIGHT);
-                nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_RIGHT, "next", NK_TEXT_LEFT);
+                nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_LEFT, "prev", NK_TEXT_ALIGN_LEFT);
+                nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_RIGHT, "next", NK_TEXT_ALIGN_RIGHT);
                 nk_tree_pop(ctx);
             }
 
@@ -942,7 +942,7 @@ int overview(struct nk_context* ctx)
                     nk_layout_row_push(ctx, widget_width);
                     if (current_tab == i) {
                         /* active tab gets highlighted */
-                        struct nk_style_item button_color = ctx->style.button.normal;
+                        nk_style_item button_color = ctx->style.button.normal;
                         ctx->style.button.normal = ctx->style.button.active;
                         current_tab = nk_button_label(ctx, names[i]) ? i : current_tab;
                         ctx->style.button.normal = button_color;

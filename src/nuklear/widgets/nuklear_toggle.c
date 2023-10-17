@@ -31,11 +31,11 @@ nk_draw_toggle(struct nk_command_buffer *out,
     const struct nk_rect *cursors, const char *string, int len, enum nk_toggle_type type,
     const struct nk_font *font)
 {
-    struct nk_style_text text = { 0 };
+    nk_style_text text = { 0 };
     text.alignment = NK_TEXT_LEFT;
 
-    const struct nk_style_item* background;
-    const struct nk_style_item* cursor;
+    const nk_style_item* background;
+    const nk_style_item* cursor;
     /* select correct colors/images */
     if (state & NK_WIDGET_STATE_HOVER)
     {
@@ -88,14 +88,6 @@ nk_do_toggle(nk_flags *state, struct nk_command_buffer *out, struct nk_rect r, n
     r.w = NK_MAX(r.w, font->height + 2 * style->padding.x);
     r.h = NK_MAX(r.h, font->height + 2 * style->padding.y);
 
-    /* add additional touch padding for touch screen devices */
-    struct nk_rect bounds = {
-        .x = r.x - style->touch_padding.x,
-        .y = r.y - style->touch_padding.y,
-        .w = r.w + 2 * style->touch_padding.x,
-        .h = r.h + 2 * style->touch_padding.y
-    };
-
     /* calculate the selector space */
     struct nk_rect select = {
         .x = r.x,
@@ -121,7 +113,7 @@ nk_do_toggle(nk_flags *state, struct nk_command_buffer *out, struct nk_rect r, n
     };
 
     /* update selector */
-    active = nk_toggle_behavior(in, bounds, state, active);
+    active = nk_toggle_behavior(in, r, state, active);
 
     /* draw selector */
     nk_draw_toggle(out, *state, style, active, &label, &select, &cursor, str, len, type, font);

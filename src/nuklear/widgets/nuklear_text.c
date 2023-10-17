@@ -7,8 +7,8 @@
  *
  * ===============================================================*/
 NK_LIB void
-nk_widget_text(struct nk_command_buffer *out, struct nk_rect bounds, const char *string, int len,
-    const struct nk_style_text *text, const struct nk_font *font)
+nk_widget_text(nk_command_buffer *out, struct nk_rect bounds, const char *string, int len,
+    const nk_style_text *text, const struct nk_font *font)
 {
     NK_ASSERT(out);
     NK_ASSERT(text);
@@ -46,8 +46,8 @@ nk_widget_text(struct nk_command_buffer *out, struct nk_rect bounds, const char 
 }
 
 NK_LIB void
-nk_widget_text_wrap(struct nk_command_buffer *o, struct nk_rect b, const char *string, int len,
-    const struct nk_style_text*t, const struct nk_font *f)
+nk_widget_text_wrap(nk_command_buffer *o, struct nk_rect b, const char *string, int len,
+    const nk_style_text*t, const struct nk_font *f)
 {
     NK_ASSERT(o);
     NK_ASSERT(t);
@@ -94,7 +94,7 @@ NK_API void nk_text(struct nk_context* ctx, const char* str, int len, nk_flags a
     nk_widget_layout_state state = nk_widget(&bounds, ctx);
     if (state == NK_WIDGET_INVALID) return;
 
-    struct nk_style_text text = style->text;
+    nk_style_text text = style->text;
     text.alignment = align;
 
     if (align & NK_TEXT_ALIGN_WRAP)
