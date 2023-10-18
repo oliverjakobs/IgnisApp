@@ -8,7 +8,7 @@
  * ===============================================================*/
 NK_API nk_bool
 nk_chart_begin_colored(struct nk_context *ctx, enum nk_chart_type type,
-    struct nk_color color, struct nk_color highlight, int count, float min_value, float max_value)
+    nk_color color, nk_color highlight, int count, float min_value, float max_value)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -75,7 +75,7 @@ NK_API void nk_chart_end(struct nk_context* ctx)
 
 NK_API void
 nk_chart_add_slot_colored(struct nk_context *ctx, const enum nk_chart_type type,
-    struct nk_color color, struct nk_color highlight,
+    nk_color color, nk_color highlight,
     int count, float min_value, float max_value)
 {
     NK_ASSERT(ctx);
@@ -125,7 +125,7 @@ nk_chart_push_line(struct nk_context *ctx, struct nk_window *win, struct nk_char
             .h = 4
         };
 
-        struct nk_color color = g->slots[slot].color;
+        nk_color color = g->slots[slot].color;
         nk_flags ret = 0;
         if (!(layout->flags & NK_WINDOW_ROM) && nk_input_mouse_hover(in, bounds))
         {
@@ -139,7 +139,7 @@ nk_chart_push_line(struct nk_context *ctx, struct nk_window *win, struct nk_char
     }
 
     /* draw a line between the last data point and the new one */
-    struct nk_color color = g->slots[slot].color;
+    nk_color color = g->slots[slot].color;
     float step = g->w / (float)g->slots[slot].count;
     struct nk_vec2 cur = {
         .x = g->x + (float)(step * (float)g->slots[slot].index),
@@ -190,7 +190,7 @@ nk_chart_push_column(const struct nk_context *ctx, struct nk_window *win, struct
 
     /* calculate bounds of current bar chart entry */
     float ratio;
-    struct nk_color color = chart->slots[slot].color;;
+    nk_color color = chart->slots[slot].color;;
     item.h = chart->h * NK_ABS((value/chart->slots[slot].range));
     if (value >= 0)
     {

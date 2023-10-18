@@ -75,12 +75,12 @@ NK_STATIC_ASSERT(sizeof(nk_bool) == 4);
 NK_GLOBAL const struct nk_rect nk_null_rect = {-8192.0f, -8192.0f, 16384, 16384};
 #define NK_FLOAT_PRECISION 0.00000000000001
 
-NK_GLOBAL const struct nk_color nk_red = {255,0,0,255};
-NK_GLOBAL const struct nk_color nk_green = {0,255,0,255};
-NK_GLOBAL const struct nk_color nk_blue = {0,0,255,255};
-NK_GLOBAL const struct nk_color nk_white = {255,255,255,255};
-NK_GLOBAL const struct nk_color nk_black = {0,0,0,255};
-NK_GLOBAL const struct nk_color nk_yellow = {255,255,0,255};
+NK_GLOBAL const nk_color nk_red = {255,0,0,255};
+NK_GLOBAL const nk_color nk_green = {0,255,0,255};
+NK_GLOBAL const nk_color nk_blue = {0,0,255,255};
+NK_GLOBAL const nk_color nk_white = {255,255,255,255};
+NK_GLOBAL const nk_color nk_black = {0,0,0,255};
+NK_GLOBAL const  nk_color nk_yellow = {255,255,0,255};
 
 /* widget */
 #define nk_widget_state_reset(s)\
@@ -148,7 +148,7 @@ NK_LIB void* nk_buffer_realloc(struct nk_buffer *b, nk_size capacity, nk_size *s
 NK_LIB void nk_command_buffer_init(struct nk_command_buffer *cb, struct nk_buffer *b, enum nk_command_clipping clip);
 NK_LIB void nk_command_buffer_reset(struct nk_command_buffer *b);
 NK_LIB void* nk_command_buffer_push(struct nk_command_buffer* b, enum nk_command_type t, nk_size size);
-NK_LIB void nk_draw_symbol(struct nk_command_buffer *out, struct nk_rect content, nk_symbol type, float line_width, struct nk_color color);
+NK_LIB void nk_draw_symbol(struct nk_command_buffer *out, struct nk_rect content, nk_symbol type, float line_width, nk_color color);
 
 /* buffering */
 NK_LIB void nk_start_buffer(struct nk_context *ctx, struct nk_command_buffer *b);
@@ -201,7 +201,7 @@ NK_LIB void nk_free_panel(struct nk_context*, struct nk_panel *pan);
 NK_LIB nk_bool nk_panel_has_header(nk_flags flags, const char *title);
 NK_LIB struct nk_vec2 nk_panel_get_padding(const struct nk_style *style, enum nk_panel_type type);
 NK_LIB float nk_panel_get_border(const struct nk_style *style, nk_flags flags, enum nk_panel_type type);
-NK_LIB struct nk_color nk_panel_get_border_color(const struct nk_style *style, enum nk_panel_type type);
+NK_LIB nk_color nk_panel_get_border_color(const struct nk_style *style, enum nk_panel_type type);
 NK_LIB nk_bool nk_panel_is_sub(enum nk_panel_type type);
 NK_LIB nk_bool nk_panel_is_nonblock(enum nk_panel_type type);
 NK_LIB nk_bool nk_panel_begin(struct nk_context *ctx, const char *title, enum nk_panel_type panel_type);
@@ -236,13 +236,13 @@ NK_LIB float nk_do_scrollbarh(nk_flags *state, struct nk_command_buffer *out, st
 /* selectable */
 
 /* edit */
-NK_LIB void nk_edit_draw_text(struct nk_command_buffer *out, const struct nk_style_edit *style, float pos_x, float pos_y, float x_offset, const char *text, int byte_len, float row_height, const struct nk_font *font, struct nk_color background, struct nk_color foreground, nk_bool is_selected);
+NK_LIB void nk_edit_draw_text(struct nk_command_buffer *out, const struct nk_style_edit *style, float pos_x, float pos_y, float x_offset, const char *text, int byte_len, float row_height, const struct nk_font *font, nk_color background, nk_color foreground, nk_bool is_selected);
 NK_LIB nk_flags nk_do_edit(nk_flags *state, struct nk_command_buffer *out, struct nk_rect bounds, nk_flags flags, nk_plugin_filter filter, struct nk_text_edit *edit, const struct nk_style_edit *style, struct nk_input *in, const struct nk_font *font);
 
 /* color-picker */
-NK_LIB struct nk_colorf nk_color_picker_behavior(nk_flags *state, const struct nk_rect bounds, const struct nk_rect matrix, const struct nk_rect hue_bar, const struct nk_rect alpha_bar, struct nk_colorf color, const struct nk_input *in);
-NK_LIB void nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix, const struct nk_rect *hue_bar, const struct nk_rect *alpha_bar, struct nk_colorf col);
-NK_LIB struct nk_colorf nk_do_color_picker(nk_flags *state, struct nk_command_buffer *out, struct nk_colorf col, enum nk_color_format fmt, struct nk_rect bounds, struct nk_vec2 padding, const struct nk_input *in, const struct nk_font *font);
+NK_LIB nk_colorf nk_color_picker_behavior(nk_flags *state, const struct nk_rect bounds, const struct nk_rect matrix, const struct nk_rect hue_bar, const struct nk_rect alpha_bar, nk_colorf color, const struct nk_input *in);
+NK_LIB void nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix, const struct nk_rect *hue_bar, const struct nk_rect *alpha_bar, nk_colorf col);
+NK_LIB nk_colorf nk_do_color_picker(nk_flags *state, struct nk_command_buffer *out, nk_colorf col, enum nk_color_format fmt, struct nk_rect bounds, struct nk_vec2 padding, const struct nk_input *in, const struct nk_font *font);
 
 /* property */
 enum nk_property_status {

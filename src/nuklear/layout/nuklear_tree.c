@@ -8,14 +8,14 @@
  * ===============================================================*/
 NK_INTERN int
 nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
-    struct nk_image *img, const char *title, enum nk_collapse_states *state)
+    nk_image *img, const char *title, enum nk_collapse_states *state)
 {
     struct nk_window *win;
     struct nk_panel *layout;
     const struct nk_style *style;
     struct nk_command_buffer *out;
     const struct nk_input *in;
-    const struct nk_style_button *button;
+    const nk_style_button *button;
     nk_symbol symbol;
     float row_height;
 
@@ -117,7 +117,7 @@ nk_tree_state_base(struct nk_context *ctx, enum nk_tree_type type,
 }
 NK_INTERN int
 nk_tree_base(struct nk_context *ctx, enum nk_tree_type type,
-    struct nk_image *img, const char *title, enum nk_collapse_states initial_state,
+    nk_image *img, const char *title, enum nk_collapse_states initial_state,
     const char *hash, int len, int line)
 {
     struct nk_window *win = ctx->current;
@@ -145,7 +145,7 @@ nk_tree_state_push(struct nk_context *ctx, enum nk_tree_type type,
 }
 NK_API nk_bool
 nk_tree_state_image_push(struct nk_context *ctx, enum nk_tree_type type,
-    struct nk_image img, const char *title, enum nk_collapse_states *state)
+    nk_image img, const char *title, enum nk_collapse_states *state)
 {
     return nk_tree_state_base(ctx, type, &img, title, state);
 }
@@ -177,7 +177,7 @@ nk_tree_push_hashed(struct nk_context *ctx, enum nk_tree_type type,
 }
 NK_API nk_bool
 nk_tree_image_push_hashed(struct nk_context *ctx, enum nk_tree_type type,
-    struct nk_image img, const char *title, enum nk_collapse_states initial_state,
+    nk_image img, const char *title, enum nk_collapse_states initial_state,
     const char *hash, int len,int seed)
 {
     return nk_tree_base(ctx, type, &img, title, initial_state, hash, len, seed);
@@ -189,7 +189,7 @@ nk_tree_pop(struct nk_context *ctx)
 }
 NK_INTERN int
 nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type type,
-    struct nk_image *img, const char *title, int title_len,
+    nk_image *img, const char *title, int title_len,
     enum nk_collapse_states *state, nk_bool *selected)
 {
     struct nk_window *win;
@@ -197,7 +197,7 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
     const struct nk_style *style;
     struct nk_command_buffer *out;
     const struct nk_input *in;
-    const struct nk_style_button *button;
+    const nk_style_button *button;
     nk_symbol symbol;
     float row_height;
     struct nk_vec2 padding;
@@ -297,7 +297,7 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
 }
 NK_INTERN int
 nk_tree_element_base(struct nk_context *ctx, enum nk_tree_type type,
-    struct nk_image *img, const char *title, enum nk_collapse_states initial_state,
+    nk_image *img, const char *title, enum nk_collapse_states initial_state,
     nk_bool *selected, const char *hash, int len, int line)
 {
     struct nk_window *win = ctx->current;
@@ -326,7 +326,7 @@ nk_tree_element_push_hashed(struct nk_context *ctx, enum nk_tree_type type,
 }
 NK_API nk_bool
 nk_tree_element_image_push_hashed(struct nk_context *ctx, enum nk_tree_type type,
-    struct nk_image img, const char *title, enum nk_collapse_states initial_state,
+    nk_image img, const char *title, enum nk_collapse_states initial_state,
     nk_bool *selected, const char *hash, int len,int seed)
 {
     return nk_tree_element_base(ctx, type, &img, title, initial_state, selected, hash, len, seed);

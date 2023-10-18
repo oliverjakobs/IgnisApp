@@ -251,15 +251,15 @@ int overview(struct nk_context* ctx)
 
                 nk_layout_row_static(ctx, 30, 80, 1);
                 if (inactive) {
-                    struct nk_style_button button;
+                    nk_style_button button;
                     button = ctx->style.button;
-                    ctx->style.button.normal = nk_style_item_color(nk_rgb(40, 40, 40));
-                    ctx->style.button.hover = nk_style_item_color(nk_rgb(40, 40, 40));
-                    ctx->style.button.active = nk_style_item_color(nk_rgb(40, 40, 40));
+                    ctx->style.button.bg_normal = nk_style_item_color(nk_rgb(40, 40, 40));
+                    ctx->style.button.bg_hover = nk_style_item_color(nk_rgb(40, 40, 40));
+                    ctx->style.button.bg_active = nk_style_item_color(nk_rgb(40, 40, 40));
                     ctx->style.button.border_color = nk_rgb(60, 60, 60);
-                    ctx->style.button.text_normal = nk_rgb(60, 60, 60);
-                    ctx->style.button.text_hover = nk_rgb(60, 60, 60);
-                    ctx->style.button.text_active = nk_rgb(60, 60, 60);
+                    ctx->style.button.fg_normal = nk_rgb(60, 60, 60);
+                    ctx->style.button.fg_hover = nk_rgb(60, 60, 60);
+                    ctx->style.button.fg_active = nk_rgb(60, 60, 60);
                     nk_button_label(ctx, "button");
                     ctx->style.button = button;
                 }
@@ -334,8 +334,8 @@ int overview(struct nk_context* ctx)
                 static int current_weapon = 0;
                 static int check_values[5] = {0};
                 static float position[3];
-                static struct nk_color combo_color = { 130, 50, 50, 255 };
-                static struct nk_colorf combo_color2 = { 0.509f, 0.705f, 0.2f, 1.0f };
+                static nk_color  combo_color = { 130, 50, 50, 255 };
+                static nk_colorf combo_color2 = { 0.509f, 0.705f, 0.2f, 1.0f };
                 static size_t prog_a = 20, prog_b = 40, prog_c = 10, prog_d = 90;
                 static const char* weapons[] = { "Fist","Pistol","Shotgun","Plasma","BFG" };
 
@@ -681,7 +681,7 @@ int overview(struct nk_context* ctx)
 
         if (nk_tree_push(ctx, NK_TREE_TAB, "Popup", NK_MINIMIZED))
         {
-            static struct nk_color color = { 255,0,0, 255 };
+            static nk_color color = { 255,0,0, 255 };
             static int select[4];
             static int popup_active;
             const struct nk_input* in = &ctx->input;
@@ -942,10 +942,10 @@ int overview(struct nk_context* ctx)
                     nk_layout_row_push(ctx, widget_width);
                     if (current_tab == i) {
                         /* active tab gets highlighted */
-                        nk_style_item button_color = ctx->style.button.normal;
-                        ctx->style.button.normal = ctx->style.button.active;
+                        nk_style_item button_color = ctx->style.button.bg_normal;
+                        ctx->style.button.bg_normal = ctx->style.button.bg_active;
                         current_tab = nk_button_label(ctx, names[i]) ? i : current_tab;
-                        ctx->style.button.normal = button_color;
+                        ctx->style.button.bg_normal = button_color;
                     }
                     else current_tab = nk_button_label(ctx, names[i]) ? i : current_tab;
                 }

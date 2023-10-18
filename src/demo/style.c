@@ -3,7 +3,7 @@
 
 void set_style(struct nk_context *ctx, enum theme theme)
 {
-    struct nk_color table[NK_COLOR_COUNT];
+    nk_color table[NK_COLOR_COUNT];
     if (theme == THEME_WHITE) {
         table[NK_COLOR_TEXT] = nk_rgba(70, 70, 70, 255);
         table[NK_COLOR_WINDOW] = nk_rgba(175, 175, 175, 255);

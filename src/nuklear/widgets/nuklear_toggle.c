@@ -6,30 +6,9 @@
  *                              TOGGLE
  *
  * ===============================================================*/
-NK_LIB nk_bool
-nk_toggle_behavior(const struct nk_input *in, struct nk_rect select, nk_flags *state, nk_bool active)
-{
-    nk_widget_state_reset(state);
-    if (nk_button_behavior(state, select, in, NK_BUTTON_DEFAULT))
-    {
-        *state = NK_WIDGET_STATE_ACTIVE;
-        active = !active;
-    }
-
-    if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(in, select))
-        *state |= NK_WIDGET_STATE_ENTERED;
-    else if (nk_input_mouse_prev_hover(in, select))
-        *state |= NK_WIDGET_STATE_LEFT;
-
-    return active;
-}
-
 NK_LIB void
-nk_draw_toggle(struct nk_command_buffer *out,
-    nk_flags state, const struct nk_style_toggle *style, nk_bool active,
-    const struct nk_rect *label, const struct nk_rect *selector,
-    const struct nk_rect *cursors, const char *string, int len, enum nk_toggle_type type,
-    const struct nk_font *font)
+nk_draw_toggle(nk_command_buffer *out, struct nk_rect bounds, nk_flags state, const struct nk_style_toggle *style,
+    nk_bool active, const char *string, int len, nk_toggle_type type, const struct nk_font *font)
 {
     nk_style_text text = { 0 };
     text.alignment = NK_TEXT_LEFT;
@@ -56,48 +35,19 @@ nk_draw_toggle(struct nk_command_buffer *out,
         text.color = style->text_normal;
     }
 
-    /* draw background and cursor */
-    if (background->type == NK_STYLE_ITEM_IMAGE)
-        nk_draw_image(out, *selector, &background->image, nk_white);
-    else if (type == NK_TOGGLE_CHECK)
-        nk_fill_rect_border(out, *selector, 0, background->color, style->border, style->border_color);
-    else if (type == NK_TOGGLE_OPTION)
-        nk_fill_circle_border(out, *selector, background->color, style->border, style->border_color);
-
-    if (active)
-    {
-        if (cursor->type == NK_STYLE_ITEM_IMAGE) nk_draw_image(out, *cursors, &cursor->image, nk_white);
-        else if (type == NK_TOGGLE_CHECK)        nk_draw_symbol(out, *cursors, NK_SYMBOL_CHECK, 3, cursor->color);
-        else if (type == NK_TOGGLE_OPTION)       nk_fill_circle(out, *cursors, cursor->color);
-    }
-    nk_widget_text(out, *label, string, len, &text, font);
-}
-
-NK_LIB nk_bool
-nk_do_toggle(nk_flags *state, struct nk_command_buffer *out, struct nk_rect r, nk_bool active,
-    const char *str, int len, enum nk_toggle_type type,
-    const struct nk_style_toggle *style, const struct nk_input *in,
-    const struct nk_font *font)
-{
-    NK_ASSERT(style);
-    NK_ASSERT(out);
-    NK_ASSERT(font);
-    if (!out || !style || !font)
-        return nk_false;
-
-    r.w = NK_MAX(r.w, font->height + 2 * style->padding.x);
-    r.h = NK_MAX(r.h, font->height + 2 * style->padding.y);
+    bounds.w = NK_MAX(bounds.w, font->height + 2 * style->padding.x);
+    bounds.h = NK_MAX(bounds.h, font->height + 2 * style->padding.y);
 
     /* calculate the selector space */
     struct nk_rect select = {
-        .x = r.x,
-        .y = r.y + (r.h - font->height) / 2.0f,
+        .x = bounds.x,
+        .y = bounds.y + (bounds.h - font->height) / 2.0f,
         .w = font->height,
         .h = font->height
     };
 
     /* calculate the bounds of the cursor inside the selector */
-    struct nk_rect cursor = {
+    struct nk_rect check = {
         .x = select.x + style->padding.x + style->border,
         .y = select.y + style->padding.y + style->border,
         .w = select.w - 2 * (style->padding.x + style->border),
@@ -108,15 +58,43 @@ nk_do_toggle(nk_flags *state, struct nk_command_buffer *out, struct nk_rect r, n
     struct nk_rect label = {
         .x = select.x + select.w + style->spacing,
         .y = select.y,
-        .w = NK_MAX(r.x + r.w, label.x) - label.x,
+        .w = NK_MAX(bounds.x + bounds.w, label.x) - label.x,
         .h = select.w
     };
 
+    /* draw background and cursor */
+    if (background->type == NK_STYLE_ITEM_IMAGE)
+        nk_draw_image(out, select, &background->image, nk_white);
+    else if (type == NK_TOGGLE_CHECK)
+        nk_fill_rect_border(out, select, 0, background->color, style->border, style->border_color);
+    else if (type == NK_TOGGLE_OPTION)
+        nk_fill_circle_border(out, select, background->color, style->border, style->border_color);
+
+    if (active)
+    {
+        if (cursor->type == NK_STYLE_ITEM_IMAGE) nk_draw_image(out, check, &cursor->image, nk_white);
+        else if (type == NK_TOGGLE_CHECK)        nk_draw_symbol(out, check, NK_SYMBOL_CHECK, 3, cursor->color);
+        else if (type == NK_TOGGLE_OPTION)       nk_fill_circle(out, check, cursor->color);
+    }
+    nk_widget_text(out, label, string, len, &text, font);
+}
+
+NK_LIB nk_bool
+nk_do_toggle(nk_flags *state, nk_command_buffer *out, struct nk_rect bounds, nk_bool active,
+    const char *str, int len, nk_toggle_type type,
+    const struct nk_style_toggle *style, const struct nk_input *in, const struct nk_font *font)
+{
+    NK_ASSERT(style);
+    NK_ASSERT(out);
+    NK_ASSERT(font);
+    if (!out || !style || !font) return nk_false;
+
     /* update selector */
-    active = nk_toggle_behavior(in, r, state, active);
+    if (nk_button_behavior(state, bounds, in, NK_BUTTON_DEFAULT))
+        active = !active;
 
     /* draw selector */
-    nk_draw_toggle(out, *state, style, active, &label, &select, &cursor, str, len, type, font);
+    nk_draw_toggle(out, bounds, *state, style, active, str, len, type, font);
 
     return active;
 }

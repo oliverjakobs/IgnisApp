@@ -29,7 +29,7 @@ static void setViewport(float w, float h)
 }
 
 struct nk_glfw glfw;
-struct nk_colorf bg;
+nk_colorf bg;
 
 int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 {

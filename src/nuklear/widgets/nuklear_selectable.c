@@ -76,16 +76,8 @@ nk_do_selectable(nk_flags *state, struct nk_command_buffer *out, struct nk_rect 
 
     if (!state || !out || !str || !len || !style || !font) return selected;
 
-    /* remove padding */
-    struct nk_rect touch = {
-        .x = bounds.x - style->touch_padding.x,
-        .y = bounds.y - style->touch_padding.y,
-        .w = bounds.w + 2 * style->touch_padding.x,
-        .h = bounds.h + 2 * style->touch_padding.y
-    };
-
     /* update button */
-    if (nk_button_behavior(state, touch, in, NK_BUTTON_DEFAULT))
+    if (nk_button_behavior(state, bounds, in, NK_BUTTON_DEFAULT))
         selected = !selected;
 
     /* draw selectable */

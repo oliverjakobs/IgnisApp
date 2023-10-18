@@ -110,7 +110,7 @@ NK_API void nk_spacing(struct nk_context *ctx, int cols)
     row->index = index;
 }
 
-NK_API void nk_label_image(struct nk_context* ctx, struct nk_image img, struct nk_color col)
+NK_API void nk_label_image(struct nk_context* ctx, nk_image img, nk_color col)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -123,7 +123,7 @@ NK_API void nk_label_image(struct nk_context* ctx, struct nk_image img, struct n
     nk_draw_image(&ctx->current->buffer, bounds, &img, col);
 }
 
-NK_API void nk_label_color(struct nk_context *ctx, struct nk_color color)
+NK_API void nk_label_color(struct nk_context *ctx, nk_color color)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);

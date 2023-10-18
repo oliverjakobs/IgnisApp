@@ -67,7 +67,7 @@ nk_panel_layout(const struct nk_context *ctx, struct nk_window *win,
     struct nk_command_buffer *out;
 
     struct nk_vec2 item_spacing;
-    struct nk_color color;
+    nk_color color;
 
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);

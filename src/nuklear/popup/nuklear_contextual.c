@@ -11,7 +11,6 @@ nk_contextual_begin(struct nk_context *ctx, nk_flags flags, struct nk_vec2 size,
 {
     struct nk_window *win;
     struct nk_window *popup;
-    struct nk_rect body;
 
     NK_STORAGE const struct nk_rect null_rect = {-1,-1,0,0};
     int is_clicked = 0;
@@ -42,10 +41,14 @@ nk_contextual_begin(struct nk_context *ctx, nk_flags flags, struct nk_vec2 size,
 
     /* calculate contextual position on click */
     win->popup.active_con = win->popup.con_count;
-    if (is_clicked) {
+    struct nk_rect body;
+    if (is_clicked)
+    {
         body.x = ctx->input.mouse_pos.x;
         body.y = ctx->input.mouse_pos.y;
-    } else {
+    }
+    else
+    {
         body.x = popup->bounds.x;
         body.y = popup->bounds.y;
     }
@@ -53,8 +56,7 @@ nk_contextual_begin(struct nk_context *ctx, nk_flags flags, struct nk_vec2 size,
     body.h = size.y;
 
     /* start nonblocking contextual popup */
-    ret = nk_nonblock_begin(ctx, flags|NK_WINDOW_NO_SCROLLBAR, body,
-            null_rect, NK_PANEL_CONTEXTUAL);
+    ret = nk_nonblock_begin(ctx, flags | NK_WINDOW_NO_SCROLLBAR, body, null_rect, NK_PANEL_CONTEXTUAL);
     if (ret) win->popup.type = NK_PANEL_CONTEXTUAL;
     else {
         win->popup.active_con = 0;

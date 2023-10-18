@@ -166,31 +166,25 @@ struct nk_allocator;
 typedef struct nk_command_buffer nk_command_buffer;
 struct nk_draw_command;
 struct nk_convert_config;
-struct nk_style_item;
 struct nk_text_edit;
 struct nk_draw_list;
 struct nk_font;
 struct nk_panel;
 struct nk_context;
 struct nk_draw_vertex_layout_element;
-struct nk_style_button;
-struct nk_style_toggle;
-struct nk_style_selectable;
-struct nk_style_slide;
-struct nk_style_progress;
-struct nk_style_scrollbar;
-struct nk_style_edit;
-struct nk_style_property;
-struct nk_style_chart;
-struct nk_style_combo;
-struct nk_style_tab;
-struct nk_style_window_header;
-struct nk_style_window;
 
 enum { nk_false, nk_true };
 
-struct nk_color { nk_byte r, g, b, a; };
-struct nk_colorf { float r, g, b, a; };
+typedef struct
+{ 
+    nk_byte r, g, b, a;
+} nk_color;
+
+typedef struct 
+{
+    float r, g, b, a;
+} nk_colorf;
+
 struct nk_vec2 { float x, y; };
 struct nk_vec2i { short x, y; };
 struct nk_rect { float x, y, w, h; };
@@ -198,16 +192,24 @@ struct nk_recti { short x, y, w, h; };
 
 typedef char nk_glyph[NK_UTF_SIZE];
 typedef union { void* ptr; int id; } nk_handle;
-struct nk_image { nk_handle handle; nk_ushort w, h; };
-struct nk_cursor { struct nk_image img; struct nk_vec2 size, offset; };
+
+typedef struct
+{
+    nk_handle handle;
+    nk_ushort w, h;
+} nk_image;
+
+struct nk_cursor { nk_image img; struct nk_vec2 size, offset; };
 struct nk_scroll { nk_uint x, y; };
 
 enum nk_heading { NK_UP, NK_RIGHT, NK_DOWN, NK_LEFT };
 enum nk_orientation { NK_VERTICAL, NK_HORIZONTAL };
 enum nk_collapse_states { NK_MINIMIZED = nk_false, NK_MAXIMIZED = nk_true };
 enum nk_show_states { NK_HIDDEN = nk_false, NK_SHOWN = nk_true };
+
 enum nk_chart_type { NK_CHART_LINES, NK_CHART_COLUMN, NK_CHART_MAX };
 enum nk_chart_event { NK_CHART_HOVERING = 0x01, NK_CHART_CLICKED = 0x02 };
+
 enum nk_color_format { NK_RGB, NK_RGBA };
 enum nk_popup_type { NK_POPUP_STATIC, NK_POPUP_DYNAMIC };
 enum nk_layout_format { NK_DYNAMIC, NK_STATIC };

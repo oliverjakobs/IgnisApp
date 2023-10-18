@@ -6,11 +6,11 @@
  *                          COLOR PICKER
  *
  * ===============================================================*/
-NK_LIB struct nk_colorf
+NK_LIB nk_colorf
 nk_color_picker_behavior(nk_flags *state,
     const struct nk_rect bounds, const struct nk_rect matrix,
     const struct nk_rect hue_bar, const struct nk_rect alpha_bar,
-    struct nk_colorf color, const struct nk_input *in)
+    nk_colorf color, const struct nk_input *in)
 {
     NK_ASSERT(state);
     nk_widget_state_reset(state);
@@ -62,11 +62,11 @@ nk_color_picker_behavior(nk_flags *state,
 NK_LIB void
 nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix,
     const struct nk_rect *hue_bar, const struct nk_rect *alpha_bar,
-    struct nk_colorf col)
+    nk_colorf col)
 {
-    NK_STORAGE const struct nk_color black = {0,0,0,255};
-    NK_STORAGE const struct nk_color white = {255, 255, 255, 255};
-    NK_STORAGE const struct nk_color black_trans = {0,0,0,0};
+    NK_STORAGE const nk_color black = {0,0,0,255};
+    NK_STORAGE const nk_color white = {255, 255, 255, 255};
+    NK_STORAGE const nk_color black_trans = {0,0,0,0};
 
     NK_ASSERT(o);
     NK_ASSERT(matrix);
@@ -78,7 +78,7 @@ nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix,
     /* draw hue bar */
     for (int i = 0; i < 6; ++i)
     {
-        NK_GLOBAL const struct nk_color hue_colors[] = {
+        NK_GLOBAL const nk_color hue_colors[] = {
             {255,   0,   0, 255},
             {255, 255,   0, 255},
             {  0, 255,   0, 255},
@@ -108,7 +108,7 @@ nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix,
     }
 
     /* draw color matrix */
-    struct nk_color color = nk_hsv_f(hsva[0], 1.0f, 1.0f);
+    nk_color color = nk_hsv_f(hsva[0], 1.0f, 1.0f);
     nk_fill_rect_multi_color(o, *matrix, white, color, color, white);
     nk_fill_rect_multi_color(o, *matrix, black_trans, black_trans, black, black);
 
@@ -126,9 +126,9 @@ nk_draw_color_picker(struct nk_command_buffer *o, const struct nk_rect *matrix,
     nk_stroke_line(o, p.x, p.y - crosshair_size, p.x, p.y-2, 1.0f, white);
 }
 
-NK_LIB struct nk_colorf
+NK_LIB nk_colorf
 nk_do_color_picker(nk_flags *state,
-    struct nk_command_buffer *out, struct nk_colorf color,
+    struct nk_command_buffer *out, nk_colorf color,
     enum nk_color_format fmt, struct nk_rect bounds,
     struct nk_vec2 padding, const struct nk_input *in,
     const struct nk_font *font)
@@ -167,8 +167,8 @@ nk_do_color_picker(nk_flags *state,
     return color;
 }
 
-NK_API struct nk_colorf
-nk_color_picker(struct nk_context *ctx, struct nk_colorf color, enum nk_color_format fmt)
+NK_API nk_colorf
+nk_color_picker(struct nk_context *ctx, nk_colorf color, enum nk_color_format fmt)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);

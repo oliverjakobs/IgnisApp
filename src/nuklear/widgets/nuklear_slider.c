@@ -51,7 +51,7 @@ nk_draw_slider(struct nk_command_buffer *out, nk_flags state,
 {
 
     /* select correct slider images/colors */
-    struct nk_color bar_color;
+    nk_color bar_color;
     const nk_style_item *cursor_style;
     const nk_style_item *background;
     if (state & NK_WIDGET_STATE_ACTIVED)

@@ -63,7 +63,7 @@ NK_LIB float nk_panel_get_border(const struct nk_style *style, nk_flags flags, e
     }
 }
 
-NK_LIB struct nk_color nk_panel_get_border_color(const struct nk_style *style, enum nk_panel_type type)
+NK_LIB nk_color nk_panel_get_border_color(const struct nk_style *style, enum nk_panel_type type)
 {
     switch (type)
     {
@@ -488,7 +488,7 @@ nk_panel_end(struct nk_context *ctx)
     /* window border */
     if (layout->flags & NK_WINDOW_BORDER)
     {
-        struct nk_color border_color = nk_panel_get_border_color(style, layout->type);
+        nk_color border_color = nk_panel_get_border_color(style, layout->type);
         const float padding_y = (layout->flags & NK_WINDOW_MINIMIZED)
             ? (style->window.border + window->bounds.y + layout->header_height)
             : ((layout->flags & NK_WINDOW_DYNAMIC)

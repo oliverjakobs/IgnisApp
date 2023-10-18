@@ -47,13 +47,13 @@ typedef struct
     nk_style_item_type type;
     union
     {
-        struct nk_color color;
-        struct nk_image image;
+        nk_color color;
+        nk_image image;
     };
 } nk_style_item;
 
-NK_API void nk_label_image(struct nk_context*, struct nk_image, struct nk_color);
-NK_API void nk_label_color(struct nk_context*, struct nk_color);
+NK_API void nk_label_image(struct nk_context*, nk_image, nk_color);
+NK_API void nk_label_color(struct nk_context*, nk_color);
 
 /* =============================================================================
  *
@@ -73,7 +73,7 @@ typedef enum
 
 typedef struct
 {
-    struct nk_color color;
+    nk_color color;
     struct nk_vec2 padding;
     nk_flags alignment;
 } nk_style_text;
@@ -95,9 +95,9 @@ NK_API void nk_value_bool(struct nk_context*, const char* prefix, int);
 NK_API void nk_value_int(struct nk_context*, const char* prefix, int);
 NK_API void nk_value_uint(struct nk_context*, const char* prefix, unsigned int);
 NK_API void nk_value_float(struct nk_context*, const char* prefix, float);
-NK_API void nk_value_color_byte(struct nk_context*, const char* prefix, struct nk_color);
-NK_API void nk_value_color_float(struct nk_context*, const char* prefix, struct nk_color);
-NK_API void nk_value_color_hex(struct nk_context*, const char* prefix, struct nk_color);
+NK_API void nk_value_color_byte(struct nk_context*, const char* prefix, nk_color);
+NK_API void nk_value_color_float(struct nk_context*, const char* prefix, nk_color);
+NK_API void nk_value_color_hex(struct nk_context*, const char* prefix, nk_color);
 
 /* =============================================================================
  *
@@ -105,24 +105,25 @@ NK_API void nk_value_color_hex(struct nk_context*, const char* prefix, struct nk
  *
  * ============================================================================= */
 
-struct nk_style_button {
+typedef struct
+{
     /* background */
-    nk_style_item normal;
-    nk_style_item hover;
-    nk_style_item active;
+    nk_style_item bg_normal;
+    nk_style_item bg_hover;
+    nk_style_item bg_active;
+    float border;
+    nk_color border_color;
 
     /* text */
-    struct nk_color text_normal;
-    struct nk_color text_hover;
-    struct nk_color text_active;
-    nk_flags text_alignment;
+    nk_color fg_normal;
+    nk_color fg_hover;
+    nk_color fg_active;
 
     /* properties */
+    nk_flags text_alignment;
     float rounding;
-    float border;
-    struct nk_color border_color;
     struct nk_vec2 padding;
-};
+} nk_style_button;
 
 typedef enum 
 {
@@ -132,13 +133,13 @@ typedef enum
 
 NK_LIB nk_bool nk_button_behavior(nk_flags* state, struct nk_rect r, const struct nk_input* i, nk_button_type behavior);
 
-NK_LIB void nk_draw_button_text(nk_command_buffer* out, struct nk_rect bounds, nk_flags state, const struct nk_style_button* style, const char* str, int len, nk_flags align, const struct nk_font* font);
-NK_LIB void nk_draw_button_symbol(nk_command_buffer* out, struct nk_rect bounds, nk_flags state, const struct nk_style_button* style, nk_symbol symbol);
-NK_LIB void nk_draw_button_text_symbol(nk_command_buffer* out, struct nk_rect bounds, nk_flags state, const struct nk_style_button* style, const char* str, int len, nk_symbol symbol, nk_flags align, const struct nk_font* font);
+NK_LIB void nk_draw_button_text(nk_command_buffer* out, struct nk_rect bounds, nk_flags state, const nk_style_button* style, const char* str, int len, nk_flags align, const struct nk_font* font);
+NK_LIB void nk_draw_button_symbol(nk_command_buffer* out, struct nk_rect bounds, nk_flags state, const nk_style_button* style, nk_symbol symbol);
+NK_LIB void nk_draw_button_text_symbol(nk_command_buffer* out, struct nk_rect bounds, nk_flags state, const nk_style_button* style, const char* str, int len, nk_symbol symbol, nk_flags align, const struct nk_font* font);
 
-NK_LIB nk_bool nk_do_button_text(nk_flags* state, nk_command_buffer* out, struct nk_rect bounds, const char* string, int len, nk_flags align, nk_button_type behavior, const struct nk_style_button* style, const struct nk_input* in, const struct nk_font* font);
-NK_LIB nk_bool nk_do_button_symbol(nk_flags* state, nk_command_buffer* out, struct nk_rect bounds, nk_symbol symbol, nk_button_type behavior, const struct nk_style_button* style, const struct nk_input* in);
-NK_LIB nk_bool nk_do_button_text_symbol(nk_flags* state, nk_command_buffer* out, struct nk_rect bounds, nk_symbol symbol, const char* str, int len, nk_flags align, nk_button_type behavior, const struct nk_style_button* style, const struct nk_font* font, const struct nk_input* in);
+NK_LIB nk_bool nk_do_button_text(nk_flags* state, nk_command_buffer* out, struct nk_rect bounds, const char* string, int len, nk_flags align, nk_button_type behavior, const nk_style_button* style, const struct nk_input* in, const struct nk_font* font);
+NK_LIB nk_bool nk_do_button_symbol(nk_flags* state, nk_command_buffer* out, struct nk_rect bounds, nk_symbol symbol, nk_button_type behavior, const nk_style_button* style, const struct nk_input* in);
+NK_LIB nk_bool nk_do_button_text_symbol(nk_flags* state, nk_command_buffer* out, struct nk_rect bounds, nk_symbol symbol, const char* str, int len, nk_flags align, nk_button_type behavior, const nk_style_button* style, const struct nk_font* font, const struct nk_input* in);
 
 NK_API nk_bool nk_button_text(struct nk_context *ctx, const char* title, int len);
 NK_API nk_bool nk_button_label(struct nk_context *ctx, const char* title);
@@ -159,16 +160,16 @@ struct nk_style_toggle {
     nk_style_item normal;
     nk_style_item hover;
     nk_style_item active;
-    struct nk_color border_color;
+    nk_color border_color;
 
     /* cursor */
     nk_style_item cursor_normal;
     nk_style_item cursor_hover;
 
     /* text */
-    struct nk_color text_normal;
-    struct nk_color text_hover;
-    struct nk_color text_active;
+    nk_color text_normal;
+    nk_color text_hover;
+    nk_color text_active;
     nk_flags text_alignment;
 
     /* properties */
@@ -177,14 +178,14 @@ struct nk_style_toggle {
     float border;
 };
 
-enum nk_toggle_type {
+typedef enum
+{
     NK_TOGGLE_CHECK,
     NK_TOGGLE_OPTION
-};
-NK_LIB nk_bool nk_toggle_behavior(const struct nk_input* in, struct nk_rect select, nk_flags* state, nk_bool active);
-NK_LIB void nk_draw_toggle(nk_command_buffer* out, nk_flags state, const struct nk_style_toggle* style, nk_bool active, const struct nk_rect* label, const struct nk_rect* selector, const struct nk_rect* cursors, const char* string, int len, enum nk_toggle_type type, const struct nk_font* font);
-NK_LIB nk_bool nk_do_toggle(nk_flags* state, nk_command_buffer* out, struct nk_rect r, nk_bool active, const char* str, int len, enum nk_toggle_type type, const struct nk_style_toggle* style, const struct nk_input* in, const struct nk_font* font);
+} nk_toggle_type;
 
+NK_LIB void nk_draw_toggle(nk_command_buffer* out, struct nk_rect bounds, nk_flags state, const struct nk_style_toggle* style, nk_bool active, const char* string, int len, nk_toggle_type type, const struct nk_font* font);
+NK_LIB nk_bool nk_do_toggle(nk_flags* state, nk_command_buffer* out, struct nk_rect bounds, nk_bool active, const char* str, int len, nk_toggle_type type, const struct nk_style_toggle* style, const struct nk_input* in, const struct nk_font* font);
 
 NK_API nk_bool nk_checkbox_text(struct nk_context*, const char*, int, nk_bool active);
 NK_API nk_bool nk_checkbox_label(struct nk_context*, const char*, nk_bool active);
@@ -211,21 +212,19 @@ struct nk_style_selectable {
     nk_style_item pressed_active;
 
     /* text color (inactive) */
-    struct nk_color text_normal;
-    struct nk_color text_hover;
-    struct nk_color text_pressed;
+    nk_color text_normal;
+    nk_color text_hover;
+    nk_color text_pressed;
 
     /* text color (active) */
-    struct nk_color text_normal_active;
-    struct nk_color text_hover_active;
-    struct nk_color text_pressed_active;
+    nk_color text_normal_active;
+    nk_color text_hover_active;
+    nk_color text_pressed_active;
     nk_flags text_alignment;
 
     /* properties */
     float rounding;
     struct nk_vec2 padding;
-    struct nk_vec2 touch_padding;
-    struct nk_vec2 image_padding;
 };
 
 NK_LIB void nk_draw_selectable(nk_command_buffer* out, nk_flags state, const struct nk_style_selectable* style, nk_bool selected, const struct nk_rect bounds, const char* string, int len, nk_flags align, const struct nk_font* font);
@@ -245,13 +244,13 @@ struct nk_style_slider {
     nk_style_item normal;
     nk_style_item hover;
     nk_style_item active;
-    struct nk_color border_color;
+    nk_color border_color;
 
     /* background bar */
-    struct nk_color bar_normal;
-    struct nk_color bar_hover;
-    struct nk_color bar_active;
-    struct nk_color bar_filled;
+    nk_color bar_normal;
+    nk_color bar_hover;
+    nk_color bar_active;
+    nk_color bar_filled;
 
     /* cursor */
     nk_style_item cursor_normal;
@@ -268,8 +267,8 @@ struct nk_style_slider {
 
     /* optional buttons */
     int show_buttons;
-    struct nk_style_button inc_button;
-    struct nk_style_button dec_button;
+    nk_style_button inc_button;
+    nk_style_button dec_button;
     nk_symbol inc_symbol;
     nk_symbol dec_symbol;
 };
@@ -279,13 +278,13 @@ struct nk_style_progress {
     nk_style_item normal;
     nk_style_item hover;
     nk_style_item active;
-    struct nk_color border_color;
+    nk_color border_color;
 
     /* cursor */
     nk_style_item cursor_normal;
     nk_style_item cursor_hover;
     nk_style_item cursor_active;
-    struct nk_color cursor_border_color;
+    nk_color cursor_border_color;
 
     /* properties */
     float rounding;
@@ -304,61 +303,11 @@ NK_LIB nk_size nk_bar_slider_behavior(nk_flags* state, struct nk_input* in, stru
 NK_LIB void nk_draw_bar_slider(struct nk_command_buffer* out, nk_flags state, const struct nk_style_progress* style, const struct nk_rect* bounds, const struct nk_rect* scursor);
 NK_LIB nk_size nk_do_bar_slider(nk_flags* state, struct nk_command_buffer* out, struct nk_rect bounds, nk_size value, nk_size max, const struct nk_style_progress* style, struct nk_input* in);
 
-
 NK_API float nk_slider(struct nk_context*, float min, float value, float max, float step);
 NK_API int nk_slider_int(struct nk_context*, int min, int value, int max, int step);
 
 NK_API nk_size nk_bar_slider(struct nk_context*, nk_size value, nk_size max);
 
 NK_API nk_size nk_progress(struct nk_context*, nk_size value, nk_size max);
-
-/* =============================================================================
- *
- *                                  POPUP
- *
- * ============================================================================= */
-NK_API nk_bool nk_popup_begin(struct nk_context*, enum nk_popup_type, const char*, nk_flags, struct nk_rect bounds);
-NK_API void nk_popup_close(struct nk_context*);
-NK_API void nk_popup_end(struct nk_context*);
-NK_API void nk_popup_get_scroll(struct nk_context*, nk_uint* offset_x, nk_uint* offset_y);
-NK_API void nk_popup_set_scroll(struct nk_context*, nk_uint offset_x, nk_uint offset_y);
-/* =============================================================================
- *
- *                                  CONTEXTUAL
- *
- * ============================================================================= */
-NK_API nk_bool nk_contextual_begin(struct nk_context*, nk_flags, struct nk_vec2, struct nk_rect trigger_bounds);
-NK_API void nk_contextual_close(struct nk_context*);
-NK_API void nk_contextual_end(struct nk_context*);
-
-NK_API nk_bool nk_contextual_item_text(struct nk_context*, const char*, int, nk_flags align);
-NK_API nk_bool nk_contextual_item_label(struct nk_context*, const char*, nk_flags align);
-NK_API nk_bool nk_contextual_item_symbol_text(struct nk_context*, nk_symbol, const char*, int, nk_flags align);
-NK_API nk_bool nk_contextual_item_symbol_label(struct nk_context*, nk_symbol, const char*, nk_flags align);
-
-/* =============================================================================
- *
- *                                  COMBOBOX
- *
- * ============================================================================= */
-NK_API int nk_combo(struct nk_context*, const char** items, int count, int selected, int item_height, struct nk_vec2 size);
-NK_API int nk_combo_separator(struct nk_context*, const char* items_separated_by_separator, int separator, int selected, int count, int item_height, struct nk_vec2 size);
-
-NK_API nk_bool nk_combo_begin_text(struct nk_context*, const char* selected, int, struct nk_vec2 size);
-NK_API nk_bool nk_combo_begin_label(struct nk_context*, const char* selected, struct nk_vec2 size);
-NK_API nk_bool nk_combo_begin_color(struct nk_context*, struct nk_color color, struct nk_vec2 size);
-NK_API void nk_combo_close(struct nk_context*);
-NK_API void nk_combo_end(struct nk_context*);
-/* =============================================================================
- *
- *                                  TOOLTIP
- *
- * ============================================================================= */
-NK_API nk_bool nk_tooltip_begin(struct nk_context*, float width);
-NK_API void nk_tooltip_end(struct nk_context*);
-
-NK_API void nk_tooltip(struct nk_context*, const char*);
-NK_API void nk_tooltipf(struct nk_context*, const char*, ...);
-NK_API void nk_tooltipfv(struct nk_context*, const char*, va_list);
 
 #endif // !WIDGETS_H

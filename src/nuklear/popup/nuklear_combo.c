@@ -37,7 +37,7 @@ NK_INTERN nk_bool nk_combo_begin(struct nk_context *ctx, struct nk_window *win, 
     return 1;
 }
 
-static const struct nk_style_item* nk_combo_draw_background(struct nk_command_buffer* out, struct nk_rect bounds, nk_flags state, struct nk_style_combo* style)
+static void nk_combo_draw_background(struct nk_command_buffer* out, struct nk_rect bounds, nk_flags state, struct nk_style_combo* style)
 {
     const nk_style_item* background;
     if (state & NK_WIDGET_STATE_ACTIVED)    background = &style->active;
@@ -53,8 +53,6 @@ static const struct nk_style_item* nk_combo_draw_background(struct nk_command_bu
         nk_fill_rect_border(out, bounds, style->rounding, background->color, style->border, style->border_color);
         break;
     }
-
-    return background;
 }
 
 static nk_bool nk_combo_draw_button(struct nk_command_buffer* out, struct nk_rect bounds, nk_flags state, nk_bool clicked, struct nk_style_combo* style)
@@ -100,7 +98,7 @@ NK_API nk_bool nk_combo_begin_text(struct nk_context *ctx, const char *selected,
     nk_bool clicked = nk_button_behavior(&state, header, in, NK_BUTTON_DEFAULT);
 
     /* draw combo box header background and border */
-    const struct nk_style_item* background = nk_combo_draw_background(&win->buffer, header, state, style);
+    nk_combo_draw_background(&win->buffer, header, state, style);
 
     /* print currently selected text item */
     nk_style_text text = { 0 };
@@ -133,7 +131,7 @@ NK_API nk_bool nk_combo_begin_label(struct nk_context *ctx, const char *selected
     return nk_combo_begin_text(ctx, selected, nk_strlen(selected), size);
 }
 
-NK_API nk_bool nk_combo_begin_color(struct nk_context *ctx, struct nk_color color, struct nk_vec2 size)
+NK_API nk_bool nk_combo_begin_color(struct nk_context *ctx, nk_color color, struct nk_vec2 size)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(ctx->current);
@@ -152,7 +150,7 @@ NK_API nk_bool nk_combo_begin_color(struct nk_context *ctx, struct nk_color colo
     nk_bool clicked = nk_button_behavior(&state, header, in, NK_BUTTON_DEFAULT);
 
     /* draw combo box header background and border */
-    const struct nk_style_item* background = nk_combo_draw_background(&win->buffer, header, state, style);
+    nk_combo_draw_background(&win->buffer, header, state, style);
 
     struct nk_rect bounds = {
         .x = header.x + 2 * style->content_padding.x,

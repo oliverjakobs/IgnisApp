@@ -37,7 +37,7 @@ NK_API void nk_style_default(struct nk_context *ctx){nk_style_from_table(ctx, 0)
     NK_COLOR(NK_COLOR_SCROLLBAR_CURSOR_ACTIVE,  150,150,150,255) \
     NK_COLOR(NK_COLOR_TAB_HEADER,               40, 40, 40,255)
 
-NK_GLOBAL const struct nk_color
+NK_GLOBAL const nk_color 
 nk_default_color_style[NK_COLOR_COUNT] = {
 #define NK_COLOR(a,b,c,d,e) {b,c,d,e},
     NK_COLOR_MAP(NK_COLOR)
@@ -55,30 +55,30 @@ nk_style_get_color_by_name(enum nk_style_colors c)
     return nk_color_names[c];
 }
 
-NK_API nk_style_item nk_style_item_color(struct nk_color col)
+NK_API nk_style_item nk_style_item_color(nk_color col)
 {
     nk_style_item i = { .type = NK_STYLE_ITEM_COLOR, .color = col };
     return i;
 }
 
-NK_API nk_style_item nk_style_item_image(struct nk_image img)
+NK_API nk_style_item nk_style_item_image(nk_image img)
 {
     nk_style_item i = { .type = NK_STYLE_ITEM_IMAGE, .image = img };
     return i;
 }
 
-NK_API nk_style_item
-nk_style_item_hide(void)
+NK_API nk_style_item nk_style_item_hide(void)
 {
     nk_style_item i = { .type = NK_STYLE_ITEM_COLOR, .color = nk_rgba(0,0,0,0) };
     return i;
 }
+
 NK_API void
-nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
+nk_style_from_table(struct nk_context *ctx, const nk_color *table)
 {
     struct nk_style *style;
     nk_style_text *text;
-    struct nk_style_button *button;
+    nk_style_button *button;
     struct nk_style_toggle *toggle;
     struct nk_style_selectable *select;
     struct nk_style_slider *slider;
@@ -104,13 +104,13 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     /* default button */
     button = &style->button;
     nk_zero_struct(*button);
-    button->normal          = nk_style_item_color(table[NK_COLOR_BUTTON]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_BUTTON_HOVER]);
-    button->active          = nk_style_item_color(table[NK_COLOR_BUTTON_ACTIVE]);
+    button->bg_normal       = nk_style_item_color(table[NK_COLOR_BUTTON]);
+    button->bg_hover        = nk_style_item_color(table[NK_COLOR_BUTTON_HOVER]);
+    button->bg_active       = nk_style_item_color(table[NK_COLOR_BUTTON_ACTIVE]);
     button->border_color    = table[NK_COLOR_BORDER];
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
+    button->fg_normal       = table[NK_COLOR_TEXT];
+    button->fg_hover        = table[NK_COLOR_TEXT];
+    button->fg_active       = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 1.0f;
@@ -119,13 +119,13 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     /* contextual button */
     button = &style->contextual_button;
     nk_zero_struct(*button);
-    button->normal          = nk_style_item_color(table[NK_COLOR_WINDOW]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_BUTTON_HOVER]);
-    button->active          = nk_style_item_color(table[NK_COLOR_BUTTON_ACTIVE]);
+    button->bg_normal       = nk_style_item_color(table[NK_COLOR_WINDOW]);
+    button->bg_hover        = nk_style_item_color(table[NK_COLOR_BUTTON_HOVER]);
+    button->bg_active       = nk_style_item_color(table[NK_COLOR_BUTTON_ACTIVE]);
     button->border_color    = table[NK_COLOR_WINDOW];
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
+    button->fg_normal       = table[NK_COLOR_TEXT];
+    button->fg_hover        = table[NK_COLOR_TEXT];
+    button->fg_active       = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
@@ -134,13 +134,13 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     /* menu button */
     button = &style->menu_button;
     nk_zero_struct(*button);
-    button->normal          = nk_style_item_color(table[NK_COLOR_WINDOW]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_WINDOW]);
-    button->active          = nk_style_item_color(table[NK_COLOR_WINDOW]);
+    button->bg_normal       = nk_style_item_color(table[NK_COLOR_WINDOW]);
+    button->bg_hover        = nk_style_item_color(table[NK_COLOR_WINDOW]);
+    button->bg_active       = nk_style_item_color(table[NK_COLOR_WINDOW]);
     button->border_color    = table[NK_COLOR_WINDOW];
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
+    button->fg_normal       = table[NK_COLOR_TEXT];
+    button->fg_hover        = table[NK_COLOR_TEXT];
+    button->fg_active       = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
@@ -195,8 +195,6 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     select->text_pressed_active = table[NK_COLOR_TEXT];
     select->text_alignment      = NK_TEXT_LEFT;
     select->padding         = nk_vec2(2.0f,2.0f);
-    select->image_padding   = nk_vec2(2.0f,2.0f);
-    select->touch_padding   = nk_vec2(0,0);
     select->rounding        = 0.0f;
 
     /* slider */
@@ -223,13 +221,13 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
 
     /* slider buttons */
     button = &style->slider.inc_button;
-    button->normal          = nk_style_item_color(nk_rgb(40,40,40));
-    button->hover           = nk_style_item_color(nk_rgb(42,42,42));
-    button->active          = nk_style_item_color(nk_rgb(44,44,44));
+    button->bg_normal       = nk_style_item_color(nk_rgb(40,40,40));
+    button->bg_hover        = nk_style_item_color(nk_rgb(42,42,42));
+    button->bg_active       = nk_style_item_color(nk_rgb(44,44,44));
     button->border_color    = nk_rgb(65,65,65);
-    button->text_normal     = nk_rgb(175,175,175);
-    button->text_hover      = nk_rgb(175,175,175);
-    button->text_active     = nk_rgb(175,175,175);
+    button->fg_normal       = nk_rgb(175,175,175);
+    button->fg_hover        = nk_rgb(175,175,175);
+    button->fg_active       = nk_rgb(175,175,175);
     button->padding         = nk_vec2(8.0f,8.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 1.0f;
@@ -276,13 +274,13 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
 
     /* scrollbars buttons */
     button = &style->scrollh.inc_button;
-    button->normal          = nk_style_item_color(nk_rgb(40,40,40));
-    button->hover           = nk_style_item_color(nk_rgb(42,42,42));
-    button->active          = nk_style_item_color(nk_rgb(44,44,44));
+    button->bg_normal       = nk_style_item_color(nk_rgb(40,40,40));
+    button->bg_hover        = nk_style_item_color(nk_rgb(42,42,42));
+    button->bg_active       = nk_style_item_color(nk_rgb(44,44,44));
     button->border_color    = nk_rgb(65,65,65);
-    button->text_normal     = nk_rgb(175,175,175);
-    button->text_hover      = nk_rgb(175,175,175);
-    button->text_active     = nk_rgb(175,175,175);
+    button->fg_normal       = nk_rgb(175,175,175);
+    button->fg_hover        = nk_rgb(175,175,175);
+    button->fg_active       = nk_rgb(175,175,175);
     button->padding         = nk_vec2(4.0f,4.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 1.0f;
@@ -336,13 +334,13 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     /* property buttons */
     button = &style->property.dec_button;
     nk_zero_struct(*button);
-    button->normal          = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-    button->active          = nk_style_item_color(table[NK_COLOR_PROPERTY]);
+    button->bg_normal       = nk_style_item_color(table[NK_COLOR_PROPERTY]);
+    button->bg_hover        = nk_style_item_color(table[NK_COLOR_PROPERTY]);
+    button->bg_active       = nk_style_item_color(table[NK_COLOR_PROPERTY]);
     button->border_color    = nk_rgba(0,0,0,0);
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
+    button->fg_normal       = table[NK_COLOR_TEXT];
+    button->fg_hover        = table[NK_COLOR_TEXT];
+    button->fg_active       = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(0.0f,0.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
@@ -404,13 +402,13 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     /* combo button */
     button = &style->combo.button;
     nk_zero_struct(*button);
-    button->normal          = nk_style_item_color(table[NK_COLOR_COMBO]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_COMBO]);
-    button->active          = nk_style_item_color(table[NK_COLOR_COMBO]);
+    button->bg_normal       = nk_style_item_color(table[NK_COLOR_COMBO]);
+    button->bg_hover        = nk_style_item_color(table[NK_COLOR_COMBO]);
+    button->bg_active       = nk_style_item_color(table[NK_COLOR_COMBO]);
     button->border_color    = nk_rgba(0,0,0,0);
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
+    button->fg_normal       = table[NK_COLOR_TEXT];
+    button->fg_hover        = table[NK_COLOR_TEXT];
+    button->fg_active       = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
@@ -432,13 +430,13 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     /* tab button */
     button = &style->tab.tab_minimize_button;
     nk_zero_struct(*button);
-    button->normal          = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
-    button->active          = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
+    button->bg_normal       = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
+    button->bg_hover        = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
+    button->bg_active       = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
     button->border_color    = nk_rgba(0,0,0,0);
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
+    button->fg_normal       = table[NK_COLOR_TEXT];
+    button->fg_hover        = table[NK_COLOR_TEXT];
+    button->fg_active       = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
@@ -448,13 +446,13 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     /* node button */
     button = &style->tab.node_minimize_button;
     nk_zero_struct(*button);
-    button->normal          = nk_style_item_color(table[NK_COLOR_WINDOW]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_WINDOW]);
-    button->active          = nk_style_item_color(table[NK_COLOR_WINDOW]);
+    button->bg_normal       = nk_style_item_color(table[NK_COLOR_WINDOW]);
+    button->bg_hover        = nk_style_item_color(table[NK_COLOR_WINDOW]);
+    button->bg_active       = nk_style_item_color(table[NK_COLOR_WINDOW]);
     button->border_color    = nk_rgba(0,0,0,0);
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
+    button->fg_normal       = table[NK_COLOR_TEXT];
+    button->fg_hover        = table[NK_COLOR_TEXT];
+    button->fg_active       = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(2.0f,2.0f);
     button->text_alignment  = NK_TEXT_CENTERED;
     button->border          = 0.0f;
@@ -477,30 +475,30 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     /* window header close button */
     button = &style->window.header.close_button;
     nk_zero_struct(*button);
-    button->normal          = nk_style_item_color(table[NK_COLOR_HEADER]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_HEADER]);
-    button->active          = nk_style_item_color(table[NK_COLOR_HEADER]);
+    button->bg_normal          = nk_style_item_color(table[NK_COLOR_HEADER]);
+    button->bg_hover           = nk_style_item_color(table[NK_COLOR_HEADER]);
+    button->bg_active          = nk_style_item_color(table[NK_COLOR_HEADER]);
     button->border_color    = nk_rgba(0,0,0,0);
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
+    button->fg_normal     = table[NK_COLOR_TEXT];
+    button->fg_hover      = table[NK_COLOR_TEXT];
+    button->fg_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(0.0f,0.0f);
-    button->text_alignment  = NK_TEXT_CENTERED;
+    button->text_alignment = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 0.0f;
 
     /* window header minimize button */
     button = &style->window.header.minimize_button;
     nk_zero_struct(*button);
-    button->normal          = nk_style_item_color(table[NK_COLOR_HEADER]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_HEADER]);
-    button->active          = nk_style_item_color(table[NK_COLOR_HEADER]);
+    button->bg_normal          = nk_style_item_color(table[NK_COLOR_HEADER]);
+    button->bg_hover           = nk_style_item_color(table[NK_COLOR_HEADER]);
+    button->bg_active          = nk_style_item_color(table[NK_COLOR_HEADER]);
     button->border_color    = nk_rgba(0,0,0,0);
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
+    button->fg_normal     = table[NK_COLOR_TEXT];
+    button->fg_hover      = table[NK_COLOR_TEXT];
+    button->fg_active     = table[NK_COLOR_TEXT];
     button->padding         = nk_vec2(0.0f,0.0f);
-    button->text_alignment  = NK_TEXT_CENTERED;
+    button->text_alignment = NK_TEXT_CENTERED;
     button->border          = 0.0f;
     button->rounding        = 0.0f;
 
@@ -625,7 +623,7 @@ NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(nk, style_item, style_items)
 NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(nk,float, floats)
 NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(struct nk, vec2, vectors)
 NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(nk,flags, flags)
-NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(struct nk,color, colors)
+NK_API nk_bool NK_STYLE_PUSH_IMPLEMENATION(nk,color, colors)
 
 NK_API nk_bool NK_STYLE_POP_IMPLEMENATION(style_item, style_items)
 NK_API nk_bool NK_STYLE_POP_IMPLEMENATION(float,floats)

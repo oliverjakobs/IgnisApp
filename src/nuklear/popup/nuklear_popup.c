@@ -7,14 +7,14 @@
  *
  * ===============================================================*/
 NK_API nk_bool
-nk_popup_begin(struct nk_context *ctx, enum nk_popup_type type, const char *title, nk_flags flags, struct nk_rect rect)
+nk_popup_begin(struct nk_context *ctx, enum nk_popup_type type, const char *title, nk_flags flags, struct nk_rect bounds)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(title);
     NK_ASSERT(ctx->current);
     NK_ASSERT(ctx->current->layout);
     if (!ctx || !ctx->current || !ctx->current->layout)
-        return 0;
+        return nk_false;
 
     struct nk_window* win = ctx->current;
     NK_ASSERT(!(win->layout->type & NK_PANEL_SET_POPUP) && "popups are not allowed to have popups");
@@ -44,16 +44,16 @@ nk_popup_begin(struct nk_context *ctx, enum nk_popup_type type, const char *titl
 
     /* popup position is local to window */
     ctx->current = popup;
-    rect.x += win->layout->clip.x;
-    rect.y += win->layout->clip.y;
+    bounds.x += win->layout->clip.x;
+    bounds.y += win->layout->clip.y;
 
     /* setup popup data */
     popup->parent = win;
-    popup->bounds = rect;
+    popup->bounds = bounds;
     popup->seq = ctx->seq;
     popup->layout = nk_create_panel(ctx);
-    popup->flags = flags;
-    popup->flags |= NK_WINDOW_BORDER;
+    popup->flags = flags | NK_WINDOW_BORDER;
+
     if (type == NK_POPUP_DYNAMIC)
         popup->flags |= NK_WINDOW_DYNAMIC;
 
@@ -66,12 +66,13 @@ nk_popup_begin(struct nk_context *ctx, enum nk_popup_type type, const char *titl
     {
         /* popup is running therefore invalidate parent panels */
         struct nk_panel *root = win->layout;
-        while (root) {
+        while (root)
+        {
             root->flags |= NK_WINDOW_ROM;
             root->flags &= ~(nk_flags)NK_WINDOW_REMOVE_ROM;
             root = root->parent;
         }
-        win->popup.active = 1;
+        win->popup.active = nk_true;
         popup->layout->offset_x = &popup->scrollbar.x;
         popup->layout->offset_y = &popup->scrollbar.y;
         popup->layout->parent = win->layout;
@@ -85,12 +86,13 @@ nk_popup_begin(struct nk_context *ctx, enum nk_popup_type type, const char *titl
         root->flags |= NK_WINDOW_REMOVE_ROM;
         root = root->parent;
     }
-    win->popup.buf.active = 0;
-    win->popup.active = 0;
+    win->popup.buf.active = nk_false;
+    win->popup.active = nk_false;
     ctx->memory.allocated = allocated;
     ctx->current = win;
     nk_free_panel(ctx, popup->layout);
-    popup->layout = 0;
+    popup->layout = NULL;
+
     return nk_false;
 }
 

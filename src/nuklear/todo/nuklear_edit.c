@@ -66,8 +66,8 @@ NK_LIB void
 nk_edit_draw_text(struct nk_command_buffer *out,
     const struct nk_style_edit *style, float pos_x, float pos_y,
     float x_offset, const char *text, int byte_len, float row_height,
-    const struct nk_font *font, struct nk_color background,
-    struct nk_color foreground, nk_bool is_selected)
+    const struct nk_font *font, nk_color background,
+    nk_color foreground, nk_bool is_selected)
 {
     NK_ASSERT(out);
     NK_ASSERT(font);
@@ -506,12 +506,12 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         }
 
         /* draw text */
-        {struct nk_color background_color;
-        struct nk_color text_color;
-        struct nk_color sel_background_color;
-        struct nk_color sel_text_color;
-        struct nk_color cursor_color;
-        struct nk_color cursor_text_color;
+        {nk_color background_color;
+        nk_color text_color;
+        nk_color sel_background_color;
+        nk_color sel_text_color;
+        nk_color cursor_color;
+        nk_color cursor_text_color;
         const nk_style_item *background;
         nk_push_scissor(out, clip);
 
@@ -632,8 +632,8 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         const char *begin = nk_str_get_const(&edit->string);
 
         const nk_style_item *background;
-        struct nk_color background_color;
-        struct nk_color text_color;
+        nk_color background_color;
+        nk_color text_color;
         nk_push_scissor(out, clip);
         if (*state & NK_WIDGET_STATE_ACTIVED) {
             background = &style->active;

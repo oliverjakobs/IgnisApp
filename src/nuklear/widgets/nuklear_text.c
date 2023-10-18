@@ -144,18 +144,18 @@ NK_API void nk_value_float(struct nk_context *ctx, const char *prefix, float val
     nk_labelf(ctx, NK_TEXT_LEFT, "%s: %.3f", prefix, double_value);
 }
 
-NK_API void nk_value_color_byte(struct nk_context *ctx, const char *p, struct nk_color c)
+NK_API void nk_value_color_byte(struct nk_context *ctx, const char *p, nk_color c)
 {
     nk_labelf(ctx, NK_TEXT_LEFT, "%s: (%d, %d, %d, %d)", p, c.r, c.g, c.b, c.a);
 }
 
-NK_API void nk_value_color_float(struct nk_context *ctx, const char *p, struct nk_color color)
+NK_API void nk_value_color_float(struct nk_context *ctx, const char *p, nk_color color)
 {
     double c[4]; nk_color_dv(c, color);
     nk_labelf(ctx, NK_TEXT_LEFT, "%s: (%.2f, %.2f, %.2f, %.2f)", p, c[0], c[1], c[2], c[3]);
 }
 
-NK_API void nk_value_color_hex(struct nk_context *ctx, const char *prefix, struct nk_color color)
+NK_API void nk_value_color_hex(struct nk_context *ctx, const char *prefix, nk_color color)
 {
     char hex[16];
     nk_color_hex_rgba(hex, color);

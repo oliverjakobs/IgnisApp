@@ -18,7 +18,7 @@ struct node {
     char name[32];
     struct nk_rect bounds;
     float value;
-    struct nk_color color;
+    nk_color color;
     int input_count;
     int output_count;
     struct node *next;
@@ -103,7 +103,7 @@ node_editor_find(struct node_editor *editor, int ID)
 
 static void
 node_editor_add(struct node_editor *editor, const char *name, struct nk_rect bounds,
-    struct nk_color col, int in_count, int out_count)
+    nk_color col, int in_count, int out_count)
 {
     static int IDs = 0;
     struct node *node;
@@ -176,7 +176,7 @@ int node_editor(struct nk_context *ctx)
             if (nodedit->show_grid) {
                 /* display grid */
                 const float grid_size = 32.0f;
-                const struct nk_color grid_color = nk_rgb(50, 50, 50);
+                const nk_color grid_color = nk_rgb(50, 50, 50);
 
                 for (float x = (float)fmod(size.x - nodedit->scrolling.x, grid_size); x < size.w; x += grid_size)
                     nk_stroke_line(canvas, x+size.x, size.y, x+size.x, size.y+size.h, 1.0f, grid_color);

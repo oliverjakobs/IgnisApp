@@ -7,6 +7,7 @@ extern "C" {
 
 #include "common.h"
 #include "widgets/widgets.h"
+#include "popup/popup.h"
 
 /* =============================================================================
  *
@@ -2287,7 +2288,7 @@ NK_API nk_bool nk_tree_push_hashed(struct nk_context*, enum nk_tree_type, const 
 /// Start a collapsible UI section with internal state management with full
 /// control over internal unique ID used to store state
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// nk_bool nk_tree_image_push_hashed(struct nk_context*, enum nk_tree_type, struct nk_image, const char *title, enum nk_collapse_states initial_state, const char *hash, int len,int seed);
+/// nk_bool nk_tree_image_push_hashed(struct nk_context*, enum nk_tree_type, nk_image, const char *title, enum nk_collapse_states initial_state, const char *hash, int len,int seed);
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ///
 /// Parameter   | Description
@@ -2303,7 +2304,7 @@ NK_API nk_bool nk_tree_push_hashed(struct nk_context*, enum nk_tree_type, const 
 ///
 /// Returns `true(1)` if visible and fillable with widgets or `false(0)` otherwise
 */
-NK_API nk_bool nk_tree_image_push_hashed(struct nk_context*, enum nk_tree_type, struct nk_image, const char *title, enum nk_collapse_states initial_state, const char *hash, int len,int seed);
+NK_API nk_bool nk_tree_image_push_hashed(struct nk_context*, enum nk_tree_type, nk_image, const char *title, enum nk_collapse_states initial_state, const char *hash, int len,int seed);
 /*/// #### nk_tree_pop
 /// Ends a collapsabale UI section
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
@@ -2334,7 +2335,7 @@ NK_API nk_bool nk_tree_state_push(struct nk_context*, enum nk_tree_type, const c
 /*/// #### nk_tree_state_image_push
 /// Start a collapsible UI section with image and label header and external state management
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
-/// nk_bool nk_tree_state_image_push(struct nk_context*, enum nk_tree_type, struct nk_image, const char *title, enum nk_collapse_states *state);
+/// nk_bool nk_tree_state_image_push(struct nk_context*, enum nk_tree_type, nk_image, const char *title, enum nk_collapse_states *state);
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ///
 /// Parameter   | Description
@@ -2347,7 +2348,7 @@ NK_API nk_bool nk_tree_state_push(struct nk_context*, enum nk_tree_type, const c
 ///
 /// Returns `true(1)` if visible and fillable with widgets or `false(0)` otherwise
 */
-NK_API nk_bool nk_tree_state_image_push(struct nk_context*, enum nk_tree_type, struct nk_image, const char *title, enum nk_collapse_states *state);
+NK_API nk_bool nk_tree_state_image_push(struct nk_context*, enum nk_tree_type, nk_image, const char *title, enum nk_collapse_states *state);
 /*/// #### nk_tree_state_pop
 /// Ends a collapsabale UI section
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
@@ -2363,7 +2364,7 @@ NK_API void nk_tree_state_pop(struct nk_context*);
 #define nk_tree_element_push(ctx, type, title, state, sel) nk_tree_element_push_hashed(ctx, type, title, state, sel, NK_FILE_LINE,nk_strlen(NK_FILE_LINE),__LINE__)
 #define nk_tree_element_push_id(ctx, type, title, state, sel, id) nk_tree_element_push_hashed(ctx, type, title, state, sel, NK_FILE_LINE,nk_strlen(NK_FILE_LINE),id)
 NK_API nk_bool nk_tree_element_push_hashed(struct nk_context*, enum nk_tree_type, const char *title, enum nk_collapse_states initial_state, nk_bool *selected, const char *hash, int len, int seed);
-NK_API nk_bool nk_tree_element_image_push_hashed(struct nk_context*, enum nk_tree_type, struct nk_image, const char *title, enum nk_collapse_states initial_state, nk_bool *selected, const char *hash, int len,int seed);
+NK_API nk_bool nk_tree_element_image_push_hashed(struct nk_context*, enum nk_tree_type, nk_image, const char *title, enum nk_collapse_states initial_state, nk_bool *selected, const char *hash, int len,int seed);
 NK_API void nk_tree_element_pop(struct nk_context*);
 
 
@@ -2375,7 +2376,7 @@ NK_API void nk_tree_element_pop(struct nk_context*);
  *                                  COLOR PICKER
  *
  * ============================================================================= */
-NK_API struct nk_colorf nk_color_picker(struct nk_context *ctx, struct nk_colorf color, enum nk_color_format format);
+NK_API nk_colorf nk_color_picker(struct nk_context *ctx, nk_colorf color, enum nk_color_format format);
 /* =============================================================================
  *
  *                                  PROPERTIES
@@ -2628,11 +2629,11 @@ NK_API void nk_edit_unfocus(struct nk_context*);
  *
  * ============================================================================= */
 NK_API nk_bool nk_chart_begin(struct nk_context*, enum nk_chart_type, int num, float min, float max);
-NK_API nk_bool nk_chart_begin_colored(struct nk_context*, enum nk_chart_type, struct nk_color, struct nk_color active, int num, float min, float max);
+NK_API nk_bool nk_chart_begin_colored(struct nk_context*, enum nk_chart_type, nk_color , nk_color active, int num, float min, float max);
 NK_API void nk_chart_end(struct nk_context*);
 
 NK_API void nk_chart_add_slot(struct nk_context *ctx, const enum nk_chart_type, int count, float min_value, float max_value);
-NK_API void nk_chart_add_slot_colored(struct nk_context *ctx, const enum nk_chart_type, struct nk_color, struct nk_color active, int count, float min_value, float max_value);
+NK_API void nk_chart_add_slot_colored(struct nk_context *ctx, const enum nk_chart_type, nk_color , nk_color active, int count, float min_value, float max_value);
 NK_API nk_flags nk_chart_push(struct nk_context*, float);
 NK_API nk_flags nk_chart_push_slot(struct nk_context*, float, int);
 
@@ -2704,7 +2705,7 @@ enum nk_style_cursor {
     NK_CURSOR_COUNT
 };
 NK_API void nk_style_default(struct nk_context*);
-NK_API void nk_style_from_table(struct nk_context*, const struct nk_color*);
+NK_API void nk_style_from_table(struct nk_context*, const nk_color *);
 NK_API void nk_style_load_cursor(struct nk_context*, enum nk_style_cursor, const struct nk_cursor*);
 NK_API void nk_style_load_all_cursors(struct nk_context*, struct nk_cursor*);
 NK_API const char* nk_style_get_color_by_name(enum nk_style_colors);
@@ -2718,7 +2719,7 @@ NK_API nk_bool nk_style_push_float(struct nk_context*, float*, float);
 NK_API nk_bool nk_style_push_vec2(struct nk_context*, struct nk_vec2*, struct nk_vec2);
 NK_API nk_bool nk_style_push_style_item(struct nk_context*, struct nk_style_item*, struct nk_style_item);
 NK_API nk_bool nk_style_push_flags(struct nk_context*, nk_flags*, nk_flags);
-NK_API nk_bool nk_style_push_color(struct nk_context*, struct nk_color*, struct nk_color);
+NK_API nk_bool nk_style_push_color(struct nk_context*, nk_color *, nk_color );
 
 NK_API nk_bool nk_style_pop_font(struct nk_context*);
 NK_API nk_bool nk_style_pop_float(struct nk_context*);
@@ -2731,64 +2732,64 @@ NK_API nk_bool nk_style_pop_color(struct nk_context*);
  *                                  COLOR
  *
  * ============================================================================= */
-NK_API struct nk_color nk_rgb(int r, int g, int b);
-NK_API struct nk_color nk_rgb_iv(const int *rgb);
-NK_API struct nk_color nk_rgb_bv(const nk_byte* rgb);
-NK_API struct nk_color nk_rgb_f(float r, float g, float b);
-NK_API struct nk_color nk_rgb_fv(const float *rgb);
-NK_API struct nk_color nk_rgb_cf(struct nk_colorf c);
-NK_API struct nk_color nk_rgb_hex(const char *rgb);
+NK_API nk_color nk_rgb(int r, int g, int b);
+NK_API nk_color nk_rgb_iv(const int *rgb);
+NK_API nk_color nk_rgb_bv(const nk_byte* rgb);
+NK_API nk_color nk_rgb_f(float r, float g, float b);
+NK_API nk_color nk_rgb_fv(const float *rgb);
+NK_API nk_color nk_rgb_cf(nk_colorf c);
+NK_API nk_color nk_rgb_hex(const char *rgb);
 
-NK_API struct nk_color nk_rgba(int r, int g, int b, int a);
-NK_API struct nk_color nk_rgba_u32(nk_uint);
-NK_API struct nk_color nk_rgba_iv(const int *rgba);
-NK_API struct nk_color nk_rgba_bv(const nk_byte *rgba);
-NK_API struct nk_color nk_rgba_f(float r, float g, float b, float a);
-NK_API struct nk_color nk_rgba_fv(const float *rgba);
-NK_API struct nk_color nk_rgba_cf(struct nk_colorf c);
-NK_API struct nk_color nk_rgba_hex(const char *rgb);
+NK_API nk_color nk_rgba(int r, int g, int b, int a);
+NK_API nk_color nk_rgba_u32(nk_uint);
+NK_API nk_color nk_rgba_iv(const int *rgba);
+NK_API nk_color nk_rgba_bv(const nk_byte *rgba);
+NK_API nk_color nk_rgba_f(float r, float g, float b, float a);
+NK_API nk_color nk_rgba_fv(const float *rgba);
+NK_API nk_color nk_rgba_cf(nk_colorf c);
+NK_API nk_color nk_rgba_hex(const char *rgb);
 
-NK_API struct nk_colorf nk_hsva_colorf(float h, float s, float v, float a);
-NK_API struct nk_colorf nk_hsva_colorfv(float *c);
-NK_API void nk_colorf_hsva_f(float *out_h, float *out_s, float *out_v, float *out_a, struct nk_colorf in);
-NK_API void nk_colorf_hsva_fv(float *hsva, struct nk_colorf in);
+NK_API nk_colorf nk_hsva_colorf(float h, float s, float v, float a);
+NK_API nk_colorf nk_hsva_colorfv(float *c);
+NK_API void nk_colorf_hsva_f(float *out_h, float *out_s, float *out_v, float *out_a, nk_colorf in);
+NK_API void nk_colorf_hsva_fv(float *hsva, nk_colorf in);
 
-NK_API struct nk_color nk_hsv(int h, int s, int v);
-NK_API struct nk_color nk_hsv_iv(const int *hsv);
-NK_API struct nk_color nk_hsv_bv(const nk_byte *hsv);
-NK_API struct nk_color nk_hsv_f(float h, float s, float v);
-NK_API struct nk_color nk_hsv_fv(const float *hsv);
+NK_API nk_color nk_hsv(int h, int s, int v);
+NK_API nk_color nk_hsv_iv(const int *hsv);
+NK_API nk_color nk_hsv_bv(const nk_byte *hsv);
+NK_API nk_color nk_hsv_f(float h, float s, float v);
+NK_API nk_color nk_hsv_fv(const float *hsv);
 
-NK_API struct nk_color nk_hsva(int h, int s, int v, int a);
-NK_API struct nk_color nk_hsva_iv(const int *hsva);
-NK_API struct nk_color nk_hsva_bv(const nk_byte *hsva);
-NK_API struct nk_color nk_hsva_f(float h, float s, float v, float a);
-NK_API struct nk_color nk_hsva_fv(const float *hsva);
+NK_API nk_color nk_hsva(int h, int s, int v, int a);
+NK_API nk_color nk_hsva_iv(const int *hsva);
+NK_API nk_color nk_hsva_bv(const nk_byte *hsva);
+NK_API nk_color nk_hsva_f(float h, float s, float v, float a);
+NK_API nk_color nk_hsva_fv(const float *hsva);
 
 /* color (conversion nuklear --> user) */
-NK_API void nk_color_f(float *r, float *g, float *b, float *a, struct nk_color);
-NK_API void nk_color_fv(float *rgba_out, struct nk_color);
-NK_API struct nk_colorf nk_color_cf(struct nk_color);
-NK_API void nk_color_d(double *r, double *g, double *b, double *a, struct nk_color);
-NK_API void nk_color_dv(double *rgba_out, struct nk_color);
+NK_API void nk_color_f(float *r, float *g, float *b, float *a, nk_color);
+NK_API void nk_color_fv(float *rgba_out, nk_color);
+NK_API nk_colorf nk_color_cf(nk_color);
+NK_API void nk_color_d(double *r, double *g, double *b, double *a, nk_color);
+NK_API void nk_color_dv(double *rgba_out, nk_color);
 
-NK_API nk_uint nk_color_u32(struct nk_color);
-NK_API void nk_color_hex_rgba(char *output, struct nk_color);
-NK_API void nk_color_hex_rgb(char *output, struct nk_color);
+NK_API nk_uint nk_color_u32(nk_color);
+NK_API void nk_color_hex_rgba(char *output, nk_color);
+NK_API void nk_color_hex_rgb(char *output, nk_color);
 
-NK_API void nk_color_hsv_i(int *out_h, int *out_s, int *out_v, struct nk_color);
-NK_API void nk_color_hsv_b(nk_byte *out_h, nk_byte *out_s, nk_byte *out_v, struct nk_color);
-NK_API void nk_color_hsv_iv(int *hsv_out, struct nk_color);
-NK_API void nk_color_hsv_bv(nk_byte *hsv_out, struct nk_color);
-NK_API void nk_color_hsv_f(float *out_h, float *out_s, float *out_v, struct nk_color);
-NK_API void nk_color_hsv_fv(float *hsv_out, struct nk_color);
+NK_API void nk_color_hsv_i(int *out_h, int *out_s, int *out_v, nk_color);
+NK_API void nk_color_hsv_b(nk_byte *out_h, nk_byte *out_s, nk_byte *out_v, nk_color);
+NK_API void nk_color_hsv_iv(int *hsv_out, nk_color);
+NK_API void nk_color_hsv_bv(nk_byte *hsv_out, nk_color);
+NK_API void nk_color_hsv_f(float *out_h, float *out_s, float *out_v, nk_color);
+NK_API void nk_color_hsv_fv(float *hsv_out, nk_color);
 
-NK_API void nk_color_hsva_i(int *h, int *s, int *v, int *a, struct nk_color);
-NK_API void nk_color_hsva_b(nk_byte *h, nk_byte *s, nk_byte *v, nk_byte *a, struct nk_color);
-NK_API void nk_color_hsva_iv(int *hsva_out, struct nk_color);
-NK_API void nk_color_hsva_bv(nk_byte *hsva_out, struct nk_color);
-NK_API void nk_color_hsva_f(float *out_h, float *out_s, float *out_v, float *out_a, struct nk_color);
-NK_API void nk_color_hsva_fv(float *hsva_out, struct nk_color);
+NK_API void nk_color_hsva_i(int *h, int *s, int *v, int *a, nk_color);
+NK_API void nk_color_hsva_b(nk_byte *h, nk_byte *s, nk_byte *v, nk_byte *a, nk_color);
+NK_API void nk_color_hsva_iv(int *hsva_out, nk_color);
+NK_API void nk_color_hsva_bv(nk_byte *hsva_out, nk_color);
+NK_API void nk_color_hsva_f(float *out_h, float *out_s, float *out_v, float *out_a, nk_color);
+NK_API void nk_color_hsva_fv(float *hsva_out, nk_color);
 /* =============================================================================
  *
  *                                  IMAGE
@@ -2796,9 +2797,9 @@ NK_API void nk_color_hsva_fv(float *hsva_out, struct nk_color);
  * ============================================================================= */
 NK_API nk_handle nk_handle_ptr(void*);
 NK_API nk_handle nk_handle_id(int);
-NK_API struct nk_image nk_image_handle(nk_handle);
-NK_API struct nk_image nk_image_ptr(void*);
-NK_API struct nk_image nk_image_id(int);
+NK_API nk_image nk_image_handle(nk_handle);
+NK_API nk_image nk_image_ptr(void*);
+NK_API nk_image nk_image_id(int);
 /* =============================================================================
  *
  *                                  MATH
@@ -3303,7 +3304,7 @@ struct nk_command_line {
     unsigned short line_thickness;
     struct nk_vec2i begin;
     struct nk_vec2i end;
-    struct nk_color color;
+    nk_color color;
 };
 
 struct nk_command_curve {
@@ -3312,7 +3313,7 @@ struct nk_command_curve {
     struct nk_vec2i begin;
     struct nk_vec2i end;
     struct nk_vec2i ctrl[2];
-    struct nk_color color;
+    nk_color color;
 };
 
 struct nk_command_rect {
@@ -3321,17 +3322,17 @@ struct nk_command_rect {
     unsigned short line_thickness;
     short x, y;
     unsigned short w, h;
-    struct nk_color color;
+    nk_color color;
 };
 
 struct nk_command_rect_multi_color {
     struct nk_command header;
     short x, y;
     unsigned short w, h;
-    struct nk_color left;
-    struct nk_color top;
-    struct nk_color bottom;
-    struct nk_color right;
+    nk_color left;
+    nk_color top;
+    nk_color bottom;
+    nk_color right;
 };
 
 struct nk_command_triangle {
@@ -3340,7 +3341,7 @@ struct nk_command_triangle {
     struct nk_vec2i a;
     struct nk_vec2i b;
     struct nk_vec2i c;
-    struct nk_color color;
+    nk_color color;
 };
 
 struct nk_command_circle {
@@ -3348,21 +3349,21 @@ struct nk_command_circle {
     short x, y;
     unsigned short line_thickness;
     unsigned short r;
-    struct nk_color color;
+    nk_color color;
 };
 
 struct nk_command_image {
     struct nk_command header;
     short x, y;
     unsigned short w, h;
-    struct nk_image img;
-    struct nk_color col;
+    nk_image img;
+    nk_color col;
 };
 
 struct nk_command_text {
     struct nk_command header;
     const struct nk_font *font;
-    struct nk_color color;
+    nk_color color;
     short x, y;
     unsigned short w, h;
     float height;
@@ -3384,23 +3385,23 @@ struct nk_command_buffer {
 };
 
 /* shape outlines */
-NK_API void nk_stroke_line(struct nk_command_buffer *b, float x0, float y0, float x1, float y1, float line_thickness, struct nk_color);
-NK_API void nk_stroke_curve(struct nk_command_buffer*, float, float, float, float, float, float, float, float, float line_thickness, struct nk_color);
-NK_API void nk_stroke_rect(struct nk_command_buffer*, struct nk_rect, float rounding, float line_thickness, struct nk_color);
-NK_API void nk_stroke_circle(struct nk_command_buffer*, struct nk_rect, float line_thickness, struct nk_color);
-NK_API void nk_stroke_triangle(struct nk_command_buffer*, struct nk_vec2 a, struct nk_vec2 b, struct nk_vec2 c, float line_thichness, struct nk_color);
+NK_API void nk_stroke_line(struct nk_command_buffer *b, float x0, float y0, float x1, float y1, float line_thickness, nk_color);
+NK_API void nk_stroke_curve(struct nk_command_buffer*, float, float, float, float, float, float, float, float, float line_thickness, nk_color);
+NK_API void nk_stroke_rect(struct nk_command_buffer*, struct nk_rect, float rounding, float line_thickness, nk_color);
+NK_API void nk_stroke_circle(struct nk_command_buffer*, struct nk_rect, float line_thickness, nk_color);
+NK_API void nk_stroke_triangle(struct nk_command_buffer*, struct nk_vec2 a, struct nk_vec2 b, struct nk_vec2 c, float line_thichness, nk_color);
 
 /* filled shades */
-NK_API void nk_fill_rect(struct nk_command_buffer*, struct nk_rect, float rounding, struct nk_color);
-NK_API void nk_fill_rect_border(struct nk_command_buffer*, struct nk_rect, float rounding, struct nk_color color, float border, struct nk_color border_color);
-NK_API void nk_fill_rect_multi_color(struct nk_command_buffer*, struct nk_rect, struct nk_color left, struct nk_color top, struct nk_color right, struct nk_color bottom);
-NK_API void nk_fill_circle(struct nk_command_buffer*, struct nk_rect, struct nk_color);
-NK_API void nk_fill_circle_border(struct nk_command_buffer* b, struct nk_rect r, struct nk_color c, float border, struct nk_color border_color);
-NK_API void nk_fill_triangle(struct nk_command_buffer*, struct nk_vec2 a, struct nk_vec2 b, struct nk_vec2 c, struct nk_color);
+NK_API void nk_fill_rect(struct nk_command_buffer*, struct nk_rect, float rounding, nk_color);
+NK_API void nk_fill_rect_border(struct nk_command_buffer*, struct nk_rect, float rounding, nk_color color, float border, nk_color border_color);
+NK_API void nk_fill_rect_multi_color(struct nk_command_buffer*, struct nk_rect, nk_color left, nk_color top, nk_color right, nk_color bottom);
+NK_API void nk_fill_circle(struct nk_command_buffer*, struct nk_rect, nk_color);
+NK_API void nk_fill_circle_border(struct nk_command_buffer* b, struct nk_rect r, nk_color c, float border, nk_color border_color);
+NK_API void nk_fill_triangle(struct nk_command_buffer*, struct nk_vec2 a, struct nk_vec2 b, struct nk_vec2 c, nk_color);
 
 /* misc */
-NK_API void nk_draw_image(struct nk_command_buffer*, struct nk_rect, const struct nk_image*, struct nk_color);
-NK_API void nk_draw_text(struct nk_command_buffer*, struct nk_rect, const char *text, int len, const struct nk_font*, struct nk_color);
+NK_API void nk_draw_image(struct nk_command_buffer*, struct nk_rect, const nk_image*, nk_color);
+NK_API void nk_draw_text(struct nk_command_buffer*, struct nk_rect, const char *text, int len, const struct nk_font*, nk_color);
 NK_API void nk_push_scissor(struct nk_command_buffer*, struct nk_rect);
 
 /* ===============================================================
@@ -3547,13 +3548,13 @@ NK_API void nk_draw_list_path_arc_to(struct nk_draw_list*, struct nk_vec2 center
 NK_API void nk_draw_list_path_rect_to(struct nk_draw_list*, struct nk_vec2 a, struct nk_vec2 b, float rounding);
 NK_API void nk_draw_list_path_curve_to(struct nk_draw_list*, struct nk_vec2 p2, struct nk_vec2 p3, struct nk_vec2 p4, unsigned int num_segments);
 
-NK_API void nk_draw_list_path_fill(struct nk_draw_list*, struct nk_color);
-NK_API void nk_draw_list_path_stroke(struct nk_draw_list*, struct nk_color, nk_bool closed, float thickness);
+NK_API void nk_draw_list_path_fill(struct nk_draw_list*, nk_color);
+NK_API void nk_draw_list_path_stroke(struct nk_draw_list*, nk_color, nk_bool closed, float thickness);
 
 /* misc */
-NK_API void nk_draw_list_fill_rect_multi_color(struct nk_draw_list*, struct nk_rect rect, struct nk_color left, struct nk_color top, struct nk_color right, struct nk_color bottom);
-NK_API void nk_draw_list_add_image(struct nk_draw_list*, struct nk_image texture, struct nk_rect rect, struct nk_color);
-NK_API void nk_draw_list_add_text(struct nk_draw_list*, const struct nk_font*, struct nk_rect, const char *text, int len, float font_height, struct nk_color);
+NK_API void nk_draw_list_fill_rect_multi_color(struct nk_draw_list*, struct nk_rect rect, nk_color left, nk_color top, nk_color right, nk_color bottom);
+NK_API void nk_draw_list_add_image(struct nk_draw_list*, nk_image texture, struct nk_rect rect, nk_color);
+NK_API void nk_draw_list_add_text(struct nk_draw_list*, const struct nk_font*, struct nk_rect, const char *text, int len, float font_height, nk_color);
 
 
 /* ===============================================================
@@ -3574,13 +3575,13 @@ struct nk_style_scrollbar {
     nk_style_item normal;
     nk_style_item hover;
     nk_style_item active;
-    struct nk_color border_color;
+    nk_color border_color;
 
     /* cursor */
     nk_style_item cursor_normal;
     nk_style_item cursor_hover;
     nk_style_item cursor_active;
-    struct nk_color cursor_border_color;
+    nk_color cursor_border_color;
 
     /* properties */
     float border;
@@ -3591,8 +3592,8 @@ struct nk_style_scrollbar {
 
     /* optional buttons */
     int show_buttons;
-    struct nk_style_button inc_button;
-    struct nk_style_button dec_button;
+    nk_style_button inc_button;
+    nk_style_button dec_button;
     nk_symbol inc_symbol;
     nk_symbol dec_symbol;
 };
@@ -3602,25 +3603,25 @@ struct nk_style_edit {
     nk_style_item normal;
     nk_style_item hover;
     nk_style_item active;
-    struct nk_color border_color;
+    nk_color border_color;
     struct nk_style_scrollbar scrollbar;
 
     /* cursor  */
-    struct nk_color cursor_normal;
-    struct nk_color cursor_hover;
-    struct nk_color cursor_text_normal;
-    struct nk_color cursor_text_hover;
+    nk_color cursor_normal;
+    nk_color cursor_hover;
+    nk_color cursor_text_normal;
+    nk_color cursor_text_hover;
 
     /* text (unselected) */
-    struct nk_color text_normal;
-    struct nk_color text_hover;
-    struct nk_color text_active;
+    nk_color text_normal;
+    nk_color text_hover;
+    nk_color text_active;
 
     /* text (selected) */
-    struct nk_color selected_normal;
-    struct nk_color selected_hover;
-    struct nk_color selected_text_normal;
-    struct nk_color selected_text_hover;
+    nk_color selected_normal;
+    nk_color selected_hover;
+    nk_color selected_text_normal;
+    nk_color selected_text_hover;
 
     /* properties */
     float border;
@@ -3636,12 +3637,12 @@ struct nk_style_property {
     nk_style_item normal;
     nk_style_item hover;
     nk_style_item active;
-    struct nk_color border_color;
+    nk_color border_color;
 
     /* text */
-    struct nk_color label_normal;
-    struct nk_color label_hover;
-    struct nk_color label_active;
+    nk_color label_normal;
+    nk_color label_hover;
+    nk_color label_active;
 
     /* symbols */
     nk_symbol sym_left;
@@ -3653,16 +3654,16 @@ struct nk_style_property {
     struct nk_vec2 padding;
 
     struct nk_style_edit edit;
-    struct nk_style_button inc_button;
-    struct nk_style_button dec_button;
+    nk_style_button inc_button;
+    nk_style_button dec_button;
 };
 
 struct nk_style_chart {
     /* colors */
     nk_style_item background;
-    struct nk_color border_color;
-    struct nk_color selected_color;
-    struct nk_color color;
+    nk_color border_color;
+    nk_color selected_color;
+    nk_color color;
 
     /* properties */
     float border;
@@ -3675,20 +3676,20 @@ struct nk_style_combo {
     nk_style_item normal;
     nk_style_item hover;
     nk_style_item active;
-    struct nk_color border_color;
+    nk_color border_color;
 
     /* label */
-    struct nk_color label_normal;
-    struct nk_color label_hover;
-    struct nk_color label_active;
+    nk_color label_normal;
+    nk_color label_hover;
+    nk_color label_active;
 
     /* symbol */
-    struct nk_color symbol_normal;
-    struct nk_color symbol_hover;
-    struct nk_color symbol_active;
+    nk_color symbol_normal;
+    nk_color symbol_hover;
+    nk_color symbol_active;
 
     /* button */
-    struct nk_style_button button;
+    nk_style_button button;
     nk_symbol sym_normal;
     nk_symbol sym_hover;
     nk_symbol sym_active;
@@ -3704,14 +3705,14 @@ struct nk_style_combo {
 struct nk_style_tab {
     /* background */
     nk_style_item background;
-    struct nk_color border_color;
-    struct nk_color text;
+    nk_color border_color;
+    nk_color text;
 
     /* button */
-    struct nk_style_button tab_maximize_button;
-    struct nk_style_button tab_minimize_button;
-    struct nk_style_button node_maximize_button;
-    struct nk_style_button node_minimize_button;
+    nk_style_button tab_maximize_button;
+    nk_style_button tab_minimize_button;
+    nk_style_button node_maximize_button;
+    nk_style_button node_minimize_button;
     nk_symbol sym_minimize;
     nk_symbol sym_maximize;
 
@@ -3734,13 +3735,13 @@ struct nk_style_window_header {
     nk_style_item active;
 
     /* button */
-    struct nk_style_button close_button;
-    struct nk_style_button minimize_button;
+    nk_style_button close_button;
+    nk_style_button minimize_button;
 
     /* title */
-    struct nk_color label_normal;
-    struct nk_color label_hover;
-    struct nk_color label_active;
+    nk_color label_normal;
+    nk_color label_hover;
+    nk_color label_active;
 
     /* properties */
     enum nk_style_header_align align;
@@ -3752,15 +3753,15 @@ struct nk_style_window_header {
 struct nk_style_window {
     struct nk_style_window_header header;
     nk_style_item fixed_background;
-    struct nk_color background;
+    nk_color background;
 
-    struct nk_color border_color;
-    struct nk_color popup_border_color;
-    struct nk_color combo_border_color;
-    struct nk_color contextual_border_color;
-    struct nk_color menu_border_color;
-    struct nk_color group_border_color;
-    struct nk_color tooltip_border_color;
+    nk_color border_color;
+    nk_color popup_border_color;
+    nk_color combo_border_color;
+    nk_color contextual_border_color;
+    nk_color menu_border_color;
+    nk_color group_border_color;
+    nk_color tooltip_border_color;
     nk_style_item scaler;
 
     float border;
@@ -3794,9 +3795,9 @@ struct nk_style {
     int cursor_visible;
 
     nk_style_text text;
-    struct nk_style_button button;
-    struct nk_style_button contextual_button;
-    struct nk_style_button menu_button;
+    nk_style_button button;
+    nk_style_button contextual_button;
+    nk_style_button menu_button;
     struct nk_style_toggle option;
     struct nk_style_toggle checkbox;
     struct nk_style_selectable selectable;
@@ -3812,8 +3813,8 @@ struct nk_style {
     struct nk_style_window window;
 };
 
-NK_API nk_style_item nk_style_item_color(struct nk_color);
-NK_API nk_style_item nk_style_item_image(struct nk_image img);
+NK_API nk_style_item nk_style_item_color(nk_color);
+NK_API nk_style_item nk_style_item_image(nk_image img);
 NK_API nk_style_item nk_style_item_hide(void);
 
 /*==============================================================
@@ -3844,8 +3845,8 @@ enum nk_panel_set {
 
 struct nk_chart_slot {
     enum nk_chart_type type;
-    struct nk_color color;
-    struct nk_color highlight;
+    nk_color color;
+    nk_color highlight;
     float min, max, range;
     int count;
     struct nk_vec2 last;
@@ -4079,7 +4080,7 @@ NK_CONFIGURATION_STACK_TYPE(nk, style_item, style_item);
 NK_CONFIGURATION_STACK_TYPE(nk ,float, float);
 NK_CONFIGURATION_STACK_TYPE(struct nk, vec2, vec2);
 NK_CONFIGURATION_STACK_TYPE(nk ,flags, flags);
-NK_CONFIGURATION_STACK_TYPE(struct nk, color, color);
+NK_CONFIGURATION_STACK_TYPE(nk, color, color);
 NK_CONFIGURATION_STACK_TYPE(const struct nk, font, font*);
 NK_CONFIGURATION_STACK_TYPE(enum nk, button_behavior, button_behavior);
 
