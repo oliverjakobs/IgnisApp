@@ -939,7 +939,6 @@ nk_draw_list_add_text(struct nk_draw_list *list, const struct nk_font *font,
     int text_len = 0;
     nk_rune next = 0;
     int next_glyph_len = 0;
-    struct nk_font_glyph g;
 
     NK_ASSERT(list);
     if (!list || !len || !text) return;
@@ -959,6 +958,8 @@ nk_draw_list_add_text(struct nk_draw_list *list, const struct nk_font *font,
 
         /* query currently drawn glyph information */
         next_glyph_len = nk_utf_decode(text + text_len + glyph_len, &next, (int)len - text_len);
+
+        nk_font_glyph g = { 0 };
         font->query(font->userdata, font_height, &g, unicode, (next == NK_UTF_INVALID) ? '\0' : next);
 
         /* calculate and draw glyph drawing rectangle and image */

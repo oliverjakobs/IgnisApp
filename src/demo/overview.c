@@ -24,7 +24,7 @@ int overview(struct nk_context* ctx)
             /* menubar */
             enum menu_states { MENU_DEFAULT, MENU_WINDOWS };
             static nk_size mprog = 60;
-            static int mslider = 10;
+            static int mslider = 26;
             static int mcheck = nk_true;
             nk_menubar_begin(ctx);
 
@@ -105,7 +105,7 @@ int overview(struct nk_context* ctx)
             /* menu widgets */
             nk_layout_row_push(ctx, 70);
             mprog = nk_bar_slider(ctx, mprog, 100);
-            mslider = nk_slider_int(ctx, 0, mslider, 16, 1);
+            mslider = nk_slider_int(ctx, 16, mslider, 32, 1);
             mcheck = nk_checkbox_label(ctx, "check", mcheck);
             nk_menubar_end(ctx);
         }
@@ -165,10 +165,10 @@ int overview(struct nk_context* ctx)
                 nk_layout_row_static(ctx, 30, 100, 2);
                 if (nk_button_label(ctx, "Button"))
                     fprintf(stdout, "Button pressed!\n");
-                nk_button_push_behavior(ctx, NK_BUTTON_REPEATER);
+                ctx->button_behavior = NK_BUTTON_REPEATER;
                 if (nk_button_label(ctx, "Repeater"))
                     fprintf(stdout, "Repeater is being pressed!\n");
-                nk_button_pop_behavior(ctx);
+                ctx->button_behavior = NK_BUTTON_DEFAULT;
 
                 nk_layout_row_static(ctx, 25, 25, 8);
                 nk_button_symbol(ctx, NK_SYMBOL_CIRCLE_SOLID);

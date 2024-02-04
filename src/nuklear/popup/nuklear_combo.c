@@ -40,7 +40,7 @@ NK_INTERN nk_bool nk_combo_begin(struct nk_context *ctx, struct nk_window *win, 
 static void nk_combo_draw_background(struct nk_command_buffer* out, struct nk_rect bounds, nk_flags state, struct nk_style_combo* style)
 {
     const nk_style_item* background;
-    if (state & NK_WIDGET_STATE_ACTIVED)    background = &style->active;
+    if (state & NK_WIDGET_STATE_ACTIVE)     background = &style->active;
     else if (state & NK_WIDGET_STATE_HOVER) background = &style->hover;
     else                                    background = &style->normal;
 
@@ -58,7 +58,7 @@ static void nk_combo_draw_background(struct nk_command_buffer* out, struct nk_re
 static nk_bool nk_combo_draw_button(struct nk_command_buffer* out, struct nk_rect bounds, nk_flags state, nk_bool clicked, struct nk_style_combo* style)
 {
     nk_symbol sym = NK_SYMBOL_NONE;
-    if (state & NK_WIDGET_STATE_ACTIVED)    sym = style->sym_active;
+    if (state & NK_WIDGET_STATE_ACTIVE)     sym = style->sym_active;
     else if (state & NK_WIDGET_STATE_HOVER) sym = style->sym_hover;
     else                                    sym = style->sym_normal;
 
@@ -103,7 +103,7 @@ NK_API nk_bool nk_combo_begin_text(struct nk_context *ctx, const char *selected,
     /* print currently selected text item */
     nk_style_text text = { 0 };
     text.alignment = NK_TEXT_LEFT;
-    if (state & NK_WIDGET_STATE_ACTIVED)    text.color = style->label_active;
+    if (state & NK_WIDGET_STATE_ACTIVE)     text.color = style->label_active;
     else if (state & NK_WIDGET_STATE_HOVER) text.color = style->label_hover;
     else                                    text.color = style->label_normal;
 

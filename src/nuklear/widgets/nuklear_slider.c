@@ -7,15 +7,15 @@
  *
  * ===============================================================*/
 NK_LIB float
-nk_slider_behavior(nk_flags *state, struct nk_rect *cursor,
+nk_slider_behavior(nk_flags *state, struct nk_rect cursor,
     struct nk_input *in, struct nk_rect bounds, float min_value, float value, float max_value, float step)
 {
     nk_widget_state_reset(state);
 
     /* check if cursor is being dragged */
-    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, *cursor) && nk_input_mouse_down(in, NK_BUTTON_LEFT))
+    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, cursor) && nk_input_mouse_down(in, NK_BUTTON_LEFT))
     {
-        const float delta = in->mouse_pos.x - (cursor->x + cursor->w * 0.5f);
+        const float delta = in->mouse_pos.x - (cursor.x + cursor.w * 0.5f);
         const float pxstep = (bounds.w * step) / (max_value - min_value);
 
         /* only update value if the next slider step is reached */
@@ -25,17 +25,20 @@ nk_slider_behavior(nk_flags *state, struct nk_rect *cursor,
             value = NK_CLAMP(min_value, value, max_value);
             float ratio = (value - min_value) / step;
 
-            float offset = bounds.x + (pxstep * ratio);
-            cursor->x = offset - cursor->w * 0.5f;
+            /*
+            float ratio = NK_MAX(0, (in->mouse_pos.x - cursor.x)) / cursor.w;
+            value = (max_value - min_value) * ratio;
+            value = NK_CLAMP(min_value, value, max_value);
+            */
 
-            in->clicked_pos[NK_BUTTON_LEFT].x = offset;
+            in->clicked_pos[NK_BUTTON_LEFT].x = cursor.x + cursor.w / 2.0f;
         }
         *state = NK_WIDGET_STATE_ACTIVE;
     }
 
     /* slider widget state */
     if (nk_input_mouse_hover(in, bounds))
-        *state |= NK_WIDGET_STATE_HOVERED;
+        *state |= NK_WIDGET_STATE_HOVER;
     if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(in, bounds))
         *state |= NK_WIDGET_STATE_ENTERED;
     else if (nk_input_mouse_prev_hover(in, bounds))
@@ -49,12 +52,11 @@ nk_draw_slider(struct nk_command_buffer *out, nk_flags state,
     const struct nk_style_slider *style, const struct nk_rect *bounds,
     const struct nk_rect *cursor)
 {
-
     /* select correct slider images/colors */
     nk_color bar_color;
     const nk_style_item *cursor_style;
     const nk_style_item *background;
-    if (state & NK_WIDGET_STATE_ACTIVED)
+    if (state & NK_WIDGET_STATE_ACTIVE)
     {
         background = &style->active;
         bar_color = style->bar_active;
@@ -76,16 +78,16 @@ nk_draw_slider(struct nk_command_buffer *out, nk_flags state,
     /* calculate slider background bar */
     struct nk_rect bar = {
         .x = bounds->x,
-        .y = (cursor->y + cursor->h/2) - bounds->h/12,
+        .y = (bounds->y + bounds->h/2) - bounds->h/12,
         .w = bounds->w,
         .h = bounds->h/6,
     };
 
     /* filled background bar style */
     struct nk_rect fill = {
-        .w = (cursor->x + (cursor->w/2.0f)) - bar.x,
         .x = bar.x,
         .y = bar.y,
+        .w = (cursor->x + (cursor->w/2.0f)) - bar.x,
         .h = bar.h
     };
 
@@ -98,6 +100,8 @@ nk_draw_slider(struct nk_command_buffer *out, nk_flags state,
     /* draw slider bar */
     nk_fill_rect(out, bar, style->rounding, bar_color);
     nk_fill_rect(out, fill, style->rounding, style->bar_filled);
+
+    //return;
 
     /* draw cursor */
     if (cursor_style->type == NK_STYLE_ITEM_IMAGE)
@@ -148,7 +152,6 @@ nk_do_slider(nk_flags *state, struct nk_command_buffer *out, struct nk_rect boun
 
     /* make sure the provided values are correct */
     value = NK_CLAMP(min_value, value, max_value);
-
     /* calculate cursor */
     float cursor_offset = bounds.w * ((value - min_value) / (max_value - min_value));
     struct nk_rect cursor = {
@@ -158,8 +161,9 @@ nk_do_slider(nk_flags *state, struct nk_command_buffer *out, struct nk_rect boun
         .h = style->cursor_size.y
     };
 
-    if (in)
-        value = nk_slider_behavior(state, &cursor, in, bounds, min_value, value, max_value, step);
+
+    value = nk_slider_behavior(state, cursor, in, bounds, min_value, value, max_value, step);
+    //value = nk_bar_slider_behavior(state, in, bounds, bounds, min_value, value, max_value);
 
     /* draw slider */
     nk_draw_slider(out, *state, style, &bounds, &cursor);
@@ -196,23 +200,25 @@ NK_API int nk_slider_int(struct nk_context *ctx, int min, int val, int max, int 
  *                          BAR SLIDER
  *
  * ===============================================================*/
-NK_LIB nk_size
-nk_bar_slider_behavior(nk_flags* state, struct nk_input* in, struct nk_rect bounds, struct nk_rect cursor, nk_size value, nk_size max_value)
+NK_LIB float
+nk_bar_slider_behavior(nk_flags* state, struct nk_input* in, struct nk_rect bounds, struct nk_rect cursor, float min_value, float value, float max_value)
 {
     nk_widget_state_reset(state);
 
-    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, cursor) && nk_input_mouse_down(in, NK_BUTTON_LEFT))
+    if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, bounds) && nk_input_mouse_down(in, NK_BUTTON_LEFT))
     {
         float ratio = NK_MAX(0, (in->mouse_pos.x - cursor.x)) / cursor.w;
-        value = (nk_size)NK_CLAMP(0, (float)max_value * ratio, (float)max_value);
-        in->clicked_pos[NK_BUTTON_LEFT].x = cursor.x + cursor.w / 2.0f;
+        value = (max_value - min_value) * ratio + min_value;
+        value = NK_CLAMP(min_value, value, max_value);
+        in->clicked_pos[NK_BUTTON_LEFT].x = bounds.x + bounds.w / 2.0f;
 
         *state |= NK_WIDGET_STATE_ACTIVE;
     }
 
     /* set progressbar widget state */
     if (nk_input_mouse_hover(in, bounds))
-        *state |= NK_WIDGET_STATE_HOVERED;
+        *state |= NK_WIDGET_STATE_HOVER;
+
     if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(in, bounds))
         *state |= NK_WIDGET_STATE_ENTERED;
     else if (nk_input_mouse_prev_hover(in, bounds))
@@ -229,7 +235,7 @@ nk_draw_bar_slider(struct nk_command_buffer* out, nk_flags state,
     const nk_style_item* cursor_style;
 
     /* select correct colors/images to draw */
-    if (state & NK_WIDGET_STATE_ACTIVED)
+    if (state & NK_WIDGET_STATE_ACTIVE)
     {
         background = &style->active;
         cursor_style = &style->cursor_active;
@@ -266,25 +272,27 @@ nk_do_bar_slider(nk_flags* state, struct nk_command_buffer* out, struct nk_rect 
     NK_ASSERT(out);
     if (!out || !style) return value;
 
-    /* calculate progressbar cursor */
-    struct nk_rect cursor = {
+    /* calculate bar */
+    struct nk_rect bar = {
         .x = bounds.x + style->padding.x + style->border,
         .y = bounds.y + style->padding.y + style->border,
         .w = NK_MAX(bounds.w, 2 * (style->padding.x + style->border)),
         .h = NK_MAX(bounds.h, 2 * (style->padding.y + style->border))
     };
-    cursor.w -= 2 * (style->padding.x + style->border);
-    cursor.h -= 2 * (style->padding.y + style->border);
+    bar.w -= 2 * (style->padding.x + style->border);
+    bar.h -= 2 * (style->padding.y + style->border);
 
-    /* update progressbar */
+    nk_size min_value = 50;
+
+    /* update slider */
     value = NK_CLAMP(0, value, max_value);
     if (in)
-        value = nk_bar_slider_behavior(state, in, bounds, cursor, value, max_value);
+        value = (nk_size)nk_bar_slider_behavior(state, in, bounds, bar, (float)min_value, (float)value, (float)max_value);
 
-    cursor.w *= (float)value / (float)max_value;
+    bar.w *= (float)(value - min_value) / (float)(max_value - min_value);
 
-    /* draw progressbar */
-    nk_draw_bar_slider(out, *state, style, &bounds, &cursor);
+    /* draw bar slider */
+    nk_draw_bar_slider(out, *state, style, &bounds, &bar);
 
     return value;
 }

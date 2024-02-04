@@ -168,7 +168,7 @@ struct nk_draw_command;
 struct nk_convert_config;
 struct nk_text_edit;
 struct nk_draw_list;
-struct nk_font;
+typedef struct nk_font nk_font;
 struct nk_panel;
 struct nk_context;
 struct nk_draw_vertex_layout_element;

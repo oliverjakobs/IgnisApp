@@ -114,7 +114,7 @@ float font_text_width(nk_handle handle, float height, const char* text, int len)
     return text_width;
 }
 
-void font_query_glyph(nk_handle handle, float height, struct nk_font_glyph* glyph, nk_rune codepoint, nk_rune next)
+void font_query_glyph(nk_handle handle, float height, nk_font_glyph* glyph, nk_rune codepoint, nk_rune next)
 {
     NK_ASSERT(glyph);
     NK_UNUSED(next);

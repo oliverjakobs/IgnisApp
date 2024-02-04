@@ -313,7 +313,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
     else nk_widget_state_reset(state);
 
     if (is_hovered)
-        *state |= NK_WIDGET_STATE_HOVERED;
+        *state |= NK_WIDGET_STATE_HOVER;
 
     /* DRAW EDIT */
     const char *text = nk_str_get_const(&edit->string);
@@ -322,7 +322,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
     {
         /* select background colors/images  */
         const nk_style_item *background = &style->normal;
-        if (*state & NK_WIDGET_STATE_ACTIVED)       background = &style->active;
+        if (*state & NK_WIDGET_STATE_ACTIVE)       background = &style->active;
         else if (*state & NK_WIDGET_STATE_HOVER)    background = &style->hover;
 
         /* draw background frame */
@@ -516,7 +516,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         nk_push_scissor(out, clip);
 
         /* select correct colors to draw */
-        if (*state & NK_WIDGET_STATE_ACTIVED) {
+        if (*state & NK_WIDGET_STATE_ACTIVE) {
             background = &style->active;
             text_color = style->text_active;
             sel_text_color = style->selected_text_hover;
@@ -635,7 +635,7 @@ nk_do_edit(nk_flags *state, struct nk_command_buffer *out,
         nk_color background_color;
         nk_color text_color;
         nk_push_scissor(out, clip);
-        if (*state & NK_WIDGET_STATE_ACTIVED) {
+        if (*state & NK_WIDGET_STATE_ACTIVE) {
             background = &style->active;
             text_color = style->text_active;
         } else if (*state & NK_WIDGET_STATE_HOVER) {

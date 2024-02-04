@@ -28,8 +28,6 @@ NK_API nk_widget_layout_state nk_widget(struct nk_rect *bounds, const struct nk_
     if (!ctx || !ctx->current || !ctx->current->layout)
         return NK_WIDGET_INVALID;
 
-    struct nk_window* win = ctx->current;
-
     /* allocate space and check if the widget needs to be updated and drawn */
     nk_panel_alloc_space(bounds, ctx);
 
@@ -38,7 +36,7 @@ NK_API nk_widget_layout_state nk_widget(struct nk_rect *bounds, const struct nk_
         Example:
             if (nk_begin(...) {...} nk_end(...); or
             if (nk_group_begin(...) { nk_group_end(...);} */
-    struct nk_panel* layout = win->layout;
+    struct nk_panel* layout = ctx->current->layout;
     NK_ASSERT(!(layout->flags & NK_WINDOW_MINIMIZED));
     NK_ASSERT(!(layout->flags & NK_WINDOW_HIDDEN));
     NK_ASSERT(!(layout->flags & NK_WINDOW_CLOSED));

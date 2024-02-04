@@ -2931,30 +2931,24 @@ NK_API const char* nk_utf_at(const char *buffer, int length, int index, nk_rune 
 /// ```
 ///
 */
-struct nk_font_glyph;
-typedef float(*nk_text_width_f)(nk_handle, float h, const char*, int len);
-typedef void(*nk_query_font_glyph_f)(nk_handle handle, float font_height,
-                                    struct nk_font_glyph *glyph,
-                                    nk_rune codepoint, nk_rune next_codepoint);
-
-struct nk_font_glyph {
+typedef struct
+{
     struct nk_vec2 uv[2];   /* texture coordinates */
     struct nk_vec2 offset;  /* offset between top left and glyph */
     float width, height;    /* size of the glyph */
     float xadvance;         /* offset to the next glyph */
-};
+} nk_font_glyph;
 
-struct nk_font {
-    nk_handle userdata;
-    /* user provided font handle */
-    float height;
-    /* max height of the font */
-    nk_text_width_f width;
-    /* font string width in pixel callback */
-    nk_query_font_glyph_f query;
-    /* font glyph callback to query drawing info */
-    nk_handle texture;
-    /* texture handle to the used font atlas or texture */
+typedef float(*nk_text_width_f)(nk_handle hnd, float h, const char*, int len);
+typedef void(*nk_query_font_glyph_f)(nk_handle hnd, float height, nk_font_glyph *glyph, nk_rune codepoint, nk_rune next);
+
+struct nk_font
+{
+    nk_handle userdata;           /* user provided font handle */
+    float height;                 /* max height of the font */
+    nk_text_width_f width;        /* font string width in pixel callback */
+    nk_query_font_glyph_f query;  /* font glyph callback to query drawing info */
+    nk_handle texture;            /* texture handle to the used font atlas or texture */
 };
 
 /* ==============================================================
@@ -3563,13 +3557,6 @@ NK_API void nk_draw_list_add_text(struct nk_draw_list*, const struct nk_font*, s
  *
  * ===============================================================*/
 
-
-
-
-
-
-
-
 struct nk_style_scrollbar {
     /* background */
     nk_style_item normal;
@@ -3798,9 +3785,9 @@ struct nk_style {
     nk_style_button button;
     nk_style_button contextual_button;
     nk_style_button menu_button;
-    struct nk_style_toggle option;
-    struct nk_style_toggle checkbox;
-    struct nk_style_selectable selectable;
+    nk_style_toggle option;
+    nk_style_toggle checkbox;
+    nk_style_selectable selectable;
     struct nk_style_slider slider;
     struct nk_style_progress progress;
     struct nk_style_property property;

@@ -55,7 +55,7 @@ NK_LIB nk_bool nk_button_behavior(nk_flags *state, struct nk_rect r, const struc
     nk_bool clicked = nk_false;
     if (nk_input_mouse_hover(i, r))
     {
-        *state = NK_WIDGET_STATE_HOVERED;
+        *state = NK_WIDGET_STATE_HOVER;
 
         if (nk_input_mouse_down(i, NK_BUTTON_LEFT))
             *state = NK_WIDGET_STATE_ACTIVE;
@@ -79,8 +79,8 @@ static void
 nk_draw_button_background(nk_command_buffer *out, struct nk_rect bounds, nk_flags state, const nk_style_button *style)
 {
     const nk_style_item *background = &style->bg_normal;
-    if (state & NK_WIDGET_STATE_HOVER)          background = &style->bg_hover;
-    else if (state & NK_WIDGET_STATE_ACTIVED)   background = &style->bg_active;
+    if (state & NK_WIDGET_STATE_HOVER)        background = &style->bg_hover;
+    else if (state & NK_WIDGET_STATE_ACTIVE)  background = &style->bg_active;
 
     if (background->type == NK_STYLE_ITEM_IMAGE)
         nk_draw_image(out, bounds, &background->image, nk_white);
@@ -96,7 +96,7 @@ nk_draw_button_text(nk_command_buffer* out, struct nk_rect bounds, nk_flags stat
 
     nk_style_text text = { 0 };
     text.alignment = text_alignment;
-    if (state & NK_WIDGET_STATE_ACTIVED)    text.color = style->fg_active;
+    if (state & NK_WIDGET_STATE_ACTIVE)     text.color = style->fg_active;
     else if (state & NK_WIDGET_STATE_HOVER) text.color = style->fg_hover;
     else                                    text.color = style->fg_normal;
 
@@ -117,7 +117,7 @@ nk_draw_button_symbol(nk_command_buffer* out, struct nk_rect bounds, nk_flags st
     nk_draw_button_background(out, bounds, state, style);
 
     nk_color color;
-    if (state & NK_WIDGET_STATE_ACTIVED)    color = style->fg_active;
+    if (state & NK_WIDGET_STATE_ACTIVE)     color = style->fg_active;
     else if (state & NK_WIDGET_STATE_HOVER) color = style->fg_hover;
     else                                    color = style->fg_normal;
 
@@ -139,7 +139,7 @@ nk_draw_button_text_symbol(nk_command_buffer* out, struct nk_rect bounds, nk_fla
 
     nk_style_text text = { 0 };
     text.alignment = style->text_alignment;
-    if (state & NK_WIDGET_STATE_ACTIVED)    text.color = style->fg_active;
+    if (state & NK_WIDGET_STATE_ACTIVE)     text.color = style->fg_active;
     else if (state & NK_WIDGET_STATE_HOVER) text.color = style->fg_hover;
     else                                    text.color = style->fg_normal;
 
@@ -282,39 +282,4 @@ NK_API nk_bool nk_button_symbol_text(struct nk_context *ctx, nk_symbol symbol, c
 NK_API nk_bool nk_button_symbol_label(struct nk_context *ctx, nk_symbol symbol, const char *label, nk_flags align)
 {
     return nk_button_symbol_text(ctx, symbol, label, nk_strlen(label), align);
-}
-
-
-NK_API nk_bool
-nk_button_push_behavior(struct nk_context* ctx, nk_button_type behavior)
-{
-    NK_ASSERT(ctx);
-    if (!ctx) return nk_false;
-
-    struct nk_config_stack_button_behavior* button_stack = &ctx->stacks.button_behaviors;
-    NK_ASSERT(button_stack->head < (int)NK_LEN(button_stack->elements));
-    if (button_stack->head >= (int)NK_LEN(button_stack->elements))
-        return nk_false;
-
-    struct nk_config_stack_button_behavior_element* element = &button_stack->elements[button_stack->head++];
-    element->address = &ctx->button_behavior;
-    element->old_value = ctx->button_behavior;
-    ctx->button_behavior = behavior;
-    return nk_true;
-}
-
-NK_API nk_bool
-nk_button_pop_behavior(struct nk_context* ctx)
-{
-    NK_ASSERT(ctx);
-    if (!ctx) return nk_false;
-
-    struct nk_config_stack_button_behavior* button_stack = &ctx->stacks.button_behaviors;
-    NK_ASSERT(button_stack->head > 0);
-    if (button_stack->head < 1)
-        return nk_false;
-
-    struct nk_config_stack_button_behavior_element* element = &button_stack->elements[--button_stack->head];
-    *element->address = element->old_value;
-    return nk_true;
 }

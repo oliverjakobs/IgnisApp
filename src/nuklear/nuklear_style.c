@@ -79,8 +79,8 @@ nk_style_from_table(struct nk_context *ctx, const nk_color *table)
     struct nk_style *style;
     nk_style_text *text;
     nk_style_button *button;
-    struct nk_style_toggle *toggle;
-    struct nk_style_selectable *select;
+    nk_style_toggle *toggle;
+    nk_style_selectable *select;
     struct nk_style_slider *slider;
     struct nk_style_progress *prog;
     struct nk_style_scrollbar *scroll;

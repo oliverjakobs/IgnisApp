@@ -7,8 +7,8 @@
  *
  * ===============================================================*/
 NK_LIB void
-nk_draw_toggle(nk_command_buffer *out, struct nk_rect bounds, nk_flags state, const struct nk_style_toggle *style,
-    nk_bool active, const char *string, int len, nk_toggle_type type, const struct nk_font *font)
+nk_draw_toggle(nk_command_buffer *out, struct nk_rect bounds, nk_flags state, const nk_style_toggle *style,
+    nk_bool active, const char *string, int len, nk_toggle_type type, const nk_font *font)
 {
     nk_style_text text = { 0 };
     text.alignment = NK_TEXT_LEFT;
@@ -22,7 +22,7 @@ nk_draw_toggle(nk_command_buffer *out, struct nk_rect bounds, nk_flags state, co
         cursor = &style->cursor_hover;
         text.color = style->text_hover;
     }
-    else if (state & NK_WIDGET_STATE_ACTIVED)
+    else if (state & NK_WIDGET_STATE_ACTIVE)
     {
         background = &style->hover;
         cursor = &style->cursor_hover;
@@ -79,27 +79,7 @@ nk_draw_toggle(nk_command_buffer *out, struct nk_rect bounds, nk_flags state, co
     nk_widget_text(out, label, string, len, &text, font);
 }
 
-NK_LIB nk_bool
-nk_do_toggle(nk_flags *state, nk_command_buffer *out, struct nk_rect bounds, nk_bool active,
-    const char *str, int len, nk_toggle_type type,
-    const struct nk_style_toggle *style, const struct nk_input *in, const struct nk_font *font)
-{
-    NK_ASSERT(style);
-    NK_ASSERT(out);
-    NK_ASSERT(font);
-    if (!out || !style || !font) return nk_false;
-
-    /* update selector */
-    if (nk_button_behavior(state, bounds, in, NK_BUTTON_DEFAULT))
-        active = !active;
-
-    /* draw selector */
-    nk_draw_toggle(out, bounds, *state, style, active, str, len, type, font);
-
-    return active;
-}
-
-nk_bool nk_toggle_text(struct nk_context* ctx, enum nk_toggle_type type, const char* text, int len, nk_bool active)
+nk_bool nk_toggle_text(struct nk_context* ctx, nk_toggle_type type, const char* text, int len, nk_bool active)
 {
     NK_ASSERT(ctx);
     NK_ASSERT(text);
@@ -115,8 +95,15 @@ nk_bool nk_toggle_text(struct nk_context* ctx, enum nk_toggle_type type, const c
     const struct nk_input *in = nk_widget_input(&bounds, &layout_state, ctx);
     if (!layout_state) return active;
 
+    /* update toggle */
     nk_flags state = 0;
-    return  nk_do_toggle(&state, &win->buffer, bounds, active, text, len, type, &style->checkbox, in, style->font);
+    if (nk_button_behavior(&state, bounds, in, NK_BUTTON_DEFAULT))
+        active = !active;
+
+    /* draw toggle */
+    nk_draw_toggle(&win->buffer, bounds, state, &style->checkbox, active, text, len, type, style->font);
+
+    return active;
 }
 
 /*----------------------------------------------------------------
@@ -156,14 +143,13 @@ nk_checkbox_flags_label(struct nk_context *ctx, const char *label, nk_flags flag
  *                          RADIO BUTTON
  *
  * --------------------------------------------------------------*/
-NK_API int nk_radio_text(struct nk_context *ctx, const char *text, int len, int option, int value)
+NK_API nk_uint nk_radio_text(struct nk_context *ctx, const char *text, int len, nk_uint option, nk_uint value)
 {
-    nk_bool active = nk_toggle_text(ctx, NK_TOGGLE_OPTION, text, len, option == value);
-    if (active) return value;
+    if (nk_toggle_text(ctx, NK_TOGGLE_OPTION, text, len, option == value)) return value;
     return option;
 }
 
-NK_API int nk_radio_label(struct nk_context *ctx, const char *label, int option, int value)
+NK_API nk_uint nk_radio_label(struct nk_context *ctx, const char *label, nk_uint option, nk_uint value)
 {
     return nk_radio_text(ctx, label, nk_strlen(label), option, value);
 }

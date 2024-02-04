@@ -284,7 +284,10 @@ nk_tree_element_image_push_hashed_base(struct nk_context *ctx, enum nk_tree_type
     label.w = NK_MIN(header.w - (sym.w + item_spacing.y + style->tab.indent), text_width);
     label.h = style->font->height;
 
-    *selected = nk_do_selectable(&dummy, &win->buffer, label, title, title_len, NK_TEXT_LEFT, *selected, &style->selectable, in, style->font);
+    if (nk_button_behavior(&dummy, label, in, NK_BUTTON_DEFAULT))
+        *selected = !(*selected);
+
+    nk_draw_selectable(&win->buffer, dummy, &style->selectable, *selected, label, title, title_len, NK_TEXT_LEFT, style->font);
     }
     /* increase x-axis cursor widget position pointer */
     if (*state == NK_MAXIMIZED) {

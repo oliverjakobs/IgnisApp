@@ -50,7 +50,8 @@ nk_color_picker_behavior(nk_flags *state,
 
     /* set color picker widget state */
     if (nk_input_mouse_hover(in, bounds))
-        *state = NK_WIDGET_STATE_HOVERED;
+        *state = NK_WIDGET_STATE_HOVER;
+
     if (*state & NK_WIDGET_STATE_HOVER && !nk_input_mouse_prev_hover(in, bounds))
         *state |= NK_WIDGET_STATE_ENTERED;
     else if (nk_input_mouse_prev_hover(in, bounds))

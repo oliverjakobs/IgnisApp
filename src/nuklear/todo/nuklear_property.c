@@ -13,7 +13,7 @@ nk_drag_behavior(nk_flags *state, const struct nk_input *in,
 {
     nk_widget_state_reset(state);
     if (nk_input_mouse_hover(in, drag))
-        *state = NK_WIDGET_STATE_HOVERED;
+        *state = NK_WIDGET_STATE_HOVER;
 
     if (nk_input_click_in_rect(in, NK_BUTTON_LEFT, drag) && nk_input_mouse_down(in, NK_BUTTON_LEFT))
     {
@@ -64,7 +64,7 @@ nk_property_behavior(nk_flags *ws, const struct nk_input *in,
     if (*state == NK_PROPERTY_DRAG)
     {
         nk_drag_behavior(ws, in, property, variant, inc_per_pixel);
-        if (!(*ws & NK_WIDGET_STATE_ACTIVED)) *state = NK_PROPERTY_DEFAULT;
+        if (!(*ws & NK_WIDGET_STATE_ACTIVE)) *state = NK_PROPERTY_DEFAULT;
     }
 }
 
@@ -78,7 +78,7 @@ nk_draw_property(struct nk_command_buffer *out, const struct nk_style_property *
 
     /* select correct background and text color */
     const nk_style_item *background;
-    if (state & NK_WIDGET_STATE_ACTIVED) {
+    if (state & NK_WIDGET_STATE_ACTIVE) {
         background = &style->active;
         text.color = style->label_active;
     } else if (state & NK_WIDGET_STATE_HOVER) {

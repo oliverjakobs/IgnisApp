@@ -18,7 +18,7 @@ NK_LIB float nk_scrollbar_behavior(nk_flags *state, struct nk_input *in,
     if (!in) return scroll_offset;
 
     if (nk_input_mouse_hover(in, *scroll))
-        *state = NK_WIDGET_STATE_HOVERED;
+        *state = NK_WIDGET_STATE_HOVER;
 
 
     /* update cursor by mouse dragging */
@@ -96,7 +96,7 @@ nk_draw_scrollbar(struct nk_command_buffer *out, nk_flags state,
     const nk_style_item *cursor;
 
     /* select correct colors/images to draw */
-    if (state & NK_WIDGET_STATE_ACTIVED) {
+    if (state & NK_WIDGET_STATE_ACTIVE) {
         background = &style->active;
         cursor = &style->cursor_active;
     } else if (state & NK_WIDGET_STATE_HOVER) {
