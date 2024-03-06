@@ -16,7 +16,7 @@
 #include "nuklear/nuklear.h"
 
 #include <ignis/ignis.h>
-#include <minimal/minimal.h>
+#include <minimal.h>
 
 #ifndef NK_GLFW_TEXT_MAX
 #define NK_GLFW_TEXT_MAX 256

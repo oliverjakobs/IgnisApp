@@ -30,7 +30,6 @@ group "Packages"
 
 include "packages/glfw.lua"
 include "packages/Ignis.lua"
-include "packages/Minimal.lua"
 
 group ""
 
@@ -57,7 +56,6 @@ project "IgnisApp"
     {
         "GLFW",
         "Ignis",
-        "Minimal",
         "opengl32"
     }
 
@@ -65,8 +63,14 @@ project "IgnisApp"
     {
         "src",
         "packages/Ignis/src",
-        "packages/Minimal/src",
+        "packages/minimal",
         "packages/glfw/include"
+    }
+    
+    defines
+    {
+        "MINIMAL_OPENGL",
+        "MINIMAL_PLATFORM_WINDOWS"
     }
 
     filter "system:linux"

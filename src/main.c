@@ -1,10 +1,12 @@
 #include <Ignis/Ignis.h>
-#include <minimal/minimal.h>
 
 #include "math/mat4.h"
 
 #include "nuklear_glfw_gl3.h"
 #include "demo/demo.h"
+
+#define MINIMAL_IMPLEMENTATION
+#include "minimal.h"
 
 static void ignisLogCallback(IgnisLogLevel level, const char* desc)
 {
@@ -17,6 +19,9 @@ static void ignisLogCallback(IgnisLogLevel level, const char* desc)
     case IGNIS_LOG_CRITICAL: MINIMAL_CRITICAL("%s", desc); break;
     }
 }
+
+
+static MinimalWindow* window;
 
 float width, height;
 mat4 screen_projection;
@@ -31,15 +36,29 @@ static void setViewport(float w, float h)
 struct nk_glfw glfw;
 nk_colorf bg;
 
-int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
+uint8_t onLoad(const char* title, int32_t x, int32_t y, uint32_t w, uint32_t h)
 {
+    /* minimal initialization */
+    if (!minimalPlatformInit())
+    {
+        MINIMAL_ERROR("[App] Failed to initialize Minimal");
+        return MINIMAL_FAIL;
+    }
+
+    /* creating the window */
+    window = minimalCreateWindow(title, x, y, w, h);
+    if (!window)
+    {
+        MINIMAL_ERROR("[App] Failed to create Minimal window");
+        return MINIMAL_FAIL;
+    }
+
     /* ingis initialization */
     ignisSetLogCallback(ignisLogCallback);
 
     int debug = 0;
 #ifdef _DEBUG
     debug = 1;
-    minimalEnableDebug(app, debug);
 #endif
 
     if (!ignisInit(minimalGetGLProcAddress, debug))
@@ -63,8 +82,7 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
 
     setViewport((float)w, (float)h);
 
-    nk_glfw3_init(&glfw, app->window);
-    glfw.ctx.input.handle = &app->input;
+    nk_glfw3_init(&glfw, window);
 
     nk_glfw3_load_font_atlas(&glfw);
 
@@ -73,16 +91,20 @@ int onLoad(MinimalApp* app, uint32_t w, uint32_t h)
     return MINIMAL_OK;
 }
 
-void onDestroy(MinimalApp* app)
+void onDestroy()
 {
     nk_glfw3_shutdown(&glfw);
 
     ignisRenderer2DDestroy();
+    ignisDestroy();
+
+    minimalDestroyWindow(window);
+    minimalPlatformTerminate();
 }
 
-int onEvent(MinimalApp* app, const MinimalEvent* e)
+uint8_t onEvent(void* context, const MinimalEvent* e)
 {
-    float w = 0, h = 0;
+    uint32_t w = 0, h = 0;
     if (minimalEventWindowSize(e, &w, &h))
     {
         setViewport(w, h);
@@ -110,20 +132,20 @@ int onEvent(MinimalApp* app, const MinimalEvent* e)
 
     switch (minimalEventKeyPressed(e))
     {
-    case MINIMAL_KEY_ESCAPE:    minimalClose(app); break;
-    case MINIMAL_KEY_F6:        minimalToggleVsync(app); break;
-    case MINIMAL_KEY_F7:        minimalToggleDebug(app); break;
+    case MINIMAL_KEY_ESCAPE:    minimalClose(window); break;
+    //case MINIMAL_KEY_F6:        minimalToggleVsync(app); break;
+    //case MINIMAL_KEY_F7:        minimalToggleDebug(app); break;
     }
 
     return MINIMAL_OK;
 }
 
-void onTick(MinimalApp* app, float deltatime)
+void onTick(void* context, const MinimalFrameData* framedata)
 {
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT);
 
-    nk_glfw3_new_frame(&glfw, deltatime);
+    nk_glfw3_new_frame(&glfw, framedata->deltatime);
 
     /* GUI */
     struct nk_context* ctx = &glfw.ctx;
@@ -172,21 +194,23 @@ void onTick(MinimalApp* app, float deltatime)
     //node_editor(ctx);
 
     nk_glfw3_render(&glfw);
+
+    minimalSwapBuffers(window);
 }
 
 int main()
 {
-    MinimalApp app = { 
-        .on_load =    onLoad,
-        .on_destroy = onDestroy,
-        .on_event =   onEvent,
-        .on_tick =    onTick
-    };
+    minimalSetWindowHint(MINIMAL_HINT_CONTEXT_MAJOR_VERSION, 4);
+    minimalSetWindowHint(MINIMAL_HINT_CONTEXT_MINOR_VERSION, 4);
+    
+    if (onLoad("IgnisApp", 100, 100, 1280, 720))
+    {
+        minimalSetCurrentContext(window);
+        minimalSetEventHandler(NULL, (MinimalEventCB)onEvent);
+        minimalRun(window, (MinimalTickCB)onTick, NULL);
+    }
 
-    if (minimalLoad(&app, "IgnisApp", 1200, 800, "4.4"))
-        minimalRun(&app);
-
-    minimalDestroy(&app);
+    onDestroy();
 
     return 0;
 }

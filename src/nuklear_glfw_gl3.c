@@ -173,7 +173,7 @@ nk_glfw3_new_frame(struct nk_glfw* glfw, float deltatime)
     glfw->text_len = 0;
 
     struct nk_vec2 pos = { 0 };
-    minimalCursorPos(in->handle, &pos.x, &pos.y);
+    minimalCursorPos(&pos.x, &pos.y);
 
     nk_input_update_mouse(in, pos, glfw->scroll);
     glfw->scroll = nk_vec2(0, 0);
@@ -229,9 +229,7 @@ nk_glfw3_render(struct nk_glfw* glfw)
 
 
     int width, height;
-    int display_width, display_height;
-    minimalGetWindowSize(glfw->win, &width, &height);
-    minimalGetFramebufferSize(glfw->win, &display_width, &display_height);
+    minimalGetFramebufferSize(glfw->win, &width, &height);
 
     struct nk_vec2 fb_scale;
     minimalGetWindowContentScale(glfw->win, &fb_scale.x, &fb_scale.y);
@@ -254,7 +252,7 @@ nk_glfw3_render(struct nk_glfw* glfw)
     glEnable(GL_SCISSOR_TEST);
     glActiveTexture(GL_TEXTURE0);
 
-    glViewport(0, 0, (GLsizei)display_width, (GLsizei)display_height);
+    glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
     /* setup program */
     ignisUseShader(dev->prog);

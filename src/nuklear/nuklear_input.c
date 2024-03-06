@@ -1,7 +1,7 @@
 #include "nuklear.h"
 #include "nuklear_internal.h"
 
-#include <minimal/minimal.h>
+#include <minimal.h>
 
 /* ===============================================================
  *
@@ -99,21 +99,21 @@ NK_API nk_bool nk_input_mouse_pressed(const struct nk_input *i, enum nk_buttons 
 {
     if (!i) return nk_false;
     // (i->mouse.buttons[id].down && i->mouse.buttons[id].clicked)
-    return minimalMousePressed(i->handle, id);
+    return minimalMousePressed(id);
 }
 
 NK_API nk_bool nk_input_mouse_released(const struct nk_input *i, enum nk_buttons id)
 {
     if (!i) return nk_false;
     // (!i->mouse.buttons[id].down && i->mouse.buttons[id].clicked)
-    return minimalMouseReleased(i->handle, id);
+    return minimalMouseReleased(id);
 }
 
 NK_API nk_bool nk_input_mouse_down(const struct nk_input* i, enum nk_buttons id)
 {
     if (!i) return nk_false;
     // i->mouse.buttons[id].down
-    return minimalMouseDown(i->handle, id);
+    return minimalMouseDown(id);
 }
 
 int input_map[][2] = {
@@ -146,19 +146,19 @@ NK_API nk_bool nk_input_key_pressed(const struct nk_input *i, enum nk_keys key)
 {
     if (!i) return nk_false;
     int* key_mod = input_map[key];
-    return minimalKeyPressed(i->handle, key_mod[0]) && minimalKeyModActive(i->handle, key_mod[1]);
+    return minimalKeyPressed(key_mod[0]) && minimalKeyModActive(key_mod[1]);
 }
 
 NK_API nk_bool nk_input_key_released(const struct nk_input *i, enum nk_keys key)
 {
     if (!i) return nk_false;
     int* key_mod = input_map[key];
-    return minimalKeyReleased(i->handle, key_mod[0]) && minimalKeyModActive(i->handle, key_mod[1]);
+    return minimalKeyReleased(key_mod[0]) && minimalKeyModActive(key_mod[1]);
 }
 
 NK_API nk_bool nk_input_key_down(const struct nk_input *i, enum nk_keys key)
 {
     if (!i) return nk_false;
     int* key_mod = input_map[key];
-    return minimalKeyDown(i->handle, key_mod[0]) && minimalKeyModActive(i->handle, key_mod[1]);
+    return minimalKeyDown(key_mod[0]) && minimalKeyModActive(key_mod[1]);
 }
