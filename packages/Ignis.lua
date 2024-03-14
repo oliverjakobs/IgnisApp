@@ -3,8 +3,8 @@ project "Ignis"
     language "C"
     location "Ignis"
     
-    targetdir ("build/bin/" .. output_dir .. "/%{prj.name}")
-    objdir ("build/bin-int/" .. output_dir .. "/%{prj.name}")
+    targetdir ("../build/bin/" .. output_dir .. "/%{prj.name}")
+    objdir ("../build/bin-int/" .. output_dir .. "/%{prj.name}")
 
     files
     {

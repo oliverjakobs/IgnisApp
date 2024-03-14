@@ -3,8 +3,8 @@ project "GLFW"
     language "C"
     architecture "x86_64"
 
-    targetdir ("build/bin/" .. output_dir .. "/%{prj.name}")
-    objdir ("build/bin-int/" .. output_dir .. "/%{prj.name}")
+    targetdir ("../build/bin/" .. output_dir .. "/%{prj.name}")
+    objdir ("../build/bin-int/" .. output_dir .. "/%{prj.name}")
 
     includedirs { "glfw/include/" }
 

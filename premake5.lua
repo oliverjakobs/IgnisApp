@@ -69,7 +69,6 @@ project "IgnisApp"
     
     defines
     {
-        "MINIMAL_OPENGL",
         "MINIMAL_PLATFORM_WINDOWS"
     }
 
